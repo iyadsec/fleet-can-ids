@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Auto-push to GitHub after each successful commit (iyadsec/fleet-can-ids)
+branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)"
+if [[ "$branch" == "main" || "$branch" == "master" ]]; then
+  git push origin "$branch" 2>/dev/null || true
+fi

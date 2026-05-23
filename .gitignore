@@ -1,0 +1,77 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Project outputs (keep structure via .gitkeep)
+outputs/metrics/*
+outputs/figures/*
+!outputs/metrics/.gitkeep
+!outputs/figures/.gitkeep
+
+# Processed data (large artifacts)
+data/processed/*
+!data/processed/.gitkeep
+
+# Raw data (often large or licensed)
+data/raw/*
+!data/raw/.gitkeep
+
+# Secrets and local overrides
+.env
+.env.*
+*.local.yaml
+secrets/
+
+# Logs
+logs/
+*.log
+
+# Large generated artifacts (rebuild locally)
+data/processed/clean_can_data.csv
+data/processed/window_metadata.csv
+data/processed/window_features.csv
+data/processed/anomaly_descriptors.csv
+data/processed/fleet_graph.pt
+outputs/fleet_graph.graphml
+outputs/checkpoints/
+outputs/embeddings/
+outputs/metrics/*.csv
+outputs/metrics/*.json
+outputs/figures/*.png
+!outputs/metrics/.gitkeep
+!outputs/figures/.gitkeep
+
+# OS
+Thumbs.db

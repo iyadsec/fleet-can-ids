@@ -1,0 +1,46 @@
+# Fleet-Aware CAN-Bus Intrusion Detection — default configuration
+
+project:
+  name: fleet-can-ids
+  seed: 42
+
+paths:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  outputs_dir: outputs
+  metrics_dir: outputs/metrics
+  figures_dir: outputs/figures
+
+data:
+  dataset: car_track
+  external_dataset_dir: /Users/iyadatieh/Library/CloudStorage/OneDrive-Personal/University of Reading/CodeRepo/Dataset
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+
+features:
+  window_size: 100
+  overlap: 50          # overlapping frames; stride = window_size - overlap
+  stride: 50           # optional override if overlap is omitted
+  # CAN-specific fields to use when available
+  use_id: true
+  use_payload: true
+  use_timestamp: true
+
+graph:
+  # Fleet anomaly graph: nodes = descriptors, edges = behavioural similarity only
+  similarity_metric: cosine      # cosine | euclidean
+  similarity_threshold: 0.85      # edge if similarity >= threshold
+  max_nodes: null                 # optional subsample for fast experiments
+
+evaluation:
+  metrics:
+    - accuracy
+    - precision
+    - recall
+    - f1
+    - auc
+
+experiment:
+  name: baseline
+  tags: []
