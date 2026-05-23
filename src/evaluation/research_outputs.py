@@ -16,7 +16,7 @@ from sklearn.manifold import TSNE
 from sklearn.metrics import RocCurveDisplay, auc, roc_curve
 from sklearn.preprocessing import StandardScaler
 
-from src.data.dataset_loader import dataset_statistics
+from src.data.dataset_loader import dataset_statistics, dataset_statistics_chunked
 from src.evaluation.campaign_clustering import (
     clustering_feature_columns,
     load_embedding_table,
@@ -377,13 +377,7 @@ def write_metrics_summary_tables(
         written["descriptors"] = p
 
     if paths.get("clean_can_data") and paths["clean_can_data"].exists():
-        sample = pd.read_csv(
-            paths["clean_can_data"],
-            usecols=["vehicle_model", "attack_type", "label"],
-            nrows=2_000_000,
-        )
-        stats = dataset_statistics(sample)
-        stats["note"] = "Statistics from up to 2M frame sample"
+        stats = dataset_statistics_chunked(paths["clean_can_data"])
         p = metrics_dir / "summary_dataset.json"
         p.write_text(json.dumps(stats, indent=2), encoding="utf-8")
         written["dataset"] = p
@@ -612,7 +606,7 @@ def generate_experiment_report(
                 "|-----------|-------|",
                 f"| Vehicles | {', '.join(ds.get('vehicles', []))} |",
                 f"| Attack types (excl. benign) | {ds.get('n_attack_types', '—')} |",
-                f"| CAN frames (sample) | {ds.get('n_can_frames', 0):,} |",
+                f"| CAN frames | {ds.get('n_can_frames', 0):,} |",
                 "",
             ]
         )
@@ -692,11 +686,18 @@ def generate_experiment_report(
         )
 
     gnn_cfg = config.get("gnn", {})
+    use_gt = bool(gnn_cfg.get("use_ground_truth_labels", True))
+    label_note = (
+        "Node classification uses **ground-truth window labels** (`ground_truth_label`), "
+        "not IDS predictions, so representation learning is not tied to per-vehicle detector bias."
+        if use_gt
+        else "Node classification uses IDS `predicted_label` (legacy mode)."
+    )
     lines.extend(
         [
             "## 7. GNN learning",
             "",
-            f"A **{gnn_cfg.get('architecture', 'gcn')}** encoder ({gnn_cfg.get('hidden_channels', 64)} hidden → {gnn_cfg.get('embedding_dim', 32)} embedding) is trained with node classification (attack vs benign) on the fleet graph. Checkpoints and metrics are stored under `outputs/checkpoints/` and `outputs/metrics/gnn_training_metrics.json` when step 7 has been run.",
+            f"A **{gnn_cfg.get('architecture', 'gcn')}** encoder ({gnn_cfg.get('hidden_channels', 64)} hidden → {gnn_cfg.get('embedding_dim', 32)} embedding) is trained on the fleet graph. {label_note}",
             "",
             _img(figures_dir, root, "embedding_tsne"),
             "",
@@ -744,7 +745,7 @@ def generate_experiment_report(
             "",
             "- **OEM isolation:** IDS models do not share weights across manufacturers; fleet reasoning happens only after descriptor abstraction.",
             "- **Similarity graph cost:** All-pairs neighbourhood search scales with descriptor count; large fleets may require `graph.max_nodes` subsampling.",
-            "- **GNN supervision:** Node labels inherit IDS predictions, so graph learning propagates per-vehicle detector bias.",
+            "- **Descriptor selection vs GNN labels:** IDS predictions still decide which windows become graph nodes (suspicious-only descriptors). GNN training uses **ground-truth labels** when `gnn.use_ground_truth_labels: true` (default). Re-run `05_generate_descriptors.py`, `06_build_graph.py`, and `07_train_gnn.py` after upgrading descriptor CSVs.",
             "- **Clustering:** Density parameters are sensitive; DBSCAN uses PCA for separation. Timing features are excluded from similarity but remain in raw window tables.",
             "- **Reproducibility:** Large artefacts (CSVs, `.pt` graphs) are gitignored; regenerate via `python experiments/run_full_pipeline.py`.",
             "",

@@ -29,9 +29,60 @@ DESCRIPTOR_PATH_COLUMNS = [
     "behavioural_feature_vector",
 ]
 
+OPTIONAL_DESCRIPTOR_COLUMNS = ("ground_truth_label",)
 
-def load_anomaly_descriptors(path: Path | str) -> pd.DataFrame:
-    """Load anomaly descriptor table."""
+
+def event_id_to_window_id(event_id: str) -> int:
+    return int(str(event_id).rsplit("-", 1)[-1])
+
+
+def resolve_gnn_node_labels(df: pd.DataFrame, *, prefer_ground_truth: bool = True) -> np.ndarray:
+    """
+    Node classification targets for GNN training.
+
+    Prefer dataset ``ground_truth_label`` when available so learning is not tied
+    to IDS predictions. Falls back to ``predicted_label`` for legacy CSVs.
+    """
+    if prefer_ground_truth and "ground_truth_label" in df.columns:
+        labels = df["ground_truth_label"].fillna(df["predicted_label"]).astype(int).to_numpy()
+        logger.info("GNN node labels: using ground_truth_label from descriptors")
+    else:
+        labels = df["predicted_label"].astype(int).to_numpy()
+        logger.warning(
+            "GNN node labels: ground_truth_label missing; using predicted_label (IDS-derived)"
+        )
+    return labels
+
+
+def attach_ground_truth_labels(
+    descriptors: pd.DataFrame,
+    features_path: Path | str | None,
+) -> pd.DataFrame:
+    """Merge window ``label`` into descriptors when ``ground_truth_label`` is absent."""
+    if "ground_truth_label" in descriptors.columns:
+        return descriptors
+    if features_path is None or not Path(features_path).exists():
+        return descriptors
+
+    feat = pd.read_csv(
+        Path(features_path),
+        usecols=["window_id", "vehicle_model", "label"],
+    )
+    out = descriptors.copy()
+    out["window_id"] = out["event_id"].map(event_id_to_window_id)
+    out = out.merge(feat, on=["window_id", "vehicle_model"], how="left")
+    out["ground_truth_label"] = out["label"].fillna(out["predicted_label"]).astype(int)
+    out = out.drop(columns=["label", "window_id"], errors="ignore")
+    logger.info("Attached ground_truth_label from %s", features_path)
+    return out
+
+
+def load_anomaly_descriptors(
+    path: Path | str,
+    *,
+    features_path: Path | str | None = None,
+) -> pd.DataFrame:
+    """Load anomaly descriptor table (optionally enrich with ground-truth labels)."""
     csv_path = Path(path)
     if not csv_path.exists():
         raise FileNotFoundError(f"Anomaly descriptors not found: {csv_path}")
@@ -39,7 +90,7 @@ def load_anomaly_descriptors(path: Path | str) -> pd.DataFrame:
     missing = set(DESCRIPTOR_PATH_COLUMNS) - set(df.columns)
     if missing:
         raise ValueError(f"Descriptor CSV missing columns: {sorted(missing)}")
-    return df
+    return attach_ground_truth_labels(df, features_path)
 
 
 def parse_feature_matrix(df: pd.DataFrame) -> tuple[np.ndarray, list[str]]:
@@ -210,6 +261,8 @@ def build_pyg_data(
     edge_index: np.ndarray,
     edge_weights: np.ndarray,
     df: pd.DataFrame,
+    *,
+    prefer_ground_truth_labels: bool = True,
 ) -> Any:
     """Build a PyTorch Geometric ``Data`` object."""
     try:
@@ -230,7 +283,11 @@ def build_pyg_data(
         x=x,
         edge_index=ei,
         edge_attr=ew,
-        y=torch.tensor(df["predicted_label"].to_numpy(), dtype=torch.long),
+        y=torch.tensor(
+            resolve_gnn_node_labels(df, prefer_ground_truth=prefer_ground_truth_labels),
+            dtype=torch.long,
+        ),
+        predicted_label=torch.tensor(df["predicted_label"].to_numpy(), dtype=torch.long),
         anomaly_score=torch.tensor(df["anomaly_score"].to_numpy(), dtype=torch.float32),
         vehicle_id=torch.tensor(
             [vehicle_codes[v] for v in df["vehicle_model"]], dtype=torch.long
@@ -274,6 +331,7 @@ def build_fleet_anomaly_graph(
     threshold: float = 0.85,
     max_nodes: int | None = None,
     seed: int = 42,
+    prefer_ground_truth_labels: bool = True,
 ) -> tuple[nx.Graph, Any, dict[str, float], np.ndarray]:
     """
     Full pipeline: descriptors -> NetworkX + PyG graphs + statistics.
@@ -293,7 +351,13 @@ def build_fleet_anomaly_graph(
     X_sub = X_full[sub_idx]
 
     G = build_networkx_graph(df_sub, edge_index, edge_weights)
-    pyg_data = build_pyg_data(X_sub, edge_index, edge_weights, df_sub)
+    pyg_data = build_pyg_data(
+        X_sub,
+        edge_index,
+        edge_weights,
+        df_sub,
+        prefer_ground_truth_labels=prefer_ground_truth_labels,
+    )
     stats = compute_graph_statistics(G)
     stats["similarity_metric"] = metric
     stats["similarity_threshold"] = threshold

@@ -322,6 +322,56 @@ def save_clean_dataset(df: pd.DataFrame, output_path: Path | str) -> Path:
     return out
 
 
+def dataset_statistics_chunked(
+    csv_path: Path | str,
+    *,
+    chunksize: int = 500_000,
+) -> dict[str, Any]:
+    """
+    Full-file dataset statistics without loading the entire CSV into memory.
+
+    Reads only ``vehicle_model`` and ``attack_type`` columns in chunks so all
+    vehicles (e.g. Hyundai, Kia, Chevrolet) are counted even when the file is
+    sorted by OEM.
+    """
+    path = Path(csv_path)
+    if not path.exists():
+        raise FileNotFoundError(path)
+
+    frames_by_vehicle: dict[str, int] = {}
+    frames_by_attack: dict[str, int] = {}
+    n_frames = 0
+
+    for chunk in pd.read_csv(
+        path,
+        usecols=["vehicle_model", "attack_type"],
+        chunksize=chunksize,
+    ):
+        n_frames += len(chunk)
+        for vehicle, count in chunk["vehicle_model"].value_counts().items():
+            frames_by_vehicle[str(vehicle)] = frames_by_vehicle.get(str(vehicle), 0) + int(count)
+        for attack, count in chunk["attack_type"].value_counts().items():
+            frames_by_attack[str(attack)] = frames_by_attack.get(str(attack), 0) + int(count)
+
+    attack_types = sorted(
+        {
+            str(v)
+            for v in frames_by_attack
+            if str(v) not in ("attack_free", "unknown", "release")
+        }
+    )
+    vehicles = sorted(frames_by_vehicle.keys())
+    return {
+        "n_vehicles": len(vehicles),
+        "n_attack_types": len(attack_types),
+        "n_can_frames": n_frames,
+        "vehicles": vehicles,
+        "attack_types": attack_types,
+        "frames_by_vehicle": frames_by_vehicle,
+        "frames_by_attack": frames_by_attack,
+    }
+
+
 def dataset_statistics(df: pd.DataFrame) -> dict[str, Any]:
     """Summarize merged dataset for reporting."""
     if df.empty:

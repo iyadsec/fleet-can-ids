@@ -270,14 +270,19 @@ class FullPipelineRunner:
 
         graph_cfg = self.config.get("graph", {})
         desc_path = self.artifact("anomaly_descriptors", "data/processed/anomaly_descriptors.csv")
-        descriptors = load_anomaly_descriptors(desc_path)
+        feat_path = self.artifact("window_features", "data/processed/window_features.csv")
+        descriptors = load_anomaly_descriptors(
+            desc_path, features_path=feat_path if feat_path.exists() else None
+        )
         max_nodes = graph_cfg.get("max_nodes")
+        use_gt = bool(self.config.get("gnn", {}).get("use_ground_truth_labels", True))
         G, pyg_data, stats, _ = build_fleet_anomaly_graph(
             descriptors,
             metric=graph_cfg.get("similarity_metric", "cosine"),  # type: ignore[arg-type]
             threshold=float(graph_cfg.get("similarity_threshold", 0.85)),
             max_nodes=int(max_nodes) if max_nodes else None,
             seed=self.seed,
+            prefer_ground_truth_labels=use_gt,
         )
         graphml = self.artifact("fleet_graph_graphml", "outputs/fleet_graph.graphml")
         save_fleet_graph(G, pyg_data, stats, pt_path=pt_out, graphml_path=graphml)

@@ -27,6 +27,7 @@ DESCRIPTOR_COLUMNS = [
     "attack_type",
     "anomaly_score",
     "predicted_label",
+    "ground_truth_label",
     "behavioural_feature_vector",
 ]
 
@@ -144,6 +145,7 @@ def generate_anomaly_descriptors(
             "attack_type": suspicious["attack_type"],
             "anomaly_score": suspicious["anomaly_score"].round(6),
             "predicted_label": suspicious["predicted_label"].astype(int),
+            "ground_truth_label": suspicious["label"].astype(int),
             "behavioural_feature_vector": suspicious.apply(behavioural_vector_to_json, axis=1),
         }
     )

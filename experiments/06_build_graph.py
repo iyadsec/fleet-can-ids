@@ -79,6 +79,8 @@ def main() -> int:
     threshold = args.threshold if args.threshold is not None else 0.85
     max_nodes = args.max_nodes
     seed = args.seed if args.seed is not None else 42
+    use_gt_labels = True
+    cfg: dict = {}
 
     if args.config:
         try:
@@ -90,6 +92,7 @@ def main() -> int:
             if args.max_nodes is None and graph_cfg.get("max_nodes"):
                 max_nodes = int(graph_cfg["max_nodes"])
             seed = int(cfg.get("project", {}).get("seed", seed))
+            use_gt_labels = bool(cfg.get("gnn", {}).get("use_ground_truth_labels", True))
         except FileNotFoundError:
             logger.warning("Config not found; using CLI defaults.")
 
@@ -105,13 +108,17 @@ def main() -> int:
     logger.info("Descriptors: %s", descriptors_path)
     logger.info("Metric:      %s, threshold: %.4f", metric, threshold)
 
-    descriptors = load_anomaly_descriptors(descriptors_path)
+    features_path = paths.root / "data/processed/window_features.csv"
+    descriptors = load_anomaly_descriptors(
+        descriptors_path, features_path=features_path if features_path.exists() else None
+    )
     G, pyg_data, stats, _ = build_fleet_anomaly_graph(
         descriptors,
         metric=metric,  # type: ignore[arg-type]
         threshold=threshold,
         max_nodes=max_nodes,
         seed=seed,
+        prefer_ground_truth_labels=use_gt_labels,
     )
 
     save_fleet_graph(G, pyg_data, stats, pt_path=pt_path, graphml_path=graphml_path)
