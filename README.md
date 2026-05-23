@@ -24,6 +24,24 @@ Research codebase for detecting intrusions on Controller Area Network (CAN) bus 
     └── utils/            # Config, paths, logging
 ```
 
+## GitHub
+
+**Repository:** [github.com/iyadsec/fleet-can-ids](https://github.com/iyadsec/fleet-can-ids)
+
+### Sync to GitHub
+
+```bash
+./scripts/sync_github.sh "describe your changes"
+```
+
+### Auto-sync after each commit
+
+```bash
+./scripts/install_git_hooks.sh   # run once per clone
+```
+
+After that, every `git commit` on `main` automatically runs `git push origin main`.
+
 ## Setup
 
 ```bash
