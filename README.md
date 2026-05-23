@@ -141,6 +141,12 @@ Optional: `--skip-existing`, `--from-step train_gnn`, `--only cluster_campaigns 
 
 Writes `outputs/metrics/pipeline_report.md` and all intermediate artefacts.
 
+**Research report** (figures + `outputs/experiment_report.md`):
+
+```bash
+python experiments/09_generate_research_outputs.py
+```
+
 ```bash
 python experiments/run_baseline.py --config configs/default.yaml
 ```

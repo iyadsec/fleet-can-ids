@@ -67,6 +67,7 @@ PIPELINE_STEPS = (
     "train_gnn",
     "cluster_campaigns",
     "generate_report",
+    "generate_research_outputs",
 )
 
 
@@ -360,4 +361,10 @@ class FullPipelineRunner:
             step_results=self.step_results,
             output_path=report_path,
         )
+        return 0
+
+    def _step_generate_research_outputs(self) -> int:
+        from src.evaluation.research_outputs import generate_all_research_outputs
+
+        generate_all_research_outputs(self.config, self.root, regenerate_clustering=False)
         return 0

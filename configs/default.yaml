@@ -25,6 +25,7 @@ pipeline:
     - train_gnn
     - cluster_campaigns
     - generate_report
+    - generate_research_outputs
   artifacts:
     clean_can_data: data/processed/clean_can_data.csv
     window_metadata: data/processed/window_metadata.csv
@@ -105,3 +106,8 @@ evaluation:
 experiment:
   name: baseline
   tags: []
+
+research:
+  report_path: outputs/experiment_report.md
+  graph_viz_max_nodes: 800
+  autoencoder_epochs_report: 15   # lighter AE when generating ROC for the report
