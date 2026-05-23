@@ -123,6 +123,24 @@ python experiments/08_cluster_campaigns.py
 
 Writes `outputs/metrics/campaign_clusters.csv` and campaign cluster figures.
 
+**Train GNN** on the fleet graph:
+
+```bash
+python experiments/07_train_gnn.py
+```
+
+Writes `outputs/embeddings/gcn_node_embeddings.pt`.
+
+**Full pipeline** (all steps end-to-end):
+
+```bash
+python experiments/run_full_pipeline.py
+```
+
+Optional: `--skip-existing`, `--from-step train_gnn`, `--only cluster_campaigns generate_report`.
+
+Writes `outputs/metrics/pipeline_report.md` and all intermediate artefacts.
+
 ```bash
 python experiments/run_baseline.py --config configs/default.yaml
 ```

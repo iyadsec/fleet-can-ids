@@ -11,6 +11,36 @@ paths:
   metrics_dir: outputs/metrics
   figures_dir: outputs/figures
 
+# Full pipeline (python experiments/run_full_pipeline.py)
+pipeline:
+  stop_on_error: true
+  skip_if_outputs_exist: false
+  steps:
+    - load_dataset
+    - generate_windows
+    - extract_features
+    - train_vehicle_ids
+    - generate_descriptors
+    - build_fleet_graph
+    - train_gnn
+    - cluster_campaigns
+    - generate_report
+  artifacts:
+    clean_can_data: data/processed/clean_can_data.csv
+    window_metadata: data/processed/window_metadata.csv
+    window_features: data/processed/window_features.csv
+    vehicle_results: outputs/metrics/vehicle_level_results.csv
+    window_predictions: outputs/metrics/window_predictions.csv
+    anomaly_descriptors: data/processed/anomaly_descriptors.csv
+    fleet_graph: data/processed/fleet_graph.pt
+    fleet_graph_graphml: outputs/fleet_graph.graphml
+    graph_stats: outputs/metrics/fleet_graph_stats.json
+    gcn_embeddings: outputs/embeddings/gcn_node_embeddings.pt
+    gnn_checkpoints: outputs/checkpoints
+    gnn_metrics: outputs/metrics/gnn_training_metrics.json
+    campaign_clusters: outputs/metrics/campaign_clusters.csv
+    report: outputs/metrics/pipeline_report.md
+
 data:
   dataset: car_track
   external_dataset_dir: /Users/iyadatieh/Library/CloudStorage/OneDrive-Personal/University of Reading/CodeRepo/Dataset
@@ -22,10 +52,32 @@ features:
   window_size: 100
   overlap: 50          # overlapping frames; stride = window_size - overlap
   stride: 50           # optional override if overlap is omitted
+  generate_plots: true
   # CAN-specific fields to use when available
   use_id: true
   use_payload: true
   use_timestamp: true
+
+vehicle_ids:
+  test_size: 0.2
+  include_autoencoder: true
+
+descriptors:
+  test_size: 0.2
+  score_threshold: 0.5
+  primary_model: random_forest
+  regenerate_predictions: false
+  include_autoencoder: true
+
+gnn:
+  architecture: gcn
+  hidden_channels: 64
+  embedding_dim: 32
+  epochs: 30
+  learning_rate: 0.01
+  weight_decay: 0.0005
+  train_ratio: 0.7
+  val_ratio: 0.15
 
 graph:
   # Fleet anomaly graph: nodes = descriptors, edges = behavioural similarity only
