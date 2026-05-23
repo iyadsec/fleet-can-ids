@@ -33,6 +33,15 @@ graph:
   similarity_threshold: 0.85      # edge if similarity >= threshold
   max_nodes: null                 # optional subsample for fast experiments
 
+clustering:
+  kmeans_clusters: 12
+  dbscan_eps: 1.2
+  dbscan_min_samples: 10
+  dbscan_pca_components: 8
+  max_clustering_samples: 20000
+  similarity_threshold: 0.85   # suspicious if intra-cluster mean cosine sim >= this
+  min_vehicles: 2                # suspicious if cluster spans >= N vehicle models
+
 evaluation:
   metrics:
     - accuracy

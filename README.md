@@ -115,6 +115,14 @@ python experiments/06_build_graph.py
 
 Writes `data/processed/fleet_graph.pt` and `outputs/fleet_graph.graphml`.
 
+**Cluster GNN embeddings** (KMeans + DBSCAN, multi-vehicle suspicious campaigns):
+
+```bash
+python experiments/08_cluster_campaigns.py
+```
+
+Writes `outputs/metrics/campaign_clusters.csv` and campaign cluster figures.
+
 ```bash
 python experiments/run_baseline.py --config configs/default.yaml
 ```
