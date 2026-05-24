@@ -47,6 +47,11 @@ stage1:
   metrics_dir: outputs/metrics
   verify_raw_rows: false   # set true or use --verify-raw for full raw vs consolidated check
 
+release:
+  raw_dir: data/raw/release
+  output: data/processed/clean_can_release.csv
+  metrics_dir: outputs/metrics
+
 data:
   dataset: car_track
   external_dataset_dir: /Users/iyadatieh/Library/CloudStorage/OneDrive-Personal/University of Reading/CodeRepo/Dataset
