@@ -42,6 +42,11 @@ pipeline:
     campaign_clusters: outputs/metrics/campaign_clusters.csv
     report: outputs/metrics/pipeline_report.md
 
+stage1:
+  consolidated_train: data/processed/clean_can_train.csv
+  metrics_dir: outputs/metrics
+  verify_raw_rows: false   # set true or use --verify-raw for full raw vs consolidated check
+
 data:
   dataset: car_track
   external_dataset_dir: /Users/iyadatieh/Library/CloudStorage/OneDrive-Personal/University of Reading/CodeRepo/Dataset
