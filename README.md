@@ -1,6 +1,6 @@
 # Fleet-Aware CAN-Bus Intrusion Detection
 
-Research codebase for detecting intrusions on Controller Area Network (CAN) bus traffic with **fleet-level** context—modeling relationships across vehicles, ECUs, and message patterns rather than treating each trace in isolation.
+Research codebase for detecting intrusions on Controller Area Network (CAN) bus traffic with **fleet-level** context. The revised workflow demonstrates how vehicle-level IDS findings can be lifted into a behavioural graph to identify coordinated CAN attack patterns across multiple vehicles, beyond isolated per-vehicle detections.
 
 ## Project layout
 
@@ -19,7 +19,7 @@ Research codebase for detecting intrusions on Controller Area Network (CAN) bus 
     ├── data/             # Loading and preprocessing
     ├── features/         # Feature extraction
     ├── graph/            # Fleet / ECU graph construction
-    ├── models/           # Detectors (not implemented yet)
+    ├── models/           # Vehicle IDS and GNN models
     ├── evaluation/       # Metrics and reporting
     └── utils/            # Config, paths, logging
 ```
@@ -57,7 +57,9 @@ Edit or copy `configs/default.yaml` for dataset paths, splits, and experiment me
 
 ## Running experiments
 
-Experiment entry points live under `experiments/`. Model training and inference are **not implemented yet**; scripts may load data and write placeholders until detectors are added under `src/models/`.
+Experiment entry points live under `experiments/`. The end-to-end research workflow is:
+
+`Raw CAN data → Vehicle anomaly detection → Descriptor generation → Behavioural graph construction → GNN / clustering → Final output classification`
 
 **Load and merge CAN datasets** (external Car Track dataset + `data/raw/`):
 
@@ -66,14 +68,6 @@ python experiments/01_load_dataset.py --config configs/default.yaml
 ```
 
 Writes `data/processed/clean_can_data.csv` with standardized columns.
-
-**Validate clean dataset** (row counts, schema, ranges, duplicates):
-
-```bash
-python experiments/01b_validate_clean_dataset.py
-```
-
-Writes `outputs/metrics/data_validation_report.csv` and `data_validation_summary.txt`.
 
 **Generate sliding-window metadata** (default: 100 frames, 50-frame overlap):
 
@@ -97,7 +91,11 @@ Writes `data/processed/window_features.csv` and figures under `outputs/figures/`
 python experiments/04_train_vehicle_ids.py
 ```
 
-Writes `outputs/metrics/vehicle_level_results.csv` and `outputs/figures/confusion_matrix_vehicle.png`.
+Writes `outputs/metrics/vehicle_level_results.csv`, `data/processed/vehicle_anomaly_predictions.csv`, and `outputs/figures/confusion_matrix_vehicle.png`.
+
+`data/processed/vehicle_anomaly_predictions.csv` is the stage hand-off into fleet analysis and contains:
+
+`window_id, vehicle_model, source_file, attack_type, true_label, predicted_label, anomaly_score, is_anomaly`
 
 **Generate anomaly descriptors** (suspicious windows only):
 
@@ -105,7 +103,7 @@ Writes `outputs/metrics/vehicle_level_results.csv` and `outputs/figures/confusio
 python experiments/05_generate_descriptors.py
 ```
 
-Writes `data/processed/anomaly_descriptors.csv` and `outputs/metrics/window_predictions.csv`.
+Writes `data/processed/anomaly_descriptors.csv` using only rows where `is_anomaly = 1`.
 
 **Build fleet anomaly graph** (behavioural similarity edges, no temporal links):
 
@@ -113,15 +111,7 @@ Writes `data/processed/anomaly_descriptors.csv` and `outputs/metrics/window_pred
 python experiments/06_build_graph.py
 ```
 
-Writes `data/processed/fleet_graph.pt` and `outputs/fleet_graph.graphml`.
-
-**Cluster GNN embeddings** (KMeans + DBSCAN, multi-vehicle suspicious campaigns):
-
-```bash
-python experiments/08_cluster_campaigns.py
-```
-
-Writes `outputs/metrics/campaign_clusters.csv` and campaign cluster figures.
+Writes `data/processed/fleet_nodes.csv`, `data/processed/fleet_edges.csv`, `data/processed/fleet_graph.pt`, and `outputs/fleet_graph.graphml`.
 
 **Train GNN** on the fleet graph:
 
@@ -131,13 +121,36 @@ python experiments/07_train_gnn.py
 
 Writes `outputs/embeddings/gcn_node_embeddings.pt`.
 
+**Cluster GNN embeddings** (KMeans + DBSCAN, multi-vehicle suspicious campaigns):
+
+```bash
+python experiments/08_cluster_campaigns.py
+```
+
+Writes `data/processed/fleet_cluster_results.csv` and campaign cluster figures.
+
+**Final decision stage** classifies each anomaly event:
+
+```bash
+python experiments/09_final_decision.py
+# or
+python experiments/run_full_pipeline.py --only final_decision
+```
+
+Writes:
+
+- `outputs/metrics/final_detection_outcomes.csv`
+- `outputs/metrics/final_outcome_summary.csv`
+
+Decision rule: if an anomaly belongs to a high-similarity cluster containing anomalies from more than one vehicle, it is classified as `Fleet-level coordinated behavioural pattern`; otherwise it is an `Isolated anomaly`.
+
 **Full pipeline** (all steps end-to-end):
 
 ```bash
 python experiments/run_full_pipeline.py
 ```
 
-Optional: `--skip-existing`, `--from-step train_gnn`, `--only cluster_campaigns generate_report`.
+Optional: `--skip-existing`, `--from-step train_gnn`, `--only cluster_campaigns final_decision generate_report`.
 
 Writes `outputs/metrics/pipeline_report.md` and all intermediate artefacts.
 
@@ -159,11 +172,12 @@ Place raw CAN dumps or public benchmark exports in `data/raw/`. Preprocessing sc
 
 | Component        | Status              |
 |------------------|---------------------|
-| Data pipeline    | Scaffold            |
-| Features         | Scaffold            |
-| Fleet graph      | Scaffold            |
-| Models           | Not implemented     |
-| Evaluation       | Scaffold            |
+| Data pipeline    | Implemented |
+| Vehicle IDS      | Implemented |
+| Descriptors      | Implemented |
+| Behavioural graph | Implemented |
+| GNN / clustering | Implemented |
+| Final outcomes   | Implemented |
 
 ## License
 

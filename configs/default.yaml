@@ -24,6 +24,7 @@ pipeline:
     - build_fleet_graph
     - train_gnn
     - cluster_campaigns
+    - final_decision
     - generate_report
     - generate_research_outputs
   artifacts:
@@ -31,26 +32,20 @@ pipeline:
     window_metadata: data/processed/window_metadata.csv
     window_features: data/processed/window_features.csv
     vehicle_results: outputs/metrics/vehicle_level_results.csv
-    window_predictions: outputs/metrics/window_predictions.csv
+    vehicle_anomaly_predictions: data/processed/vehicle_anomaly_predictions.csv
     anomaly_descriptors: data/processed/anomaly_descriptors.csv
+    fleet_nodes: data/processed/fleet_nodes.csv
+    fleet_edges: data/processed/fleet_edges.csv
     fleet_graph: data/processed/fleet_graph.pt
     fleet_graph_graphml: outputs/fleet_graph.graphml
     graph_stats: outputs/metrics/fleet_graph_stats.json
     gcn_embeddings: outputs/embeddings/gcn_node_embeddings.pt
     gnn_checkpoints: outputs/checkpoints
     gnn_metrics: outputs/metrics/gnn_training_metrics.json
-    campaign_clusters: outputs/metrics/campaign_clusters.csv
+    fleet_cluster_results: data/processed/fleet_cluster_results.csv
+    final_detection_outcomes: outputs/metrics/final_detection_outcomes.csv
+    final_outcome_summary: outputs/metrics/final_outcome_summary.csv
     report: outputs/metrics/pipeline_report.md
-
-stage1:
-  consolidated_train: data/processed/clean_can_train.csv
-  metrics_dir: outputs/metrics
-  verify_raw_rows: false   # set true or use --verify-raw for full raw vs consolidated check
-
-release:
-  raw_dir: data/raw/release
-  output: data/processed/clean_can_release.csv
-  metrics_dir: outputs/metrics
 
 data:
   dataset: car_track
@@ -71,6 +66,7 @@ features:
 
 vehicle_ids:
   test_size: 0.2
+  primary_model: random_forest
   include_autoencoder: true
 
 descriptors:
@@ -105,6 +101,10 @@ clustering:
   max_clustering_samples: 20000
   similarity_threshold: 0.85   # suspicious if intra-cluster mean cosine sim >= this
   min_vehicles: 2                # suspicious if cluster spans >= N vehicle models
+
+final_decision:
+  similarity_threshold: 0.85
+  min_vehicles: 2
 
 evaluation:
   metrics:

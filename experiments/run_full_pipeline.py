@@ -11,7 +11,8 @@ Steps (see configs/default.yaml → pipeline.steps):
   6. build_fleet_graph
   7. train_gnn
   8. cluster_campaigns
-  9. generate_report
+  9. final_decision
+ 10. generate_report
 """
 
 from __future__ import annotations

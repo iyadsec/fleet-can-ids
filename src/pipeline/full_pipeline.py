@@ -16,6 +16,12 @@ from src.evaluation.campaign_clustering import (
     run_campaign_clustering,
     save_campaign_clusters,
 )
+from src.evaluation.final_decision import (
+    classify_final_outcomes,
+    load_cluster_results,
+    save_final_outcomes,
+    summarize_final_outcomes,
+)
 from src.evaluation.pipeline_report import generate_pipeline_report
 from src.features.descriptor_generator import (
     generate_anomaly_descriptors,
@@ -43,12 +49,15 @@ from src.graph.fleet_graph_builder import (
     load_anomaly_descriptors,
     print_graph_statistics,
     save_fleet_graph,
+    save_graph_tables,
 )
 from src.models.vehicle_ids import (
+    generate_vehicle_anomaly_predictions,
     load_feature_dataset,
     plot_vehicle_confusion_matrices,
     print_results_summary,
     run_vehicle_level_training,
+    save_vehicle_anomaly_predictions,
     save_results,
 )
 from src.utils.config import get_nested
@@ -66,6 +75,7 @@ PIPELINE_STEPS = (
     "build_fleet_graph",
     "train_gnn",
     "cluster_campaigns",
+    "final_decision",
     "generate_report",
     "generate_research_outputs",
 )
@@ -201,8 +211,12 @@ class FullPipelineRunner:
 
     def _step_train_vehicle_ids(self) -> int:
         out = self.artifact("vehicle_results", "outputs/metrics/vehicle_level_results.csv")
-        if self._should_skip(out):
-            logger.info("Skipping train_vehicle_ids — output exists: %s", out)
+        pred_out = self.artifact(
+            "vehicle_anomaly_predictions",
+            "data/processed/vehicle_anomaly_predictions.csv",
+        )
+        if self._should_skip(out) and pred_out.exists():
+            logger.info("Skipping train_vehicle_ids — outputs exist: %s, %s", out, pred_out)
             return 0
 
         ids_cfg = self.config.get("vehicle_ids", {})
@@ -216,6 +230,15 @@ class FullPipelineRunner:
         if results.empty:
             return 1
         save_results(results, out)
+        features = load_feature_dataset(features_path)
+        predictions = generate_vehicle_anomaly_predictions(
+            features,
+            primary_model=str(ids_cfg.get("primary_model", "random_forest")),
+            test_size=float(ids_cfg.get("test_size", 0.2)),
+            random_state=self.seed,
+            include_autoencoder=bool(ids_cfg.get("include_autoencoder", True)),
+        )
+        save_vehicle_anomaly_predictions(predictions, pred_out)
         plot_vehicle_confusion_matrices(
             results, self.paths.figures_dir / "confusion_matrix_vehicle.png"
         )
@@ -231,7 +254,8 @@ class FullPipelineRunner:
         desc_cfg = self.config.get("descriptors", {})
         features_path = self.artifact("window_features", "data/processed/window_features.csv")
         predictions_path = self.artifact(
-            "window_predictions", "outputs/metrics/window_predictions.csv"
+            "vehicle_anomaly_predictions",
+            "data/processed/vehicle_anomaly_predictions.csv",
         )
         features = load_feature_dataset(features_path)
         predictions = load_or_generate_predictions(
@@ -286,6 +310,11 @@ class FullPipelineRunner:
         )
         graphml = self.artifact("fleet_graph_graphml", "outputs/fleet_graph.graphml")
         save_fleet_graph(G, pyg_data, stats, pt_path=pt_out, graphml_path=graphml)
+        save_graph_tables(
+            G,
+            nodes_path=self.artifact("fleet_nodes", "data/processed/fleet_nodes.csv"),
+            edges_path=self.artifact("fleet_edges", "data/processed/fleet_edges.csv"),
+        )
         stats_path = self.artifact("graph_stats", "outputs/metrics/fleet_graph_stats.json")
         stats_path.parent.mkdir(parents=True, exist_ok=True)
         stats_path.write_text(json.dumps(stats, indent=2), encoding="utf-8")
@@ -320,7 +349,7 @@ class FullPipelineRunner:
         return 0
 
     def _step_cluster_campaigns(self) -> int:
-        out = self.artifact("campaign_clusters", "outputs/metrics/campaign_clusters.csv")
+        out = self.artifact("fleet_cluster_results", "data/processed/fleet_cluster_results.csv")
         cluster_cfg = self.config.get("clustering", {})
 
         emb_path = self.artifact("gcn_embeddings", "outputs/embeddings/gcn_node_embeddings.pt")
@@ -355,6 +384,44 @@ class FullPipelineRunner:
             )
         plot_cluster_summaries(assignments, self.paths.figures_dir / "campaign_cluster_summary.png")
         print_cluster_report(assignments)
+        return 0
+
+    def _step_final_decision(self) -> int:
+        outcomes_path = self.artifact(
+            "final_detection_outcomes",
+            "outputs/metrics/final_detection_outcomes.csv",
+        )
+        summary_path = self.artifact(
+            "final_outcome_summary",
+            "outputs/metrics/final_outcome_summary.csv",
+        )
+        if self._should_skip(outcomes_path) and summary_path.exists():
+            logger.info("Skipping final_decision — outputs exist: %s, %s", outcomes_path, summary_path)
+            return 0
+
+        cfg = self.config.get("final_decision", {})
+        cluster_results = load_cluster_results(
+            self.artifact("fleet_cluster_results", "data/processed/fleet_cluster_results.csv")
+        )
+        outcomes = classify_final_outcomes(
+            cluster_results,
+            similarity_threshold=float(
+                cfg.get(
+                    "similarity_threshold",
+                    self.config.get("clustering", {}).get("similarity_threshold", 0.85),
+                )
+            ),
+            min_vehicles=int(
+                cfg.get("min_vehicles", self.config.get("clustering", {}).get("min_vehicles", 2))
+            ),
+        )
+        summary = summarize_final_outcomes(outcomes)
+        save_final_outcomes(
+            outcomes,
+            summary,
+            outcomes_path=outcomes_path,
+            summary_path=summary_path,
+        )
         return 0
 
     def _step_generate_report(self) -> int:

@@ -47,7 +47,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output",
         type=str,
-        default="outputs/metrics/campaign_clusters.csv",
+        default="data/processed/fleet_cluster_results.csv",
     )
     parser.add_argument("--kmeans-k", type=int, default=12)
     parser.add_argument("--dbscan-eps", type=float, default=1.2)

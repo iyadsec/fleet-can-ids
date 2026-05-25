@@ -12,9 +12,12 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from src.models.vehicle_ids import (
+    generate_vehicle_anomaly_predictions,
+    load_feature_dataset,
     plot_vehicle_confusion_matrices,
     print_results_summary,
     run_vehicle_level_training,
+    save_vehicle_anomaly_predictions,
     save_results,
 )
 from src.utils import get_logger, load_config
@@ -35,6 +38,13 @@ def parse_args() -> argparse.Namespace:
         type=str,
         default="outputs/metrics/vehicle_level_results.csv",
     )
+    parser.add_argument(
+        "--predictions",
+        type=str,
+        default="data/processed/vehicle_anomaly_predictions.csv",
+        help="Canonical vehicle IDS predictions for downstream fleet stages",
+    )
+    parser.add_argument("--primary-model", type=str, default="random_forest")
     parser.add_argument(
         "--confusion-plot",
         type=str,
@@ -65,6 +75,7 @@ def main() -> int:
 
     features_path = paths.root / args.features
     results_path = paths.root / args.results
+    predictions_path = paths.root / args.predictions
     confusion_path = paths.root / args.confusion_plot
 
     if not features_path.exists():
@@ -85,6 +96,15 @@ def main() -> int:
         return 1
 
     save_results(results, results_path)
+    features = load_feature_dataset(features_path)
+    predictions = generate_vehicle_anomaly_predictions(
+        features,
+        primary_model=args.primary_model,
+        test_size=args.test_size,
+        random_state=seed,
+        include_autoencoder=not args.no_autoencoder,
+    )
+    save_vehicle_anomaly_predictions(predictions, predictions_path)
     plot_vehicle_confusion_matrices(results, confusion_path)
     print_results_summary(results)
     return 0

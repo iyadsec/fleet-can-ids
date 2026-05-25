@@ -5,6 +5,11 @@ from src.evaluation.campaign_clustering import (
     run_campaign_clustering,
     save_campaign_clusters,
 )
+from src.evaluation.final_decision import (
+    classify_final_outcomes,
+    save_final_outcomes,
+    summarize_final_outcomes,
+)
 from src.evaluation.metrics import compute_metrics, save_metrics
 from src.evaluation.research_outputs import generate_all_research_outputs
 
@@ -14,5 +19,8 @@ __all__ = [
     "load_embedding_table",
     "run_campaign_clustering",
     "save_campaign_clusters",
+    "classify_final_outcomes",
+    "save_final_outcomes",
+    "summarize_final_outcomes",
     "generate_all_research_outputs",
 ]

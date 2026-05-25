@@ -33,8 +33,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--predictions",
         type=str,
-        default="outputs/metrics/window_predictions.csv",
-        help="Cached per-window IDS predictions (generated if missing)",
+        default="data/processed/vehicle_anomaly_predictions.csv",
+        help="Vehicle IDS predictions with is_anomaly column",
     )
     parser.add_argument(
         "--output",

@@ -11,11 +11,9 @@ import pandas as pd
 
 from src.features.feature_extractor import BEHAVIOURAL_FEATURE_COLUMNS
 from src.models.vehicle_ids import (
-    VEHICLE_MODELS,
-    generate_window_predictions,
-    load_feature_dataset,
+    generate_vehicle_anomaly_predictions,
     load_window_predictions,
-    save_window_predictions,
+    save_vehicle_anomaly_predictions,
 )
 from src.utils.logging import get_logger
 
@@ -23,10 +21,13 @@ logger = get_logger(__name__)
 
 DESCRIPTOR_COLUMNS = [
     "event_id",
+    "window_id",
     "vehicle_model",
+    "source_file",
     "attack_type",
     "anomaly_score",
     "predicted_label",
+    "is_anomaly",
     "ground_truth_label",
     "behavioural_feature_vector",
 ]
@@ -127,10 +128,37 @@ def generate_anomaly_descriptors(
     primary_model: str = PRIMARY_MODEL,
     score_threshold: float = 0.5,
 ) -> pd.DataFrame:
-    """Build compact anomaly descriptor rows for suspicious windows only."""
-    agg = aggregate_predictions(predictions, primary_model=primary_model)
-    merged = features.merge(agg, on=["window_id", "vehicle_model"], how="inner")
-    suspicious = filter_suspicious_windows(merged, score_threshold=score_threshold)
+    """Build compact anomaly descriptor rows for windows where ``is_anomaly == 1``."""
+    if "is_anomaly" in predictions.columns:
+        pred_cols = [
+            "window_id",
+            "vehicle_model",
+            "source_file",
+            "attack_type",
+            "true_label",
+            "predicted_label",
+            "anomaly_score",
+            "is_anomaly",
+        ]
+        merged = features.merge(
+            predictions[[c for c in pred_cols if c in predictions.columns]],
+            on=["window_id", "vehicle_model"],
+            how="inner",
+            suffixes=("", "_pred"),
+        )
+        if "source_file_pred" in merged.columns:
+            merged["source_file"] = merged["source_file_pred"].fillna(merged["source_file"])
+        if "attack_type_pred" in merged.columns:
+            merged["attack_type"] = merged["attack_type_pred"].fillna(merged["attack_type"])
+        suspicious = merged[merged["is_anomaly"].astype(int) == 1].copy()
+        if "true_label" not in suspicious.columns:
+            suspicious["true_label"] = suspicious["label"]
+    else:
+        agg = aggregate_predictions(predictions, primary_model=primary_model)
+        merged = features.merge(agg, on=["window_id", "vehicle_model"], how="inner")
+        suspicious = filter_suspicious_windows(merged, score_threshold=score_threshold)
+        suspicious["is_anomaly"] = suspicious["predicted_label"].astype(int)
+        suspicious["true_label"] = suspicious["label"]
 
     if suspicious.empty:
         logger.warning("No suspicious windows found.")
@@ -141,11 +169,14 @@ def generate_anomaly_descriptors(
             "event_id": suspicious.apply(
                 lambda r: make_event_id(r["vehicle_model"], r["window_id"]), axis=1
             ),
+            "window_id": suspicious["window_id"].astype(int),
             "vehicle_model": suspicious["vehicle_model"],
+            "source_file": suspicious["source_file"],
             "attack_type": suspicious["attack_type"],
             "anomaly_score": suspicious["anomaly_score"].round(6),
             "predicted_label": suspicious["predicted_label"].astype(int),
-            "ground_truth_label": suspicious["label"].astype(int),
+            "is_anomaly": suspicious["is_anomaly"].astype(int),
+            "ground_truth_label": suspicious["true_label"].astype(int),
             "behavioural_feature_vector": suspicious.apply(behavioural_vector_to_json, axis=1),
         }
     )
@@ -168,15 +199,15 @@ def load_or_generate_predictions(
             logger.info("Loading predictions from %s", path)
             return load_window_predictions(path)
 
-    logger.info("Generating window-level IDS predictions...")
-    predictions = generate_window_predictions(
+    logger.info("Generating vehicle-level anomaly predictions...")
+    predictions = generate_vehicle_anomaly_predictions(
         features,
         random_state=random_state,
         test_size=test_size,
         include_autoencoder=include_autoencoder,
     )
     if predictions_path is not None:
-        save_window_predictions(predictions, predictions_path)
+        save_vehicle_anomaly_predictions(predictions, predictions_path)
     return predictions
 
 

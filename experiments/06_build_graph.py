@@ -17,6 +17,7 @@ from src.graph.fleet_graph_builder import (
     load_anomaly_descriptors,
     print_graph_statistics,
     save_fleet_graph,
+    save_graph_tables,
 )
 from src.utils import get_logger, load_config
 from src.utils.paths import ProjectPaths
@@ -36,6 +37,16 @@ def parse_args() -> argparse.Namespace:
         "--pt-output",
         type=str,
         default="data/processed/fleet_graph.pt",
+    )
+    parser.add_argument(
+        "--nodes-output",
+        type=str,
+        default="data/processed/fleet_nodes.csv",
+    )
+    parser.add_argument(
+        "--edges-output",
+        type=str,
+        default="data/processed/fleet_edges.csv",
     )
     parser.add_argument(
         "--graphml-output",
@@ -98,6 +109,8 @@ def main() -> int:
 
     descriptors_path = paths.root / args.descriptors
     pt_path = paths.root / args.pt_output
+    nodes_path = paths.root / args.nodes_output
+    edges_path = paths.root / args.edges_output
     graphml_path = paths.root / args.graphml_output
     stats_path = paths.root / args.stats_output
 
@@ -122,6 +135,7 @@ def main() -> int:
     )
 
     save_fleet_graph(G, pyg_data, stats, pt_path=pt_path, graphml_path=graphml_path)
+    save_graph_tables(G, nodes_path=nodes_path, edges_path=edges_path)
     stats_path.parent.mkdir(parents=True, exist_ok=True)
     stats_path.write_text(json.dumps(stats, indent=2), encoding="utf-8")
     logger.info("Wrote stats to %s", stats_path)

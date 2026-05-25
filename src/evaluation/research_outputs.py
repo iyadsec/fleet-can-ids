@@ -358,8 +358,8 @@ def write_metrics_summary_tables(
         summary.to_csv(p, index=False)
         written["vehicle_ids"] = p
 
-    if paths.get("campaign_clusters") and paths["campaign_clusters"].exists():
-        cdf = pd.read_csv(paths["campaign_clusters"])
+    if paths.get("fleet_cluster_results") and paths["fleet_cluster_results"].exists():
+        cdf = pd.read_csv(paths["fleet_cluster_results"])
         sus = (
             cdf[cdf["is_suspicious_campaign"]]
             .drop_duplicates(subset=["algorithm", "cluster_id"])
@@ -388,6 +388,9 @@ def write_metrics_summary_tables(
     if paths.get("gnn_metrics") and paths["gnn_metrics"].exists():
         written["gnn"] = paths["gnn_metrics"]
 
+    if paths.get("final_outcome_summary") and paths["final_outcome_summary"].exists():
+        written["final_outcomes"] = paths["final_outcome_summary"]
+
     return written
 
 
@@ -400,7 +403,7 @@ def ensure_clustering_outputs(
     regenerate: bool = False,
 ) -> pd.DataFrame | None:
     """Run or reload campaign clustering and figures."""
-    cluster_csv = paths.get("campaign_clusters")
+    cluster_csv = paths.get("fleet_cluster_results")
     if cluster_csv is None:
         return None
 
@@ -465,7 +468,9 @@ def generate_all_research_outputs(
         "graph_stats": art("graph_stats", "outputs/metrics/fleet_graph_stats.json"),
         "gcn_embeddings": art("gcn_embeddings", "outputs/embeddings/gcn_node_embeddings.pt"),
         "gnn_metrics": art("gnn_metrics", "outputs/metrics/gnn_training_metrics.json"),
-        "campaign_clusters": art("campaign_clusters", "outputs/metrics/campaign_clusters.csv"),
+        "fleet_cluster_results": art("fleet_cluster_results", "data/processed/fleet_cluster_results.csv"),
+        "final_detection_outcomes": art("final_detection_outcomes", "outputs/metrics/final_detection_outcomes.csv"),
+        "final_outcome_summary": art("final_outcome_summary", "outputs/metrics/final_outcome_summary.csv"),
     }
 
     figures_dir = root / config.get("paths", {}).get("figures_dir", "outputs/figures")
@@ -584,7 +589,7 @@ def generate_experiment_report(
     lines: list[str] = [
         "# Fleet-Aware CAN-Bus Intrusion Detection — Experiment Report",
         "",
-        "Research summary for the end-to-end pipeline: per-vehicle IDS, fleet graph, GNN embeddings, and multi-vehicle campaign clustering.",
+        "Research summary for the end-to-end pipeline: per-vehicle IDS, anomaly descriptors, behavioural fleet graph, GNN / clustering, and final isolated-vs-coordinated anomaly classification.",
         "",
         f"**Project:** {config.get('project', {}).get('name', 'fleet-can-ids')}  ",
         f"**Random seed:** {seed}",
@@ -648,7 +653,7 @@ def generate_experiment_report(
         [
             "## 5. Descriptor abstraction",
             "",
-            "Suspicious windows are retained when any IDS flags an attack or the primary model (Random Forest) score ≥ 0.5. Each descriptor stores `event_id`, vehicle, attack type, anomaly score, and a JSON behavioural vector for graph construction.",
+            "Only rows with `is_anomaly = 1` from `data/processed/vehicle_anomaly_predictions.csv` are retained. Each descriptor stores `event_id`, vehicle, source file, attack type, anomaly score, and a JSON behavioural vector for graph construction.",
             "",
         ]
     )
@@ -739,9 +744,32 @@ def generate_experiment_report(
         lines.append(_dataframe_to_markdown(pd.read_csv(sus_csv)))
         lines.append("")
 
+    final_csv = paths.get("final_detection_outcomes")
+    final_summary = paths.get("final_outcome_summary")
+    if final_summary and final_summary.exists():
+        lines.extend(
+            [
+                "## 9. Final anomaly outcomes",
+                "",
+                "Each anomaly event is classified as either `Isolated anomaly` or `Fleet-level coordinated behavioural pattern`. A fleet-level outcome requires a cluster spanning more than one vehicle with high behavioural similarity; temporal proximity is not used.",
+                "",
+                _dataframe_to_markdown(pd.read_csv(final_summary)),
+                "",
+            ]
+        )
+    elif final_csv and final_csv.exists():
+        lines.extend(
+            [
+                "## 9. Final anomaly outcomes",
+                "",
+                _dataframe_to_markdown(pd.read_csv(final_csv)),
+                "",
+            ]
+        )
+
     lines.extend(
         [
-            "## 9. Limitations",
+            "## 10. Limitations",
             "",
             "- **OEM isolation:** IDS models do not share weights across manufacturers; fleet reasoning happens only after descriptor abstraction.",
             "- **Similarity graph cost:** All-pairs neighbourhood search scales with descriptor count; large fleets may require `graph.max_nodes` subsampling.",
@@ -749,7 +777,7 @@ def generate_experiment_report(
             "- **Clustering:** Density parameters are sensitive; DBSCAN uses PCA for separation. Timing features are excluded from similarity but remain in raw window tables.",
             "- **Reproducibility:** Large artefacts (CSVs, `.pt` graphs) are gitignored; regenerate via `python experiments/run_full_pipeline.py`.",
             "",
-            "## 10. Future work",
+            "## 11. Future work",
             "",
             "- Joint **cross-vehicle** representation learning with contrastive or graph-matching losses.",
             "- **Temporal** edges (session-aware) combined with behavioural similarity for attack progression analysis.",

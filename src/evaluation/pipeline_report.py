@@ -95,6 +95,20 @@ def generate_pipeline_report(
     if ids_path.exists():
         ids_df = pd.read_csv(ids_path)
         lines.append(_section("Vehicle-level IDS", _df_summary_table(ids_df)))
+    pred_path = root / artifacts.get(
+        "vehicle_anomaly_predictions",
+        "data/processed/vehicle_anomaly_predictions.csv",
+    )
+    if pred_path.exists():
+        pred_df = pd.read_csv(pred_path)
+        n_anom = int(pred_df["is_anomaly"].sum()) if "is_anomaly" in pred_df.columns else 0
+        lines.append(
+            _section(
+                "Vehicle anomaly predictions",
+                f"- Prediction rows: **{len(pred_df):,}**\n"
+                f"- Vehicle-level anomalies: **{n_anom:,}** (`is_anomaly = 1`)",
+            )
+        )
 
     # Graph
     graph_stats = _read_json(
@@ -117,12 +131,20 @@ def generate_pipeline_report(
         lines.append(_section("GNN training", body))
 
     # Clustering
-    cluster_path = root / artifacts.get("campaign_clusters", "outputs/metrics/campaign_clusters.csv")
+    cluster_path = root / artifacts.get("fleet_cluster_results", "data/processed/fleet_cluster_results.csv")
     if cluster_path.exists():
         cdf = pd.read_csv(cluster_path)
         sus = cdf[cdf["is_suspicious_campaign"]].drop_duplicates(
             subset=["algorithm", "cluster_id"]
         )
+
+    final_path = root / artifacts.get(
+        "final_detection_outcomes",
+        "outputs/metrics/final_detection_outcomes.csv",
+    )
+    if final_path.exists():
+        final_df = pd.read_csv(final_path)
+        lines.append(_section("Final detection outcomes", _df_summary_table(final_df)))
         lines.append(
             _section(
                 "Campaign clustering",

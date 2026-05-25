@@ -7,6 +7,7 @@ from src.graph.fleet_graph_builder import (
     load_anomaly_descriptors,
     print_graph_statistics,
     save_fleet_graph,
+    save_graph_tables,
 )
 
 __all__ = [
@@ -17,4 +18,5 @@ __all__ = [
     "load_anomaly_descriptors",
     "print_graph_statistics",
     "save_fleet_graph",
+    "save_graph_tables",
 ]

@@ -424,7 +424,7 @@ def generate_window_predictions(
     """
     Fit IDS models per vehicle (train split) and predict on **all** windows.
 
-    Returns long-format predictions: window_id, vehicle_model, model,
+    Returns long-format predictions: window_id, vehicle metadata, model,
     predicted_label, anomaly_score.
     """
     rows: list[pd.DataFrame] = []
@@ -447,7 +447,14 @@ def generate_window_predictions(
         X_train, y_train = X[train_idx], y[train_idx]
         X_train_benign = X_train[y_train == 0]
 
-        meta = subset[["window_id", "vehicle_model"]].copy()
+        meta_cols = [
+            "window_id",
+            "vehicle_model",
+            "source_file",
+            "attack_type",
+            "label",
+        ]
+        meta = subset[[c for c in meta_cols if c in subset.columns]].copy()
 
         for model_name, predict_fn in model_fns:
             logger.info("Predicting %s for %s (%d windows)", model_name, vehicle, len(subset))
@@ -471,6 +478,91 @@ def generate_window_predictions(
             columns=["window_id", "vehicle_model", "model", "predicted_label", "anomaly_score"]
         )
     return pd.concat(rows, ignore_index=True)
+
+
+def generate_vehicle_anomaly_predictions(
+    features: pd.DataFrame,
+    *,
+    primary_model: str = "random_forest",
+    test_size: float = 0.2,
+    random_state: int = 42,
+    include_autoencoder: bool = True,
+) -> pd.DataFrame:
+    """
+    Generate the canonical vehicle IDS output used by downstream fleet stages.
+
+    ``predicted_label`` is an ensemble anomaly flag: a window is anomalous if
+    any configured vehicle IDS model flags it. ``anomaly_score`` is reported
+    from the primary model, usually Random Forest attack probability.
+    """
+    long_preds = generate_window_predictions(
+        features,
+        test_size=test_size,
+        random_state=random_state,
+        include_autoencoder=include_autoencoder,
+    )
+    if long_preds.empty:
+        return pd.DataFrame(
+            columns=[
+                "window_id",
+                "vehicle_model",
+                "source_file",
+                "attack_type",
+                "true_label",
+                "predicted_label",
+                "anomaly_score",
+                "is_anomaly",
+            ]
+        )
+
+    primary = long_preds[long_preds["model"] == primary_model].copy()
+    if primary.empty:
+        logger.warning("Primary model %s missing; using max anomaly score.", primary_model)
+        primary = (
+            long_preds.groupby(["window_id", "vehicle_model"], as_index=False)
+            .agg(anomaly_score=("anomaly_score", "max"))
+        )
+    else:
+        primary = primary.drop(columns=["model"], errors="ignore")
+
+    flags = (
+        long_preds.groupby(["window_id", "vehicle_model"], as_index=False)["predicted_label"]
+        .max()
+        .rename(columns={"predicted_label": "is_anomaly"})
+    )
+    meta_cols = ["window_id", "vehicle_model", "source_file", "attack_type", "label"]
+    meta = features[[c for c in meta_cols if c in features.columns]].drop_duplicates(
+        subset=["window_id", "vehicle_model"]
+    )
+    out = meta.merge(
+        primary[["window_id", "vehicle_model", "anomaly_score"]],
+        on=["window_id", "vehicle_model"],
+        how="left",
+    ).merge(flags, on=["window_id", "vehicle_model"], how="left")
+    out["true_label"] = out["label"].astype(int)
+    out["predicted_label"] = out["is_anomaly"].fillna(0).astype(int)
+    out["is_anomaly"] = out["predicted_label"].astype(int)
+    out["anomaly_score"] = out["anomaly_score"].fillna(0.0).astype(float)
+    return out[
+        [
+            "window_id",
+            "vehicle_model",
+            "source_file",
+            "attack_type",
+            "true_label",
+            "predicted_label",
+            "anomaly_score",
+            "is_anomaly",
+        ]
+    ]
+
+
+def save_vehicle_anomaly_predictions(predictions: pd.DataFrame, path: Path | str) -> Path:
+    out = Path(path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    predictions.to_csv(out, index=False)
+    logger.info("Saved vehicle anomaly predictions to %s", out)
+    return out
 
 
 def save_window_predictions(predictions: pd.DataFrame, path: Path | str) -> Path:

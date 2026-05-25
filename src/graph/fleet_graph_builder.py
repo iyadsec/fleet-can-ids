@@ -22,10 +22,13 @@ SimilarityMetric = Literal["cosine", "euclidean"]
 
 DESCRIPTOR_PATH_COLUMNS = [
     "event_id",
+    "window_id",
     "vehicle_model",
+    "source_file",
     "attack_type",
     "anomaly_score",
     "predicted_label",
+    "is_anomaly",
     "behavioural_feature_vector",
 ]
 
@@ -236,10 +239,13 @@ def build_networkx_graph(
     for _, row in df.iterrows():
         G.add_node(
             row["event_id"],
+            window_id=int(row["window_id"]) if "window_id" in row and pd.notna(row["window_id"]) else -1,
             vehicle_model=row["vehicle_model"],
+            source_file=row["source_file"] if "source_file" in row else "",
             attack_type=row["attack_type"],
             anomaly_score=float(row["anomaly_score"]),
             predicted_label=int(row["predicted_label"]),
+            is_anomaly=int(row["is_anomaly"]) if "is_anomaly" in row else int(row["predicted_label"]),
         )
 
     id_list = df["event_id"].tolist()
@@ -254,6 +260,42 @@ def build_networkx_graph(
                 G.add_edge(u, v, weight=w, similarity=w)
 
     return G
+
+
+def graph_to_tables(G: nx.Graph) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Convert the fleet graph to node and edge tables for transparent inspection."""
+    nodes = pd.DataFrame(
+        [{"event_id": node, **attrs} for node, attrs in G.nodes(data=True)]
+    )
+    edges = pd.DataFrame(
+        [
+            {
+                "source_event_id": u,
+                "target_event_id": v,
+                "similarity": attrs.get("similarity", attrs.get("weight", 1.0)),
+            }
+            for u, v, attrs in G.edges(data=True)
+        ]
+    )
+    return nodes, edges
+
+
+def save_graph_tables(
+    G: nx.Graph,
+    *,
+    nodes_path: Path | str,
+    edges_path: Path | str,
+) -> tuple[Path, Path]:
+    nodes, edges = graph_to_tables(G)
+    nodes_out = Path(nodes_path)
+    edges_out = Path(edges_path)
+    nodes_out.parent.mkdir(parents=True, exist_ok=True)
+    edges_out.parent.mkdir(parents=True, exist_ok=True)
+    nodes.to_csv(nodes_out, index=False)
+    edges.to_csv(edges_out, index=False)
+    logger.info("Saved fleet node table to %s", nodes_out)
+    logger.info("Saved fleet edge table to %s", edges_out)
+    return nodes_out, edges_out
 
 
 def build_pyg_data(
