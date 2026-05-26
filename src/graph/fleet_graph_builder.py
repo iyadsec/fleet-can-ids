@@ -146,6 +146,7 @@ def build_similarity_edges(
     metric: SimilarityMetric = "cosine",
     threshold: float = 0.85,
     max_nodes: int | None = None,
+    max_neighbors: int | None = None,
     seed: int = 42,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
@@ -178,47 +179,59 @@ def build_similarity_edges(
         nn_metric = "euclidean"
 
     logger.info(
-        "Nearest neighbours: metric=%s, radius=%.4f, threshold=%.4f, n=%d",
+        "Nearest neighbours: metric=%s, radius=%.4f, threshold=%.4f, n=%d, max_neighbors=%s",
         metric,
         radius,
         threshold,
         len(X_prep),
+        max_neighbors,
     )
-    nn = NearestNeighbors(
-        radius=radius,
-        metric=nn_metric,
-        algorithm="auto",
-        n_jobs=-1,
-    )
-    nn.fit(X_prep)
-    distances_list, indices_list = nn.radius_neighbors(X_prep, return_distance=True)
 
-    src_list: list[int] = []
-    dst_list: list[int] = []
-    weight_list: list[float] = []
+    if max_neighbors is not None and max_neighbors > 0:
+        n_neighbors = min(int(max_neighbors) + 1, len(X_prep))
+        nn = NearestNeighbors(
+            n_neighbors=n_neighbors,
+            metric=nn_metric,
+            algorithm="auto",
+            n_jobs=1,
+        )
+        nn.fit(X_prep)
+        distances, indices = nn.kneighbors(X_prep, return_distance=True)
+        row_idx = np.repeat(np.arange(len(X_prep), dtype=np.int64), n_neighbors)
+        col_idx = indices.reshape(-1).astype(np.int64, copy=False)
+        dist = distances.reshape(-1)
+        upper = row_idx < col_idx
+        src = row_idx[upper]
+        dst = col_idx[upper]
+        sim = _similarity_from_distance(dist[upper], metric).astype(np.float32, copy=False)
+    else:
+        nn = NearestNeighbors(
+            radius=radius,
+            metric=nn_metric,
+            algorithm="auto",
+            n_jobs=1,
+        )
+        nn.fit(X_prep)
+        distances = nn.radius_neighbors_graph(X_prep, mode="distance")
+        coo = distances.tocoo()
 
-    for i, (nbr_idx, nbr_dist) in enumerate(zip(indices_list, distances_list)):
-        for j, dist in zip(nbr_idx, nbr_dist):
-            if i == j:
-                continue
-            sim = float(_similarity_from_distance(np.array([dist]), metric)[0])
-            if sim < threshold:
-                continue
-            # Undirected: store once with i < j
-            if i < j:
-                src_list.append(i)
-                dst_list.append(j)
-                weight_list.append(sim)
+        # Keep one side of the undirected graph and drop self-neighbours without
+        # materializing Python lists of neighbours for every node.
+        upper = coo.row < coo.col
+        src = coo.row[upper].astype(np.int64, copy=False)
+        dst = coo.col[upper].astype(np.int64, copy=False)
+        sim = _similarity_from_distance(coo.data[upper], metric).astype(np.float32, copy=False)
+    keep = sim >= threshold
+    src = src[keep]
+    dst = dst[keep]
+    w = sim[keep]
 
-    if not src_list:
+    if len(src) == 0:
         logger.warning("No edges above threshold %.4f", threshold)
         edge_index = np.zeros((2, 0), dtype=np.int64)
         edge_weights = np.zeros(0, dtype=np.float32)
     else:
         # Bidirectional for PyG
-        src = np.array(src_list, dtype=np.int64)
-        dst = np.array(dst_list, dtype=np.int64)
-        w = np.array(weight_list, dtype=np.float32)
         edge_index = np.vstack([np.concatenate([src, dst]), np.concatenate([dst, src])])
         edge_weights = np.concatenate([w, w])
 
@@ -372,6 +385,7 @@ def build_fleet_anomaly_graph(
     metric: SimilarityMetric = "cosine",
     threshold: float = 0.85,
     max_nodes: int | None = None,
+    max_neighbors: int | None = None,
     seed: int = 42,
     prefer_ground_truth_labels: bool = True,
 ) -> tuple[nx.Graph, Any, dict[str, float], np.ndarray]:
@@ -386,6 +400,7 @@ def build_fleet_anomaly_graph(
         metric=metric,
         threshold=threshold,
         max_nodes=max_nodes,
+        max_neighbors=max_neighbors,
         seed=seed,
     )
 
@@ -403,6 +418,7 @@ def build_fleet_anomaly_graph(
     stats = compute_graph_statistics(G)
     stats["similarity_metric"] = metric
     stats["similarity_threshold"] = threshold
+    stats["max_neighbors"] = float(max_neighbors) if max_neighbors else 0.0
     stats["directed_edge_count"] = float(edge_index.shape[1]) if edge_index.size else 0.0
 
     logger.info(
@@ -453,6 +469,8 @@ def print_graph_statistics(stats: dict[str, float]) -> None:
     if "similarity_metric" in stats:
         print(f"Similarity metric:  {stats['similarity_metric']}")
         print(f"Threshold:          {stats.get('similarity_threshold')}")
+    if stats.get("max_neighbors"):
+        print(f"Max neighbours:     {int(stats['max_neighbors'])}")
     if "directed_edge_count" in stats:
         print(f"Directed edges (PyG): {int(stats['directed_edge_count']):,}")
     print("==============================\n")

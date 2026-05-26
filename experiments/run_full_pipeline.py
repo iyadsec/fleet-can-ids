@@ -2,17 +2,16 @@
 """
 Run the full Fleet CAN-IDS experiment pipeline.
 
-Steps (see configs/default.yaml → pipeline.steps):
-  1. load_dataset
-  2. generate_windows
-  3. extract_features
-  4. train_vehicle_ids
-  5. generate_descriptors
-  6. build_fleet_graph
-  7. train_gnn
-  8. cluster_campaigns
-  9. final_decision
- 10. generate_report
+Conceptual flow:
+  Raw CAN data
+  → Vehicle anomaly detection
+  → Descriptor generation
+  → Behavioural graph construction
+  → GNN / clustering
+  → Final outcome classification
+
+The runner keeps windowing and feature extraction as internal preparation steps
+for vehicle anomaly detection.
 """
 
 from __future__ import annotations

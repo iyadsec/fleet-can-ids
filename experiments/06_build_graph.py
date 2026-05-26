@@ -77,6 +77,12 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Subsample nodes (for faster experiments)",
     )
+    parser.add_argument(
+        "--max-neighbors",
+        type=int,
+        default=None,
+        help="Connect each node to at most this many nearest neighbours before thresholding",
+    )
     parser.add_argument("--seed", type=int, default=None)
     return parser.parse_args()
 
@@ -89,6 +95,7 @@ def main() -> int:
     metric = args.metric or "cosine"
     threshold = args.threshold if args.threshold is not None else 0.85
     max_nodes = args.max_nodes
+    max_neighbors = args.max_neighbors
     seed = args.seed if args.seed is not None else 42
     use_gt_labels = True
     cfg: dict = {}
@@ -102,6 +109,8 @@ def main() -> int:
                 threshold = float(graph_cfg.get("similarity_threshold", threshold))
             if args.max_nodes is None and graph_cfg.get("max_nodes"):
                 max_nodes = int(graph_cfg["max_nodes"])
+            if args.max_neighbors is None and graph_cfg.get("max_neighbors"):
+                max_neighbors = int(graph_cfg["max_neighbors"])
             seed = int(cfg.get("project", {}).get("seed", seed))
             use_gt_labels = bool(cfg.get("gnn", {}).get("use_ground_truth_labels", True))
         except FileNotFoundError:
@@ -130,6 +139,7 @@ def main() -> int:
         metric=metric,  # type: ignore[arg-type]
         threshold=threshold,
         max_nodes=max_nodes,
+        max_neighbors=max_neighbors,
         seed=seed,
         prefer_ground_truth_labels=use_gt_labels,
     )

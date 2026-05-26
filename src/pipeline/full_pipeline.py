@@ -82,7 +82,7 @@ PIPELINE_STEPS = (
 
 
 class FullPipelineRunner:
-    """Orchestrate dataset → IDS → graph → GNN → clustering → report."""
+    """Orchestrate raw CAN data → IDS → graph → GNN/clustering → final outcomes."""
 
     def __init__(self, config: dict[str, Any], paths: ProjectPaths) -> None:
         self.config = config
@@ -305,6 +305,9 @@ class FullPipelineRunner:
             metric=graph_cfg.get("similarity_metric", "cosine"),  # type: ignore[arg-type]
             threshold=float(graph_cfg.get("similarity_threshold", 0.85)),
             max_nodes=int(max_nodes) if max_nodes else None,
+            max_neighbors=(
+                int(graph_cfg["max_neighbors"]) if graph_cfg.get("max_neighbors") else None
+            ),
             seed=self.seed,
             prefer_ground_truth_labels=use_gt,
         )
