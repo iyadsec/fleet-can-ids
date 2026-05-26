@@ -67,7 +67,15 @@ def _load_behavioural_matrix_from_features(
 
     desc = pd.read_csv(
         descriptors_path,
-        usecols=["event_id", "vehicle_model", "attack_type", "anomaly_score", "predicted_label"],
+        usecols=[
+            "event_id",
+            "vehicle_model",
+            "attack_type",
+            "evidence_level",
+            "anomaly_score",
+            "local_alert",
+            "weak_signal",
+        ],
     )
     feat_cols = clustering_feature_columns(list(BEHAVIOURAL_FEATURE_COLUMNS))
 
@@ -85,7 +93,16 @@ def _load_behavioural_matrix_from_features(
         )
     X = merged[feat_cols].to_numpy(dtype=np.float32)
     meta = merged[
-        ["event_id", "vehicle_model", "attack_type", "anomaly_score", "predicted_label"]
+        [
+            "event_id",
+            "window_id",
+            "vehicle_model",
+            "attack_type",
+            "evidence_level",
+            "anomaly_score",
+            "local_alert",
+            "weak_signal",
+        ]
     ].copy()
     meta["embedding_source"] = "behavioural_fallback"
     return X, meta
@@ -105,7 +122,16 @@ def load_embedding_table(
     emb_path = Path(embeddings_path)
     meta = pd.DataFrame()
 
-    if emb_path.exists() and emb_path.suffix == ".pt":
+    if emb_path.exists() and emb_path.suffix == ".csv":
+        df = pd.read_csv(emb_path)
+        emb_cols = [c for c in df.columns if c.startswith("embedding_")]
+        if not emb_cols:
+            raise ValueError(f"No embedding_* columns found in {emb_path}")
+        X = df[emb_cols].to_numpy(dtype=np.float32)
+        meta = df[["event_id"]].copy()
+        meta["embedding_source"] = "gnn_csv"
+        logger.info("Loaded %d GNN embeddings from %s", len(X), emb_path)
+    elif emb_path.exists() and emb_path.suffix == ".pt":
         import torch
 
         bundle = torch.load(emb_path, map_location="cpu", weights_only=False)
@@ -133,7 +159,15 @@ def load_embedding_table(
             ]
             X = np.asarray(vectors, dtype=np.float32)
             meta = desc[
-                ["event_id", "vehicle_model", "attack_type", "anomaly_score", "predicted_label"]
+                [
+                    "event_id",
+                    "vehicle_model",
+                    "attack_type",
+                    "evidence_level",
+                    "anomaly_score",
+                    "local_alert",
+                    "weak_signal",
+                ]
             ].copy()
             meta["embedding_source"] = "behavioural_fallback"
     else:
@@ -141,10 +175,20 @@ def load_embedding_table(
             f"No embeddings at {emb_path} and no descriptors fallback at {descriptors_path}"
         )
 
-    if emb_path.exists() and emb_path.suffix == ".pt" and descriptors_path and Path(descriptors_path).exists():
+    if emb_path.exists() and emb_path.suffix in {".pt", ".csv"} and descriptors_path and Path(descriptors_path).exists():
         extra = pd.read_csv(
             descriptors_path,
-            usecols=["event_id", "vehicle_model", "attack_type", "anomaly_score", "predicted_label"],
+            usecols=[
+                "event_id",
+                "window_id",
+                "vehicle_model",
+                "source_file",
+                "attack_type",
+                "evidence_level",
+                "anomaly_score",
+                "local_alert",
+                "weak_signal",
+            ],
         )
         meta = meta.merge(extra, on="event_id", how="left", suffixes=("", "_dup"))
         meta = meta[[c for c in meta.columns if not c.endswith("_dup")]]
@@ -304,10 +348,19 @@ def summarize_clusters(
             and n_vehicles >= min_vehicles
             and mean_sim >= similarity_threshold
         )
+        vehicles = ",".join(sorted(meta.loc[mask, "vehicle_model"].dropna().unique()))
+        dominant_attack = (
+            meta.loc[mask, "attack_type"].mode(dropna=True).iloc[0]
+            if not meta.loc[mask, "attack_type"].dropna().empty
+            else "unknown"
+        )
         cluster_stats[cid] = {
             "cluster_size": cluster_size,
-            "n_vehicles": n_vehicles,
+            "num_unique_vehicles": n_vehicles,
+            "vehicles_in_cluster": vehicles,
+            "dominant_attack_type": dominant_attack,
             "mean_behavioural_similarity": round(mean_sim, 6),
+            "is_cross_vehicle_cluster": bool((not is_noise) and n_vehicles > 1),
             "is_suspicious_campaign": bool(is_suspicious),
         }
 
@@ -315,27 +368,50 @@ def summarize_clusters(
     events["algorithm"] = algorithm
     events["cluster_id"] = labels.astype(int)
     events["cluster_size"] = events["cluster_id"].map(lambda c: cluster_stats[c]["cluster_size"])
-    events["n_vehicles_in_cluster"] = events["cluster_id"].map(lambda c: cluster_stats[c]["n_vehicles"])
-    events["mean_behavioural_similarity"] = events["cluster_id"].map(
+    events["vehicles_in_cluster"] = events["cluster_id"].map(lambda c: cluster_stats[c]["vehicles_in_cluster"])
+    events["num_unique_vehicles"] = events["cluster_id"].map(lambda c: cluster_stats[c]["num_unique_vehicles"])
+    events["dominant_attack_type"] = events["cluster_id"].map(lambda c: cluster_stats[c]["dominant_attack_type"])
+    events["is_cross_vehicle_cluster"] = events["cluster_id"].map(
+        lambda c: cluster_stats[c]["is_cross_vehicle_cluster"]
+    )
+    events["mean_cluster_similarity"] = events["cluster_id"].map(
         lambda c: cluster_stats[c]["mean_behavioural_similarity"]
     )
     events["is_suspicious_campaign"] = events["cluster_id"].map(
         lambda c: cluster_stats[c]["is_suspicious_campaign"]
     )
+    required = [
+        "event_id",
+        "window_id",
+        "vehicle_model",
+        "attack_type",
+        "evidence_level",
+        "anomaly_score",
+        "local_alert",
+        "weak_signal",
+        "algorithm",
+        "cluster_id",
+        "cluster_size",
+        "vehicles_in_cluster",
+        "num_unique_vehicles",
+        "dominant_attack_type",
+        "is_cross_vehicle_cluster",
+        "mean_cluster_similarity",
+    ]
 
     summary_rows = [
         {
             "algorithm": algorithm,
             "cluster_id": cid,
             "cluster_size": st["cluster_size"],
-            "n_vehicles": st["n_vehicles"],
-            "mean_behavioural_similarity": st["mean_behavioural_similarity"],
+            "num_unique_vehicles": st["num_unique_vehicles"],
+            "mean_cluster_similarity": st["mean_behavioural_similarity"],
             "is_suspicious_campaign": st["is_suspicious_campaign"],
             "is_noise": cid == -1,
         }
         for cid, st in cluster_stats.items()
     ]
-    return events, pd.DataFrame(summary_rows)
+    return events[required], pd.DataFrame(summary_rows)
 
 
 def run_campaign_clustering(
@@ -350,8 +426,9 @@ def run_campaign_clustering(
     dbscan_pca_components: int = 8,
     random_state: int = 42,
     max_clustering_samples: int | None = 20_000,
+    method: str = "dbscan",
 ) -> pd.DataFrame:
-    """Run KMeans and DBSCAN; return combined per-event cluster assignments."""
+    """Run DBSCAN by default; KMeans can be enabled for optional comparison."""
     parts: list[pd.DataFrame] = []
 
     if max_clustering_samples and len(X) > max_clustering_samples:
@@ -362,39 +439,41 @@ def run_campaign_clustering(
 
     X_fit, meta_fit = X[fit_idx], meta.iloc[fit_idx].reset_index(drop=True)
 
-    km_fit, scaler, km_model = run_kmeans(
-        X_fit, n_clusters=kmeans_clusters, random_state=random_state
-    )
-    km_labels = predict_kmeans_labels(km_model, scaler, X)
-    km_events, _ = summarize_clusters(
-        km_labels,
-        X,
-        meta.reset_index(drop=True),
-        algorithm="kmeans",
-        similarity_threshold=similarity_threshold,
-        min_vehicles=min_vehicles,
-    )
-    parts.append(km_events)
+    if method.lower() in {"kmeans", "both"}:
+        km_fit, scaler, km_model = run_kmeans(
+            X_fit, n_clusters=kmeans_clusters, random_state=random_state
+        )
+        km_labels = predict_kmeans_labels(km_model, scaler, X)
+        km_events, _ = summarize_clusters(
+            km_labels,
+            X,
+            meta.reset_index(drop=True),
+            algorithm="kmeans",
+            similarity_threshold=similarity_threshold,
+            min_vehicles=min_vehicles,
+        )
+        parts.append(km_events)
 
-    db_fit, db_projector = run_dbscan(
-        X_fit,
-        eps=dbscan_eps,
-        min_samples=dbscan_min_samples,
-        pca_components=dbscan_pca_components,
-        random_state=random_state,
-    )
-    db_labels = extend_dbscan_labels(
-        X, db_fit, X_fit, db_projector, eps=dbscan_eps
-    )
-    db_events, _ = summarize_clusters(
-        db_labels,
-        X,
-        meta.reset_index(drop=True),
-        algorithm="dbscan",
-        similarity_threshold=similarity_threshold,
-        min_vehicles=min_vehicles,
-    )
-    parts.append(db_events)
+    if method.lower() in {"dbscan", "both"}:
+        db_fit, db_projector = run_dbscan(
+            X_fit,
+            eps=dbscan_eps,
+            min_samples=dbscan_min_samples,
+            pca_components=dbscan_pca_components,
+            random_state=random_state,
+        )
+        db_labels = extend_dbscan_labels(
+            X, db_fit, X_fit, db_projector, eps=dbscan_eps
+        )
+        db_events, _ = summarize_clusters(
+            db_labels,
+            X,
+            meta.reset_index(drop=True),
+            algorithm="dbscan",
+            similarity_threshold=similarity_threshold,
+            min_vehicles=min_vehicles,
+        )
+        parts.append(db_events)
 
     return pd.concat(parts, ignore_index=True)
 
@@ -405,10 +484,11 @@ def build_cluster_summary_table(assignments: pd.DataFrame) -> pd.DataFrame:
         assignments.groupby(["algorithm", "cluster_id"], as_index=False)
         .agg(
             cluster_size=("event_id", "count"),
-            n_vehicles=("n_vehicles_in_cluster", "first"),
-            mean_behavioural_similarity=("mean_behavioural_similarity", "first"),
-            is_suspicious_campaign=("is_suspicious_campaign", "first"),
-            vehicles=("vehicle_model", lambda s: ",".join(sorted(s.dropna().unique()))),
+            num_unique_vehicles=("num_unique_vehicles", "first"),
+            mean_cluster_similarity=("mean_cluster_similarity", "first"),
+            is_cross_vehicle_cluster=("is_cross_vehicle_cluster", "first"),
+            vehicles_in_cluster=("vehicles_in_cluster", "first"),
+            dominant_attack_type=("dominant_attack_type", "first"),
         )
     )
 
@@ -437,7 +517,7 @@ def plot_tsne_clusters(
 
     sub = assignments[assignments["algorithm"] == algorithm].copy()
     labels = sub["cluster_id"].to_numpy()
-    suspicious = sub["is_suspicious_campaign"].to_numpy()
+    suspicious = sub["is_cross_vehicle_cluster"].to_numpy()
 
     n = len(X)
     if n > max_points:
@@ -483,7 +563,7 @@ def plot_cluster_summaries(
 
     for ax, algo in zip(axes[0], ["kmeans", "dbscan"]):
         sub = summary[summary["algorithm"] == algo].sort_values("cluster_id")
-        colors = sub["is_suspicious_campaign"].map({True: "crimson", False: "steelblue"})
+        colors = sub["is_cross_vehicle_cluster"].map({True: "crimson", False: "steelblue"})
         ax.bar(sub["cluster_id"].astype(str), sub["cluster_size"], color=colors)
         ax.set_title(f"{algo}: cluster size")
         ax.set_xlabel("cluster_id")
@@ -491,12 +571,12 @@ def plot_cluster_summaries(
 
     for ax, algo in zip(axes[1], ["kmeans", "dbscan"]):
         sub = summary[summary["algorithm"] == algo]
-        sus = sub[sub["is_suspicious_campaign"]]
+        sus = sub[sub["is_cross_vehicle_cluster"]]
         if sus.empty:
-            ax.text(0.5, 0.5, "No suspicious campaigns", ha="center", va="center")
+            ax.text(0.5, 0.5, "No cross-vehicle clusters", ha="center", va="center")
         else:
-            ax.barh(sus["cluster_id"].astype(str), sus["n_vehicles"], color="crimson")
-            ax.set_title(f"{algo}: suspicious — vehicle count")
+            ax.barh(sus["cluster_id"].astype(str), sus["num_unique_vehicles"], color="crimson")
+            ax.set_title(f"{algo}: cross-vehicle — vehicle count")
         ax.set_xlabel("distinct vehicles")
 
     fig.suptitle("Campaign cluster summaries (no temporal features)", fontsize=12)
@@ -511,12 +591,12 @@ def print_cluster_report(assignments: pd.DataFrame) -> None:
     """Print suspicious multi-vehicle campaign clusters."""
     print("\n=== Suspicious Multi-Vehicle Campaign Clusters ===")
     for algo in assignments["algorithm"].unique():
-        sub = assignments[(assignments["algorithm"] == algo) & assignments["is_suspicious_campaign"]]
+        sub = assignments[(assignments["algorithm"] == algo) & assignments["is_cross_vehicle_cluster"]]
         clusters = sub.drop_duplicates(subset=["cluster_id"])
         print(f"\n  [{algo}] {len(clusters)} suspicious cluster(s)")
         for _, row in clusters.iterrows():
             print(
                 f"    cluster {row['cluster_id']}: size={row['cluster_size']}, "
-                f"vehicles={row['n_vehicles_in_cluster']}, sim={row['mean_behavioural_similarity']:.4f}"
+                f"vehicles={row['num_unique_vehicles']}, sim={row['mean_cluster_similarity']:.4f}"
             )
     print("================================================\n")

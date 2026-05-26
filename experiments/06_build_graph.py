@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
@@ -56,7 +55,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--stats-output",
         type=str,
-        default="outputs/metrics/fleet_graph_stats.json",
+        default="outputs/metrics/graph_statistics.csv",
     )
     parser.add_argument(
         "--metric",
@@ -109,8 +108,10 @@ def main() -> int:
                 threshold = float(graph_cfg.get("similarity_threshold", threshold))
             if args.max_nodes is None and graph_cfg.get("max_nodes"):
                 max_nodes = int(graph_cfg["max_nodes"])
-            if args.max_neighbors is None and graph_cfg.get("max_neighbors"):
-                max_neighbors = int(graph_cfg["max_neighbors"])
+            if args.max_neighbors is None:
+                cfg_neighbors = graph_cfg.get("max_neighbors", graph_cfg.get("max_neighbours_per_node"))
+                if cfg_neighbors:
+                    max_neighbors = int(cfg_neighbors)
             seed = int(cfg.get("project", {}).get("seed", seed))
             use_gt_labels = bool(cfg.get("gnn", {}).get("use_ground_truth_labels", True))
         except FileNotFoundError:
@@ -147,7 +148,22 @@ def main() -> int:
     save_fleet_graph(G, pyg_data, stats, pt_path=pt_path, graphml_path=graphml_path)
     save_graph_tables(G, nodes_path=nodes_path, edges_path=edges_path)
     stats_path.parent.mkdir(parents=True, exist_ok=True)
-    stats_path.write_text(json.dumps(stats, indent=2), encoding="utf-8")
+    import pandas as pd
+
+    pd.DataFrame(
+        [
+            {
+                "num_nodes": int(stats.get("num_nodes", 0)),
+                "num_edges": int(stats.get("num_edges", 0)),
+                "similarity_threshold": float(stats.get("similarity_threshold", 0.0)),
+                "max_neighbours_per_node": int(stats.get("max_neighbors", 0)),
+                "num_cross_vehicle_edges": int(stats.get("num_cross_vehicle_edges", 0)),
+                "graph_density": float(stats.get("graph_density", 0.0)),
+                "average_degree": float(stats.get("average_degree", 0.0)),
+                "connected_components": int(stats.get("connected_components", 0)),
+            }
+        ]
+    ).to_csv(stats_path, index=False)
     logger.info("Wrote stats to %s", stats_path)
 
     print_graph_statistics(stats)

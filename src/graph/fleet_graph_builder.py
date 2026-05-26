@@ -27,9 +27,9 @@ DESCRIPTOR_PATH_COLUMNS = [
     "source_file",
     "attack_type",
     "anomaly_score",
-    "predicted_label",
-    "is_anomaly",
-    "behavioural_feature_vector",
+    "evidence_level",
+    "local_alert",
+    "weak_signal",
 ]
 
 OPTIONAL_DESCRIPTOR_COLUMNS = ("ground_truth_label",)
@@ -47,12 +47,12 @@ def resolve_gnn_node_labels(df: pd.DataFrame, *, prefer_ground_truth: bool = Tru
     to IDS predictions. Falls back to ``predicted_label`` for legacy CSVs.
     """
     if prefer_ground_truth and "ground_truth_label" in df.columns:
-        labels = df["ground_truth_label"].fillna(df["predicted_label"]).astype(int).to_numpy()
+        labels = df["ground_truth_label"].fillna(df["local_alert"]).astype(int).to_numpy()
         logger.info("GNN node labels: using ground_truth_label from descriptors")
     else:
-        labels = df["predicted_label"].astype(int).to_numpy()
+        labels = (df["local_alert"].astype(int) | df["weak_signal"].astype(int)).to_numpy()
         logger.warning(
-            "GNN node labels: ground_truth_label missing; using predicted_label (IDS-derived)"
+            "GNN node labels: ground_truth_label missing; using IDS evidence labels"
         )
     return labels
 
@@ -74,7 +74,7 @@ def attach_ground_truth_labels(
     out = descriptors.copy()
     out["window_id"] = out["event_id"].map(event_id_to_window_id)
     out = out.merge(feat, on=["window_id", "vehicle_model"], how="left")
-    out["ground_truth_label"] = out["label"].fillna(out["predicted_label"]).astype(int)
+    out["ground_truth_label"] = out["label"].fillna(out["local_alert"]).astype(int)
     out = out.drop(columns=["label", "window_id"], errors="ignore")
     logger.info("Attached ground_truth_label from %s", features_path)
     return out
@@ -97,24 +97,26 @@ def load_anomaly_descriptors(
 
 
 def parse_feature_matrix(df: pd.DataFrame) -> tuple[np.ndarray, list[str]]:
-    """Parse JSON feature vectors into a float matrix."""
-    vectors: list[list[float]] = []
-    node_ids: list[str] = []
-    for _, row in df.iterrows():
-        raw = row["behavioural_feature_vector"]
-        if isinstance(raw, str):
-            vals = json.loads(raw)
-        else:
-            vals = raw
-        vec = [float(v) if v is not None else 0.0 for v in vals]
-        if len(vec) != len(BEHAVIOURAL_FEATURE_COLUMNS):
-            raise ValueError(
-                f"Expected {len(BEHAVIOURAL_FEATURE_COLUMNS)} features, got {len(vec)} "
-                f"for {row['event_id']}"
-            )
-        vectors.append(vec)
-        node_ids.append(str(row["event_id"]))
-    X = np.asarray(vectors, dtype=np.float32)
+    """Return descriptor feature matrix from explicit columns or legacy JSON vectors."""
+    node_ids = df["event_id"].astype(str).tolist()
+    if set(BEHAVIOURAL_FEATURE_COLUMNS).issubset(df.columns):
+        X = df[BEHAVIOURAL_FEATURE_COLUMNS].to_numpy(dtype=np.float32)
+    elif "behavioural_feature_vector" in df.columns:
+        vectors: list[list[float]] = []
+        for _, row in df.iterrows():
+            raw = row["behavioural_feature_vector"]
+            vals = json.loads(raw) if isinstance(raw, str) else raw
+            vec = [float(v) if v is not None else 0.0 for v in vals]
+            if len(vec) != len(BEHAVIOURAL_FEATURE_COLUMNS):
+                raise ValueError(
+                    f"Expected {len(BEHAVIOURAL_FEATURE_COLUMNS)} features, got {len(vec)} "
+                    f"for {row['event_id']}"
+                )
+            vectors.append(vec)
+        X = np.asarray(vectors, dtype=np.float32)
+    else:
+        missing = sorted(set(BEHAVIOURAL_FEATURE_COLUMNS) - set(df.columns))
+        raise ValueError(f"Descriptor CSV missing feature columns: {missing}")
     X = np.nan_to_num(X, nan=0.0)
     return X, node_ids
 
@@ -238,6 +240,83 @@ def build_similarity_edges(
     return edge_index, edge_weights, idx
 
 
+def build_cross_vehicle_similarity_edges(
+    X: np.ndarray,
+    vehicles: np.ndarray,
+    *,
+    metric: SimilarityMetric = "cosine",
+    threshold: float = 0.85,
+    max_neighbors: int | None = 50,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Preserve bounded cross-vehicle behavioural neighbours above threshold."""
+    unique_vehicles = [v for v in pd.Series(vehicles).dropna().unique()]
+    if len(unique_vehicles) < 2:
+        return np.zeros((2, 0), dtype=np.int64), np.zeros(0, dtype=np.float32)
+
+    X_prep = _prepare_features(X, metric)
+    nn_metric = "cosine" if metric == "cosine" else "euclidean"
+    per_vehicle_k = max(1, int(max_neighbors or 1) // max(1, len(unique_vehicles) - 1))
+    edge_scores: dict[tuple[int, int], float] = {}
+
+    for source_vehicle in unique_vehicles:
+        source_idx = np.flatnonzero(vehicles == source_vehicle)
+        if source_idx.size == 0:
+            continue
+        for target_vehicle in unique_vehicles:
+            if target_vehicle == source_vehicle:
+                continue
+            target_idx = np.flatnonzero(vehicles == target_vehicle)
+            if target_idx.size == 0:
+                continue
+            k = min(per_vehicle_k, len(target_idx))
+            nn = NearestNeighbors(n_neighbors=k, metric=nn_metric, algorithm="auto", n_jobs=1)
+            nn.fit(X_prep[target_idx])
+            distances, local_indices = nn.kneighbors(X_prep[source_idx], return_distance=True)
+            similarities = _similarity_from_distance(distances.reshape(-1), metric)
+            src = np.repeat(source_idx, k)
+            dst = target_idx[local_indices.reshape(-1)]
+            keep = similarities >= threshold
+            for u, v, sim in zip(src[keep], dst[keep], similarities[keep]):
+                a, b = (int(u), int(v)) if int(u) < int(v) else (int(v), int(u))
+                edge_scores[(a, b)] = max(float(sim), edge_scores.get((a, b), 0.0))
+
+    if not edge_scores:
+        return np.zeros((2, 0), dtype=np.int64), np.zeros(0, dtype=np.float32)
+    pairs = np.asarray(list(edge_scores.keys()), dtype=np.int64)
+    weights = np.asarray(list(edge_scores.values()), dtype=np.float32)
+    edge_index = np.vstack([np.concatenate([pairs[:, 0], pairs[:, 1]]), np.concatenate([pairs[:, 1], pairs[:, 0]])])
+    edge_weights = np.concatenate([weights, weights])
+    logger.info("Added %d cross-vehicle behavioural edges above threshold", len(pairs))
+    return edge_index, edge_weights
+
+
+def merge_edge_sets(
+    edge_index_a: np.ndarray,
+    edge_weights_a: np.ndarray,
+    edge_index_b: np.ndarray,
+    edge_weights_b: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Merge bidirectional edge sets, keeping the strongest duplicate weight."""
+    edge_scores: dict[tuple[int, int], float] = {}
+    for edge_index, edge_weights in [(edge_index_a, edge_weights_a), (edge_index_b, edge_weights_b)]:
+        if edge_index.size == 0:
+            continue
+        for k in range(edge_index.shape[1]):
+            u = int(edge_index[0, k])
+            v = int(edge_index[1, k])
+            if u == v:
+                continue
+            a, b = (u, v) if u < v else (v, u)
+            edge_scores[(a, b)] = max(float(edge_weights[k]), edge_scores.get((a, b), 0.0))
+    if not edge_scores:
+        return np.zeros((2, 0), dtype=np.int64), np.zeros(0, dtype=np.float32)
+    pairs = np.asarray(list(edge_scores.keys()), dtype=np.int64)
+    weights = np.asarray(list(edge_scores.values()), dtype=np.float32)
+    edge_index = np.vstack([np.concatenate([pairs[:, 0], pairs[:, 1]]), np.concatenate([pairs[:, 1], pairs[:, 0]])])
+    edge_weights = np.concatenate([weights, weights])
+    return edge_index, edge_weights
+
+
 def build_networkx_graph(
     df: pd.DataFrame,
     edge_index: np.ndarray,
@@ -257,8 +336,9 @@ def build_networkx_graph(
             source_file=row["source_file"] if "source_file" in row else "",
             attack_type=row["attack_type"],
             anomaly_score=float(row["anomaly_score"]),
-            predicted_label=int(row["predicted_label"]),
-            is_anomaly=int(row["is_anomaly"]) if "is_anomaly" in row else int(row["predicted_label"]),
+            evidence_level=row["evidence_level"],
+            local_alert=int(row["local_alert"]),
+            weak_signal=int(row["weak_signal"]),
         )
 
     id_list = df["event_id"].tolist()
@@ -285,7 +365,11 @@ def graph_to_tables(G: nx.Graph) -> tuple[pd.DataFrame, pd.DataFrame]:
             {
                 "source_event_id": u,
                 "target_event_id": v,
-                "similarity": attrs.get("similarity", attrs.get("weight", 1.0)),
+                "source_vehicle": G.nodes[u].get("vehicle_model", ""),
+                "target_vehicle": G.nodes[v].get("vehicle_model", ""),
+                "similarity_score": attrs.get("similarity", attrs.get("weight", 1.0)),
+                "is_cross_vehicle_edge": G.nodes[u].get("vehicle_model", "")
+                != G.nodes[v].get("vehicle_model", ""),
             }
             for u, v, attrs in G.edges(data=True)
         ]
@@ -342,7 +426,8 @@ def build_pyg_data(
             resolve_gnn_node_labels(df, prefer_ground_truth=prefer_ground_truth_labels),
             dtype=torch.long,
         ),
-        predicted_label=torch.tensor(df["predicted_label"].to_numpy(), dtype=torch.long),
+        local_alert=torch.tensor(df["local_alert"].to_numpy(), dtype=torch.long),
+        weak_signal=torch.tensor(df["weak_signal"].to_numpy(), dtype=torch.long),
         anomaly_score=torch.tensor(df["anomaly_score"].to_numpy(), dtype=torch.float32),
         vehicle_id=torch.tensor(
             [vehicle_codes[v] for v in df["vehicle_model"]], dtype=torch.long
@@ -368,6 +453,8 @@ def compute_graph_statistics(G: nx.Graph) -> dict[str, float]:
             "num_edges": 0,
             "average_degree": 0.0,
             "graph_density": 0.0,
+            "num_cross_vehicle_edges": 0.0,
+            "connected_components": 0.0,
         }
     avg_degree = float(2 * m / n)
     density = float(2 * m / (n * (n - 1))) if n > 1 else 0.0
@@ -376,6 +463,14 @@ def compute_graph_statistics(G: nx.Graph) -> dict[str, float]:
         "num_edges": float(m),
         "average_degree": avg_degree,
         "graph_density": density,
+        "num_cross_vehicle_edges": float(
+            sum(
+                1
+                for u, v in G.edges()
+                if G.nodes[u].get("vehicle_model") != G.nodes[v].get("vehicle_model")
+            )
+        ),
+        "connected_components": float(nx.number_connected_components(G)),
     }
 
 
@@ -406,6 +501,14 @@ def build_fleet_anomaly_graph(
 
     df_sub = descriptors.iloc[sub_idx].reset_index(drop=True)
     X_sub = X_full[sub_idx]
+    cross_edge_index, cross_edge_weights = build_cross_vehicle_similarity_edges(
+        X_sub,
+        df_sub["vehicle_model"].to_numpy(),
+        metric=metric,
+        threshold=threshold,
+        max_neighbors=max_neighbors,
+    )
+    edge_index, edge_weights = merge_edge_sets(edge_index, edge_weights, cross_edge_index, cross_edge_weights)
 
     G = build_networkx_graph(df_sub, edge_index, edge_weights)
     pyg_data = build_pyg_data(

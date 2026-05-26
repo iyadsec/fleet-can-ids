@@ -11,7 +11,6 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.manifold import TSNE
 from sklearn.metrics import RocCurveDisplay, auc, roc_curve
 from sklearn.preprocessing import StandardScaler
@@ -42,7 +41,6 @@ from src.models.vehicle_ids import (
     predict_autoencoder,
     predict_isolation_forest,
     predict_logistic_regression,
-    predict_random_forest,
     prepare_vehicle_split,
 )
 from src.utils.logging import get_logger
@@ -92,7 +90,6 @@ def plot_vehicle_roc_curves(
     """ROC curves per vehicle (held-out test split)."""
     df = load_feature_dataset(features_path)
     predictors: list[tuple[str, Any]] = [
-        ("random_forest", predict_random_forest),
         ("logistic_regression", predict_logistic_regression),
         ("isolation_forest", predict_isolation_forest),
     ]
@@ -152,7 +149,7 @@ def plot_feature_importance(
     random_state: int = 42,
     top_k: int = 12,
 ) -> Path:
-    """Random Forest feature importance per vehicle (train split)."""
+    """Model-free feature variability summary per vehicle."""
     df = load_feature_dataset(features_path)
     feat_cols = clustering_feature_columns(list(BEHAVIOURAL_FEATURE_COLUMNS))
     vehicles = [v for v in VEHICLE_MODELS if v in df["vehicle_model"].unique()]
@@ -163,23 +160,17 @@ def plot_feature_importance(
 
     for ax, vehicle in zip(axes, vehicles):
         sub = df[df["vehicle_model"] == vehicle]
-        X = sub[feat_cols].fillna(0.0).to_numpy(dtype=np.float32)
-        y = sub["label"].to_numpy(dtype=np.int64)
-        clf = RandomForestClassifier(
-            n_estimators=200, class_weight="balanced", random_state=random_state, n_jobs=-1
-        )
-        clf.fit(X, y)
-        imp = clf.feature_importances_
-        order = np.argsort(imp)[-top_k:]
+        variability = sub[feat_cols].fillna(0.0).std(axis=0).to_numpy(dtype=np.float32)
+        order = np.argsort(variability)[-top_k:]
         ax.barh(
             [feat_cols[i] for i in order],
-            imp[order],
+            variability[order],
             color="steelblue",
         )
         ax.set_title(f"{vehicle}")
-        ax.set_xlabel("Importance")
+        ax.set_xlabel("Standard deviation")
 
-    fig.suptitle("Random Forest feature importance (no timing features)", fontsize=12)
+    fig.suptitle("Behavioural feature variability by vehicle", fontsize=12)
     fig.tight_layout()
     out = Path(output_path)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -461,7 +452,10 @@ def generate_all_research_outputs(
         "clean_can_data": art("clean_can_data", "data/processed/clean_can_data.csv"),
         "window_metadata": art("window_metadata", "data/processed/window_metadata.csv"),
         "window_features": art("window_features", "data/processed/window_features.csv"),
-        "vehicle_results": art("vehicle_results", "outputs/metrics/vehicle_level_results.csv"),
+        "vehicle_results": art(
+            "vehicle_results",
+            "outputs/metrics/vehicle_level_self_supervised_results.csv",
+        ),
         "descriptors": art("anomaly_descriptors", "data/processed/anomaly_descriptors.csv"),
         "fleet_graph": art("fleet_graph", "data/processed/fleet_graph.pt"),
         "fleet_graph_graphml": art("fleet_graph_graphml", "outputs/fleet_graph.graphml"),
@@ -620,7 +614,7 @@ def generate_experiment_report(
         [
             "## 2. Preprocessing",
             "",
-            "Frames are sorted per vehicle and attack session. No cross-file windowing is applied. Validation checks (schema, DLC/byte ranges, duplicate keys) are recorded in `outputs/metrics/data_validation_report.csv`.",
+            "Frames are sorted per vehicle and attack session. No cross-file windowing is applied before window metadata and behavioural features are generated.",
             "",
             "## 3. Feature extraction",
             "",
@@ -634,7 +628,7 @@ def generate_experiment_report(
             "",
             "## 4. Vehicle-level IDS",
             "",
-            "Four models are trained **per OEM** on disjoint train/test splits (80/20 stratified): Random Forest and Logistic Regression (supervised), Isolation Forest and Autoencoder (benign-only anomaly detection).",
+            "The proposed vehicle-level IDS is a lightweight self-supervised Isolation Forest trained **per OEM only on benign CAN windows**. Attack labels are used only after inference for evaluation.",
             "",
             _img(figures_dir, root, "confusion"),
             "",

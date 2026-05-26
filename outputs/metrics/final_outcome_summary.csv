@@ -1,3 +1,4 @@
-final_classification,event_count,vehicle_count,attack_types
-Isolated anomaly,61990,3,"attack_free,flooding,fuzzy,malfunction,replay"
-Fleet-level coordinated behavioural pattern,24973,3,"attack_free,flooding,fuzzy,malfunction,replay"
+final_outcome,event_count,vehicle_count,attack_types
+Isolated anomaly,55242,3,"attack_free,flooding,fuzzy,malfunction,replay"
+Weak isolated signal,20014,3,"attack_free,flooding,fuzzy,malfunction,replay"
+Fleet-level coordinated behavioural pattern,1977,3,"attack_free,flooding,fuzzy,malfunction,replay"

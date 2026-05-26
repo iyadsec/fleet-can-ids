@@ -26,10 +26,11 @@ DESCRIPTOR_COLUMNS = [
     "source_file",
     "attack_type",
     "anomaly_score",
-    "predicted_label",
-    "is_anomaly",
+    "evidence_level",
+    "local_alert",
+    "weak_signal",
     "ground_truth_label",
-    "behavioural_feature_vector",
+    *BEHAVIOURAL_FEATURE_COLUMNS,
 ]
 
 VEHICLE_PREFIX = {
@@ -38,7 +39,7 @@ VEHICLE_PREFIX = {
     "Chevrolet": "CHV",
 }
 
-PRIMARY_MODEL = "random_forest"
+PRIMARY_MODEL = "isolation_forest"
 
 
 def make_event_id(vehicle_model: str, window_id: int) -> str:
@@ -62,7 +63,7 @@ def aggregate_predictions(
     Collapse long-format model predictions to one row per window.
 
     ``predicted_label``: attack if **any** model flags the window.
-    ``anomaly_score``: score from the primary model (RF probability by default).
+    ``anomaly_score``: score from the proposed self-supervised IDS.
     ``ids_model``: model used for the reported score.
     """
     if predictions.empty:
@@ -128,17 +129,18 @@ def generate_anomaly_descriptors(
     primary_model: str = PRIMARY_MODEL,
     score_threshold: float = 0.5,
 ) -> pd.DataFrame:
-    """Build compact anomaly descriptor rows for windows where ``is_anomaly == 1``."""
-    if "is_anomaly" in predictions.columns:
+    """Build descriptors for strong local anomalies and weak suspicious signals."""
+    if "evidence_level" in predictions.columns:
         pred_cols = [
             "window_id",
             "vehicle_model",
             "source_file",
             "attack_type",
             "true_label",
-            "predicted_label",
             "anomaly_score",
-            "is_anomaly",
+            "local_alert",
+            "weak_signal",
+            "evidence_level",
         ]
         merged = features.merge(
             predictions[[c for c in pred_cols if c in predictions.columns]],
@@ -150,14 +152,20 @@ def generate_anomaly_descriptors(
             merged["source_file"] = merged["source_file_pred"].fillna(merged["source_file"])
         if "attack_type_pred" in merged.columns:
             merged["attack_type"] = merged["attack_type_pred"].fillna(merged["attack_type"])
-        suspicious = merged[merged["is_anomaly"].astype(int) == 1].copy()
+        suspicious = merged[
+            merged["evidence_level"].isin(["strong_local_anomaly", "weak_suspicious_signal"])
+        ].copy()
         if "true_label" not in suspicious.columns:
             suspicious["true_label"] = suspicious["label"]
     else:
         agg = aggregate_predictions(predictions, primary_model=primary_model)
         merged = features.merge(agg, on=["window_id", "vehicle_model"], how="inner")
         suspicious = filter_suspicious_windows(merged, score_threshold=score_threshold)
-        suspicious["is_anomaly"] = suspicious["predicted_label"].astype(int)
+        suspicious["local_alert"] = suspicious["predicted_label"].astype(int)
+        suspicious["weak_signal"] = 0
+        suspicious["evidence_level"] = np.where(
+            suspicious["local_alert"].eq(1), "strong_local_anomaly", "weak_suspicious_signal"
+        )
         suspicious["true_label"] = suspicious["label"]
 
     if suspicious.empty:
@@ -174,12 +182,14 @@ def generate_anomaly_descriptors(
             "source_file": suspicious["source_file"],
             "attack_type": suspicious["attack_type"],
             "anomaly_score": suspicious["anomaly_score"].round(6),
-            "predicted_label": suspicious["predicted_label"].astype(int),
-            "is_anomaly": suspicious["is_anomaly"].astype(int),
+            "evidence_level": suspicious["evidence_level"],
+            "local_alert": suspicious["local_alert"].astype(int),
+            "weak_signal": suspicious["weak_signal"].astype(int),
             "ground_truth_label": suspicious["true_label"].astype(int),
-            "behavioural_feature_vector": suspicious.apply(behavioural_vector_to_json, axis=1),
         }
     )
+    for col in BEHAVIOURAL_FEATURE_COLUMNS:
+        descriptors[col] = pd.to_numeric(suspicious[col], errors="coerce").fillna(0.0)
     return descriptors[DESCRIPTOR_COLUMNS]
 
 
@@ -191,6 +201,8 @@ def load_or_generate_predictions(
     test_size: float = 0.2,
     include_autoencoder: bool = True,
     regenerate: bool = False,
+    strong_threshold: float = 0.80,
+    weak_threshold: float = 0.55,
 ) -> pd.DataFrame:
     """Load cached window predictions or generate them from trained IDS models."""
     if predictions_path is not None:
@@ -205,6 +217,8 @@ def load_or_generate_predictions(
         random_state=random_state,
         test_size=test_size,
         include_autoencoder=include_autoencoder,
+        strong_threshold=strong_threshold,
+        weak_threshold=weak_threshold,
     )
     if predictions_path is not None:
         save_vehicle_anomaly_predictions(predictions, predictions_path)
@@ -227,7 +241,8 @@ def descriptor_statistics(descriptors: pd.DataFrame) -> dict[str, Any]:
         "by_vehicle": descriptors["vehicle_model"].value_counts().to_dict(),
         "by_attack_type": descriptors["attack_type"].value_counts().to_dict(),
         "mean_anomaly_score": float(descriptors["anomaly_score"].mean()),
-        "predicted_attack_rate": float(descriptors["predicted_label"].mean()),
+        "strong_local_anomalies": int(descriptors["local_alert"].sum()),
+        "weak_suspicious_signals": int(descriptors["weak_signal"].sum()),
     }
 
 
