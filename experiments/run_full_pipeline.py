@@ -5,14 +5,13 @@ Run the full Fleet CAN-IDS experiment pipeline.
 Conceptual flow:
   Raw CAN data
   → Vehicle anomaly detection
-  → Strong/weak anomaly evidence classification
   → Descriptor generation
-  → Raw-vs-descriptor size comparison
   → Behavioural graph construction
-  → GNN embedding learning
-  → Clustering
+  → GNN / clustering
   → Final outcome classification
-  → Research evidence summary and figures
+
+The runner keeps windowing and feature extraction as internal preparation steps
+for vehicle anomaly detection.
 """
 
 from __future__ import annotations
@@ -108,7 +107,6 @@ def main() -> int:
 
     if code == 0:
         logger.info("Pipeline finished successfully.")
-        print("Research evidence pipeline completed successfully.")
     else:
         logger.error("Pipeline exited with code %d.", code)
     return code

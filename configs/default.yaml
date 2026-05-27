@@ -20,41 +20,29 @@ pipeline:
     - generate_windows
     - extract_features
     - train_vehicle_ids
-    - classify_evidence
     - generate_descriptors
-    - compare_descriptor_size
     - build_fleet_graph
     - train_gnn
     - cluster_campaigns
     - final_decision
-    - summarize_research_evidence
-    - generate_research_figures
   artifacts:
     clean_can_data: data/processed/clean_can_data.csv
     window_metadata: data/processed/window_metadata.csv
     window_features: data/processed/window_features.csv
-    vehicle_results: outputs/metrics/vehicle_level_self_supervised_results.csv
-    vehicle_ids_model: outputs/models/vehicle_isolation_forest.joblib
+    vehicle_results: outputs/metrics/vehicle_level_results.csv
     vehicle_anomaly_predictions: data/processed/vehicle_anomaly_predictions.csv
     anomaly_descriptors: data/processed/anomaly_descriptors.csv
     fleet_nodes: data/processed/fleet_nodes.csv
     fleet_edges: data/processed/fleet_edges.csv
     fleet_graph: data/processed/fleet_graph.pt
     fleet_graph_graphml: outputs/fleet_graph.graphml
-    graph_statistics: outputs/metrics/graph_statistics.csv
-    node_embeddings: data/processed/node_embeddings.csv
+    graph_stats: outputs/metrics/fleet_graph_stats.json
+    gcn_embeddings: outputs/embeddings/gcn_node_embeddings.pt
     gnn_checkpoints: outputs/checkpoints
-    gnn_metrics: outputs/metrics/gnn_training_metrics.csv
-    gnn_loss_figure: outputs/figures/gnn_training_loss.png
-    gnn_tsne_figure: outputs/figures/gnn_embeddings_tsne.png
+    gnn_metrics: outputs/metrics/gnn_training_metrics.json
     fleet_cluster_results: data/processed/fleet_cluster_results.csv
     final_detection_outcomes: outputs/metrics/final_detection_outcomes.csv
     final_outcome_summary: outputs/metrics/final_outcome_summary.csv
-    fleet_value_summary: outputs/metrics/fleet_value_summary.csv
-    weak_signal_upgrade_summary: outputs/metrics/weak_signal_upgrade_summary.csv
-    cross_vehicle_cluster_summary: outputs/metrics/cross_vehicle_cluster_summary.csv
-    raw_vs_descriptor_size: outputs/metrics/raw_vs_descriptor_size.csv
-    raw_vs_descriptor_size_figure: outputs/figures/raw_vs_descriptor_size.png
     report: outputs/metrics/pipeline_report.md
 
 data:
@@ -76,21 +64,18 @@ features:
 
 vehicle_ids:
   test_size: 0.2
-  primary_model: isolation_forest
-  include_autoencoder: false
-  strong_threshold: 0.80
-  weak_threshold: 0.55
+  primary_model: random_forest
+  include_autoencoder: true
 
 descriptors:
   test_size: 0.2
   score_threshold: 0.5
-  primary_model: isolation_forest
+  primary_model: random_forest
   regenerate_predictions: false
   include_autoencoder: true
 
 gnn:
-  architecture: graphsage
-  gnn_model: GraphSAGE
+  architecture: gcn
   hidden_channels: 64
   embedding_dim: 32
   epochs: 30
@@ -106,11 +91,8 @@ graph:
   similarity_threshold: 0.85      # edge if similarity >= threshold
   max_nodes: null                 # optional subsample for fast experiments
   max_neighbors: 50               # full-node bounded kNN before thresholding; prevents OOM
-  max_neighbours_per_node: 50
 
 clustering:
-  method: dbscan
-  clustering_method: DBSCAN
   kmeans_clusters: 12
   dbscan_eps: 1.2
   dbscan_min_samples: 10
@@ -121,7 +103,7 @@ clustering:
 
 final_decision:
   similarity_threshold: 0.85
-  minimum_cluster_size: 2
+  min_vehicles: 2
 
 evaluation:
   metrics:

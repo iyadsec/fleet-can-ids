@@ -20,17 +20,6 @@ def _read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _read_metric_table(path: Path) -> dict[str, Any]:
-    if not path.exists():
-        return {}
-    if path.suffix.lower() == ".json":
-        return _read_json(path)
-    df = pd.read_csv(path)
-    if df.empty:
-        return {}
-    return df.iloc[-1].to_dict()
-
-
 def _section(title: str, body: str) -> str:
     return f"## {title}\n\n{body.strip()}\n\n"
 
@@ -102,10 +91,7 @@ def generate_pipeline_report(
                 pass
 
     # Vehicle IDS
-    ids_path = root / artifacts.get(
-        "vehicle_results",
-        "outputs/metrics/vehicle_level_self_supervised_results.csv",
-    )
+    ids_path = root / artifacts.get("vehicle_results", "outputs/metrics/vehicle_level_results.csv")
     if ids_path.exists():
         ids_df = pd.read_csv(ids_path)
         lines.append(_section("Vehicle-level IDS", _df_summary_table(ids_df)))
@@ -115,28 +101,26 @@ def generate_pipeline_report(
     )
     if pred_path.exists():
         pred_df = pd.read_csv(pred_path)
-        strong = int(pred_df["local_alert"].sum()) if "local_alert" in pred_df.columns else 0
-        weak = int(pred_df["weak_signal"].sum()) if "weak_signal" in pred_df.columns else 0
+        n_anom = int(pred_df["is_anomaly"].sum()) if "is_anomaly" in pred_df.columns else 0
         lines.append(
             _section(
                 "Vehicle anomaly predictions",
                 f"- Prediction rows: **{len(pred_df):,}**\n"
-                f"- Strong local anomalies: **{strong:,}** (`local_alert = 1`)\n"
-                f"- Weak suspicious signals: **{weak:,}** (`weak_signal = 1`)",
+                f"- Vehicle-level anomalies: **{n_anom:,}** (`is_anomaly = 1`)",
             )
         )
 
     # Graph
-    graph_stats = _read_metric_table(
-        root / artifacts.get("graph_statistics", "outputs/metrics/graph_statistics.csv")
+    graph_stats = _read_json(
+        root / artifacts.get("graph_stats", "outputs/metrics/fleet_graph_stats.json")
     )
     if graph_stats:
         body = "\n".join(f"- **{k}**: {v}" for k, v in graph_stats.items() if k != "history")
         lines.append(_section("Fleet graph", body))
 
     # GNN
-    gnn_metrics = _read_metric_table(
-        root / artifacts.get("gnn_metrics", "outputs/metrics/gnn_training_metrics.csv")
+    gnn_metrics = _read_json(
+        root / artifacts.get("gnn_metrics", "outputs/metrics/gnn_training_metrics.json")
     )
     if gnn_metrics:
         body = "\n".join(
@@ -148,15 +132,11 @@ def generate_pipeline_report(
 
     # Clustering
     cluster_path = root / artifacts.get("fleet_cluster_results", "data/processed/fleet_cluster_results.csv")
-    cdf = pd.DataFrame()
-    sus = pd.DataFrame()
     if cluster_path.exists():
         cdf = pd.read_csv(cluster_path)
-        flag_col = "is_suspicious_campaign" if "is_suspicious_campaign" in cdf.columns else "is_cross_vehicle_cluster"
-        if flag_col in cdf.columns:
-            sus = cdf[cdf[flag_col].astype(bool)].drop_duplicates(
-                subset=["algorithm", "cluster_id"]
-            )
+        sus = cdf[cdf["is_suspicious_campaign"]].drop_duplicates(
+            subset=["algorithm", "cluster_id"]
+        )
 
     final_path = root / artifacts.get(
         "final_detection_outcomes",
@@ -165,14 +145,13 @@ def generate_pipeline_report(
     if final_path.exists():
         final_df = pd.read_csv(final_path)
         lines.append(_section("Final detection outcomes", _df_summary_table(final_df)))
-        if not cdf.empty:
-            lines.append(
-                _section(
-                    "Campaign clustering",
-                    f"- Total assignment rows: **{len(cdf):,}**\n"
-                    f"- Cross-vehicle behavioural clusters:\n\n{_df_summary_table(sus)}",
-                )
+        lines.append(
+            _section(
+                "Campaign clustering",
+                f"- Total assignment rows: **{len(cdf):,}**\n"
+                f"- Suspicious multi-vehicle clusters:\n\n{_df_summary_table(sus)}",
             )
+        )
 
     # Configuration snapshot
     lines.append(_section("Configuration", f"```yaml\n# See configs/default.yaml\n```"))

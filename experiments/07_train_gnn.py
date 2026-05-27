@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Train a GNN on the fleet anomaly graph and export node embeddings."""
+"""Train a GCN on the fleet anomaly graph and export node embeddings."""
 
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -27,7 +28,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--embeddings",
         type=str,
-        default="data/processed/node_embeddings.csv",
+        default="outputs/embeddings/gcn_node_embeddings.pt",
     )
     parser.add_argument(
         "--checkpoint-dir",
@@ -37,7 +38,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--metrics-output",
         type=str,
-        default="outputs/metrics/gnn_training_metrics.csv",
+        default="outputs/metrics/gnn_training_metrics.json",
     )
     parser.add_argument("--seed", type=int, default=None)
     return parser.parse_args()
@@ -76,10 +77,10 @@ def main() -> int:
         ckpt_dir,
         config=gnn_cfg,
         seed=seed,
-        metrics_path=metrics_path,
-        loss_plot_path=paths.root / "outputs/figures/gnn_training_loss.png",
-        tsne_plot_path=paths.root / "outputs/figures/gnn_embeddings_tsne.png",
     )
+
+    metrics_path.parent.mkdir(parents=True, exist_ok=True)
+    metrics_path.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
     logger.info("Wrote training metrics to %s", metrics_path)
     return 0
 

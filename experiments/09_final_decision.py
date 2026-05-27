@@ -14,7 +14,6 @@ if str(_ROOT) not in sys.path:
 from src.evaluation.final_decision import (
     classify_final_outcomes,
     load_cluster_results,
-    load_fleet_edges,
     save_final_outcomes,
     summarize_final_outcomes,
 )
@@ -26,7 +25,6 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate final anomaly classifications")
     parser.add_argument("--config", type=str, default="configs/default.yaml")
     parser.add_argument("--clusters", type=str, default="data/processed/fleet_cluster_results.csv")
-    parser.add_argument("--edges", type=str, default="data/processed/fleet_edges.csv")
     parser.add_argument(
         "--outcomes",
         type=str,
@@ -58,12 +56,10 @@ def main() -> int:
         return 1
 
     clusters = load_cluster_results(cluster_path)
-    edges = load_fleet_edges(paths.root / args.edges)
     outcomes = classify_final_outcomes(
         clusters,
-        edges,
         similarity_threshold=float(decision_cfg.get("similarity_threshold", 0.85)),
-        minimum_cluster_size=int(decision_cfg.get("minimum_cluster_size", 2)),
+        min_vehicles=int(decision_cfg.get("min_vehicles", 2)),
     )
     summary = summarize_final_outcomes(outcomes)
     save_final_outcomes(

@@ -9,6 +9,11 @@ from src.features.feature_extractor import (
     plot_feature_distributions,
     save_window_features,
 )
+from src.features.descriptor_generator import (
+    generate_anomaly_descriptors,
+    print_descriptor_summary,
+    save_anomaly_descriptors,
+)
 from src.features.window_generator import (
     generate_windows,
     print_window_statistics,
@@ -17,6 +22,9 @@ from src.features.window_generator import (
 )
 
 __all__ = [
+    "generate_anomaly_descriptors",
+    "print_descriptor_summary",
+    "save_anomaly_descriptors",
     "BEHAVIOURAL_FEATURE_COLUMNS",
     "extract_window_features",
     "extract_behavioural_window_features",

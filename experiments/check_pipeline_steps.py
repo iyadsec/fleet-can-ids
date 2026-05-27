@@ -24,15 +24,13 @@ STEP_ORDER = (
     "generate_windows",
     "extract_features",
     "train_vehicle_ids",
-    "classify_evidence",
     "generate_descriptors",
-    "compare_descriptor_size",
     "build_fleet_graph",
     "train_gnn",
     "cluster_campaigns",
     "final_decision",
-    "summarize_research_evidence",
-    "generate_research_figures",
+    "generate_report",
+    "generate_research_outputs",
 )
 
 STEP_SCRIPTS: dict[str, str] = {
@@ -40,15 +38,13 @@ STEP_SCRIPTS: dict[str, str] = {
     "generate_windows": "experiments/02_generate_windows.py",
     "extract_features": "experiments/03_extract_features.py",
     "train_vehicle_ids": "experiments/04_train_vehicle_ids.py",
-    "classify_evidence": "experiments/run_full_pipeline.py",
     "generate_descriptors": "experiments/05_generate_descriptors.py",
-    "compare_descriptor_size": "experiments/run_full_pipeline.py",
     "build_fleet_graph": "experiments/06_build_graph.py",
     "train_gnn": "experiments/07_train_gnn.py",
     "cluster_campaigns": "experiments/08_cluster_campaigns.py",
     "final_decision": "experiments/09_final_decision.py",
-    "summarize_research_evidence": "experiments/run_full_pipeline.py",
-    "generate_research_figures": "experiments/run_full_pipeline.py",
+    "generate_report": "experiments/run_full_pipeline.py",
+    "generate_research_outputs": "experiments/09_generate_research_outputs.py",
 }
 
 CSV_COLUMN_CHECKS: dict[str, list[str]] = {
@@ -64,17 +60,11 @@ CSV_COLUMN_CHECKS: dict[str, list[str]] = {
     ],
     "window_metadata": ["window_id", "vehicle_model", "attack_type", "label"],
     "window_features": ["window_id", "vehicle_model", "attack_type", "label"],
-    "vehicle_results": ["vehicle_model", "model", "accuracy", "precision", "recall", "f1_score", "roc_auc"],
-    "vehicle_anomaly_predictions": ["window_id", "vehicle_model", "true_label", "anomaly_score", "local_alert", "weak_signal", "evidence_level"],
-    "anomaly_descriptors": ["event_id", "window_id", "vehicle_model", "attack_type", "evidence_level", "local_alert", "weak_signal"],
-    "fleet_edges": ["source_event_id", "target_event_id", "source_vehicle", "target_vehicle", "similarity_score", "is_cross_vehicle_edge"],
-    "fleet_cluster_results": ["event_id", "window_id", "vehicle_model", "cluster_id", "num_unique_vehicles", "mean_cluster_similarity"],
-    "final_detection_outcomes": ["event_id", "final_outcome", "was_upgraded_by_fleet"],
-    "raw_vs_descriptor_size": ["total_raw_windows", "total_anomaly_descriptors", "estimated_raw_bytes", "estimated_descriptor_bytes", "compression_ratio", "percentage_reduction"],
-    "graph_statistics": ["num_nodes", "num_edges", "similarity_threshold", "max_neighbours_per_node", "num_cross_vehicle_edges", "graph_density", "average_degree", "connected_components"],
-    "fleet_value_summary": ["total_events", "total_strong_local_anomalies", "total_weak_suspicious_signals", "total_fleet_level_patterns", "percentage_weak_signals_upgraded"],
-    "weak_signal_upgrade_summary": ["total_weak_suspicious_signals", "weak_signals_not_alerted_locally", "weak_signals_upgraded_by_fleet", "upgrade_percentage"],
-    "cross_vehicle_cluster_summary": ["cluster_id", "cluster_size", "num_unique_vehicles", "vehicles_in_cluster", "dominant_attack_type", "mean_cluster_similarity"],
+    "vehicle_results": ["vehicle_model", "model", "accuracy"],
+    "vehicle_anomaly_predictions": ["window_id", "vehicle_model", "true_label", "predicted_label", "anomaly_score", "is_anomaly"],
+    "anomaly_descriptors": ["event_id", "window_id", "vehicle_model", "attack_type", "is_anomaly"],
+    "fleet_cluster_results": ["event_id", "vehicle_model", "cluster_id"],
+    "final_detection_outcomes": ["event_id", "final_classification"],
 }
 
 
@@ -219,12 +209,7 @@ def check_step(step: str, root: Path, artifacts: dict[str, str]) -> CheckResult:
 
     elif step == "train_vehicle_ids":
         inp = _artifact(root, artifacts, "window_features", "data/processed/window_features.csv")
-        out = _artifact(
-            root,
-            artifacts,
-            "vehicle_results",
-            "outputs/metrics/vehicle_level_self_supervised_results.csv",
-        )
+        out = _artifact(root, artifacts, "vehicle_results", "outputs/metrics/vehicle_level_results.csv")
         ok, msg = _check_file(inp)
         result.add(f"input {msg}", fail=not ok)
         ok, msg = _check_file(out)
@@ -236,21 +221,6 @@ def check_step(step: str, root: Path, artifacts: dict[str, str]) -> CheckResult:
             root, artifacts, "vehicle_anomaly_predictions", "data/processed/vehicle_anomaly_predictions.csv"
         )
         ok, msg = _check_file(pred)
-        result.add(f"prediction output {msg}", fail=not ok)
-        model = _artifact(
-            root, artifacts, "vehicle_ids_model", "outputs/models/vehicle_isolation_forest.joblib"
-        )
-        ok, msg = _check_file(model, min_bytes=100)
-        result.add(f"model output {msg}", fail=not ok)
-        if pred.exists():
-            ok2, msg2 = _check_csv_columns(pred, CSV_COLUMN_CHECKS["vehicle_anomaly_predictions"])
-            result.add(msg2, fail=not ok2)
-
-    elif step == "classify_evidence":
-        pred = _artifact(
-            root, artifacts, "vehicle_anomaly_predictions", "data/processed/vehicle_anomaly_predictions.csv"
-        )
-        ok, msg = _check_file(pred, min_bytes=1000)
         result.add(f"prediction output {msg}", fail=not ok)
         if pred.exists():
             ok2, msg2 = _check_csv_columns(pred, CSV_COLUMN_CHECKS["vehicle_anomaly_predictions"])
@@ -271,16 +241,6 @@ def check_step(step: str, root: Path, artifacts: dict[str, str]) -> CheckResult:
             ok2, msg2 = _check_csv_columns(out, CSV_COLUMN_CHECKS["anomaly_descriptors"])
             result.add(msg2, fail=not ok2)
 
-    elif step == "compare_descriptor_size":
-        out = _artifact(root, artifacts, "raw_vs_descriptor_size", "outputs/metrics/raw_vs_descriptor_size.csv")
-        fig = _artifact(root, artifacts, "raw_vs_descriptor_size_figure", "outputs/figures/raw_vs_descriptor_size.png")
-        for label, path in [("metrics", out), ("figure", fig)]:
-            ok, msg = _check_file(path, min_bytes=100)
-            result.add(f"output {label}: {msg}", fail=not ok)
-        if out.exists():
-            ok2, msg2 = _check_csv_columns(out, CSV_COLUMN_CHECKS["raw_vs_descriptor_size"])
-            result.add(msg2, fail=not ok2)
-
     elif step == "build_fleet_graph":
         inp = _artifact(
             root, artifacts, "anomaly_descriptors", "data/processed/anomaly_descriptors.csv"
@@ -289,23 +249,17 @@ def check_step(step: str, root: Path, artifacts: dict[str, str]) -> CheckResult:
         nodes = _artifact(root, artifacts, "fleet_nodes", "data/processed/fleet_nodes.csv")
         edges = _artifact(root, artifacts, "fleet_edges", "data/processed/fleet_edges.csv")
         graphml = _artifact(root, artifacts, "fleet_graph_graphml", "outputs/fleet_graph.graphml")
-        stats = _artifact(root, artifacts, "graph_statistics", "outputs/metrics/graph_statistics.csv")
+        stats = _artifact(root, artifacts, "graph_stats", "outputs/metrics/fleet_graph_stats.json")
         ok, msg = _check_file(inp)
         result.add(f"input {msg}", fail=not ok)
         for label, path in [("nodes", nodes), ("edges", edges), ("graph.pt", pt), ("graphml", graphml), ("stats", stats)]:
             ok, msg = _check_file(path, min_bytes=100)
             result.add(f"output {label}: {msg}", fail=not ok)
-        if edges.exists():
-            ok2, msg2 = _check_csv_columns(edges, CSV_COLUMN_CHECKS["fleet_edges"])
-            result.add(msg2, fail=not ok2)
-        if stats.exists():
-            ok2, msg2 = _check_csv_columns(stats, CSV_COLUMN_CHECKS["graph_statistics"])
-            result.add(msg2, fail=not ok2)
 
     elif step == "train_gnn":
         graph = _artifact(root, artifacts, "fleet_graph", "data/processed/fleet_graph.pt")
-        emb = _artifact(root, artifacts, "node_embeddings", "data/processed/node_embeddings.csv")
-        metrics = _artifact(root, artifacts, "gnn_metrics", "outputs/metrics/gnn_training_metrics.csv")
+        emb = _artifact(root, artifacts, "gcn_embeddings", "outputs/embeddings/gcn_node_embeddings.pt")
+        metrics = _artifact(root, artifacts, "gnn_metrics", "outputs/metrics/gnn_training_metrics.json")
         ok, msg = _check_file(graph)
         result.add(f"input {msg}", fail=not ok)
         ok, msg = _check_file(emb, min_bytes=100)
@@ -318,7 +272,7 @@ def check_step(step: str, root: Path, artifacts: dict[str, str]) -> CheckResult:
         desc = _artifact(
             root, artifacts, "anomaly_descriptors", "data/processed/anomaly_descriptors.csv"
         )
-        emb = _artifact(root, artifacts, "node_embeddings", "data/processed/node_embeddings.csv")
+        emb = _artifact(root, artifacts, "gcn_embeddings", "outputs/embeddings/gcn_node_embeddings.pt")
         out = _artifact(root, artifacts, "fleet_cluster_results", "data/processed/fleet_cluster_results.csv")
         ok, msg = _check_file(desc)
         result.add(f"input descriptors: {msg}", fail=not ok)
@@ -346,29 +300,19 @@ def check_step(step: str, root: Path, artifacts: dict[str, str]) -> CheckResult:
             ok2, msg2 = _check_csv_columns(out, CSV_COLUMN_CHECKS["final_detection_outcomes"])
             result.add(msg2, fail=not ok2)
 
-    elif step == "summarize_research_evidence":
-        for key, default, columns in [
-            ("fleet_value_summary", "outputs/metrics/fleet_value_summary.csv", "fleet_value_summary"),
-            ("weak_signal_upgrade_summary", "outputs/metrics/weak_signal_upgrade_summary.csv", "weak_signal_upgrade_summary"),
-            ("cross_vehicle_cluster_summary", "outputs/metrics/cross_vehicle_cluster_summary.csv", "cross_vehicle_cluster_summary"),
-        ]:
-            path = _artifact(root, artifacts, key, default)
-            ok, msg = _check_file(path, min_bytes=50)
-            result.add(f"output {key}: {msg}", fail=not ok)
-            if path.exists():
-                ok2, msg2 = _check_csv_columns(path, CSV_COLUMN_CHECKS[columns])
-                result.add(msg2, fail=not ok2)
+    elif step == "generate_report":
+        out = _artifact(root, artifacts, "report", "outputs/metrics/pipeline_report.md")
+        ok, msg = _check_file(out, min_bytes=100)
+        result.add(f"output {msg}", fail=not ok)
 
-    elif step == "generate_research_figures":
-        figures = [
-            root / "outputs/figures/local_vs_fleet_outcomes.png",
-            root / "outputs/figures/weak_signal_upgrade_chart.png",
-            root / "outputs/figures/cross_vehicle_clusters_by_attack_type.png",
-            root / "outputs/figures/fleet_cluster_vehicle_distribution.png",
-        ]
-        for fig in figures:
-            ok, msg = _check_file(fig, min_bytes=100)
-            result.add(f"output figure: {msg}", fail=not ok)
+    elif step == "generate_research_outputs":
+        research_cfg = load_config(root / "configs/default.yaml").get("research", {})
+        report = root / research_cfg.get("report_path", "outputs/experiment_report.md")
+        ok, msg = _check_file(report, min_bytes=100)
+        if ok:
+            result.add(f"output {msg}")
+        else:
+            result.add(f"output {msg}", warn=True)
 
     return result
 

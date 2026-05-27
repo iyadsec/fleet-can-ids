@@ -50,12 +50,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--primary-model",
         type=str,
-        default="isolation_forest",
-        help="Self-supervised IDS model providing the reported anomaly_score",
+        default="random_forest",
+        help="Model providing the reported anomaly_score",
     )
     parser.add_argument("--test-size", type=float, default=0.2)
-    parser.add_argument("--strong-threshold", type=float, default=None)
-    parser.add_argument("--weak-threshold", type=float, default=None)
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument(
         "--regenerate-predictions",
@@ -76,15 +74,10 @@ def main() -> int:
     paths = ProjectPaths.from_root(_ROOT)
 
     seed = args.seed if args.seed is not None else 42
-    strong_threshold = args.strong_threshold if args.strong_threshold is not None else 0.80
-    weak_threshold = args.weak_threshold if args.weak_threshold is not None else 0.55
     if args.config:
         try:
             cfg = load_config(paths.root / args.config)
             seed = int(cfg.get("project", {}).get("seed", seed))
-            ids_cfg = cfg.get("vehicle_ids", {})
-            strong_threshold = float(ids_cfg.get("strong_threshold", strong_threshold))
-            weak_threshold = float(ids_cfg.get("weak_threshold", weak_threshold))
         except FileNotFoundError:
             logger.warning("Config not found; using default seed.")
 
@@ -108,8 +101,6 @@ def main() -> int:
         test_size=args.test_size,
         include_autoencoder=not args.no_autoencoder,
         regenerate=args.regenerate_predictions,
-        strong_threshold=strong_threshold,
-        weak_threshold=weak_threshold,
     )
 
     descriptors = generate_anomaly_descriptors(

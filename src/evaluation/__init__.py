@@ -11,6 +11,7 @@ from src.evaluation.final_decision import (
     summarize_final_outcomes,
 )
 from src.evaluation.metrics import compute_metrics, save_metrics
+from src.evaluation.research_outputs import generate_all_research_outputs
 
 __all__ = [
     "compute_metrics",
@@ -21,4 +22,5 @@ __all__ = [
     "classify_final_outcomes",
     "save_final_outcomes",
     "summarize_final_outcomes",
+    "generate_all_research_outputs",
 ]
