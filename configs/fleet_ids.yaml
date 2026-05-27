@@ -1,4 +1,11 @@
-# Fleet-Aware CAN-Bus Intrusion Detection — default configuration
+# Fleet-Aware CAN IDS — paper deliverables configuration
+#
+# This config keeps the existing pipeline outputs under `outputs/` and `data/processed/`,
+# and additionally enables a publication-ready export package under:
+#   results/, figures/, tables/, logs/
+#
+# Run:
+#   python run_all_experiments.py --config configs/fleet_ids.yaml
 
 project:
   name: fleet-can-ids
@@ -11,7 +18,14 @@ paths:
   metrics_dir: outputs/metrics
   figures_dir: outputs/figures
 
-# Full pipeline (python experiments/run_full_pipeline.py)
+publication:
+  enabled: true
+  results_dir: results
+  figures_dir: figures
+  tables_dir: tables
+  logs_dir: logs
+  overwrite: true
+
 pipeline:
   stop_on_error: true
   skip_if_outputs_exist: false
@@ -70,31 +84,37 @@ data:
 
 features:
   window_size: 100
-  overlap: 50          # overlapping frames; stride = window_size - overlap
-  stride: 50           # optional override if overlap is omitted
+  overlap: 50
+  stride: 50
   generate_plots: true
-  # CAN-specific fields to use when available
   use_id: true
   use_payload: true
   use_timestamp: true
 
 vehicle_ids:
-  test_size: 0.2
   primary_model: isolation_forest
-  include_autoencoder: false
+  include_autoencoder: true
   strong_threshold: 0.80
   weak_threshold: 0.55
+  # Paper deliverables (vehicle-level evidence package)
+  eval_threshold_percentile: 95.0
 
 descriptors:
-  test_size: 0.2
   score_threshold: 0.5
   primary_model: isolation_forest
   regenerate_predictions: false
   include_autoencoder: true
 
+graph:
+  similarity_metric: cosine      # cosine | euclidean
+  similarity_threshold: 0.85
+  max_nodes: null
+  max_neighbors: 50
+  max_neighbours_per_node: 50
+
 gnn:
+  # The deliverables runner will sweep: graphsage, gcn, gat
   architecture: graphsage
-  gnn_model: GraphSAGE
   hidden_channels: 64
   embedding_dim: 32
   epochs: 30
@@ -102,44 +122,23 @@ gnn:
   weight_decay: 0.0005
   train_ratio: 0.7
   val_ratio: 0.15
-  use_ground_truth_labels: true   # GNN trains on dataset labels, not IDS predictions
-
-graph:
-  # Fleet anomaly graph: nodes = descriptors, edges = behavioural similarity only
-  similarity_metric: cosine      # cosine | euclidean
-  similarity_threshold: 0.85      # edge if similarity >= threshold
-  max_nodes: null                 # optional subsample for fast experiments
-  max_neighbors: 50               # full-node bounded kNN before thresholding; prevents OOM
-  max_neighbours_per_node: 50
+  use_ground_truth_labels: true
 
 clustering:
   method: dbscan
-  clustering_method: DBSCAN
   kmeans_clusters: 12
   dbscan_eps: 1.2
   dbscan_min_samples: 10
   dbscan_pca_components: 8
   max_clustering_samples: 20000
-  similarity_threshold: 0.85   # suspicious if intra-cluster mean cosine sim >= this
-  min_vehicles: 2                # suspicious if cluster spans >= N vehicle models
+  similarity_threshold: 0.85
+  min_vehicles: 2
 
 final_decision:
   similarity_threshold: 0.85
   minimum_cluster_size: 2
 
-evaluation:
-  metrics:
-    - accuracy
-    - precision
-    - recall
-    - f1
-    - auc
-
-experiment:
-  name: baseline
-  tags: []
-
 research:
-  report_path: outputs/experiment_report.md
   graph_viz_max_nodes: 800
-  autoencoder_epochs_report: 15   # lighter AE when generating ROC for the report
+  autoencoder_epochs_report: 15
+
