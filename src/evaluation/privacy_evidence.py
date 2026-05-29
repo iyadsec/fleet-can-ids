@@ -82,7 +82,6 @@ def _train_vehicle_reid(
     )
     clf = LogisticRegression(
         max_iter=2000,
-        multi_class="auto",
         n_jobs=-1,
     )
     pipe = Pipeline([("pre", pre), ("clf", clf)])
