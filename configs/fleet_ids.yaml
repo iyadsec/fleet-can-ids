@@ -99,6 +99,13 @@ vehicle_ids:
   # Paper deliverables (vehicle-level evidence package)
   eval_threshold_percentile: 95.0
 
+# Vehicle-level IDS paper outputs (run_vehicle_level_evaluation.py)
+vehicle_level_evaluation:
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+  n_estimators: 200
+
 descriptors:
   score_threshold: 0.5
   primary_model: isolation_forest
