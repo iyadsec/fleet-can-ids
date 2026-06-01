@@ -80,10 +80,7 @@ def _train_vehicle_reid(
         ],
         remainder="drop",
     )
-    clf = LogisticRegression(
-        max_iter=2000,
-        n_jobs=-1,
-    )
+    clf = LogisticRegression(max_iter=2000)
     pipe = Pipeline([("pre", pre), ("clf", clf)])
     pipe.fit(X_train, y_train)
     pred = pipe.predict(X_test)
