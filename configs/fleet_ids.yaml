@@ -105,6 +105,11 @@ vehicle_level_evaluation:
   val_split: 0.15
   test_split: 0.15
   n_estimators: 200
+  primary_fpr_cap: 0.05
+  fallback_fpr_cap: 0.10
+
+descriptor_security:
+  fleet_sizes: [10, 50, 100, 500, 1000]
 
 descriptors:
   score_threshold: 0.5
