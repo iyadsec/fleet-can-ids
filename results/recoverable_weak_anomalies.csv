@@ -1,0 +1,1 @@
+window_id,vehicle_id,anomaly_score,ground_truth_label,descriptor_id,attack_type,local_alert,cluster_id,recovery_eligible

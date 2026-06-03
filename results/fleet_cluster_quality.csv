@@ -1,0 +1,9 @@
+metric,value
+silhouette_score,0.15905310213565826
+davies_bouldin_index,0.9432938776672009
+adjusted_rand_index,0.0478252481631495
+normalized_mutual_info,0.012395786283334613
+mean_cluster_purity,0.8901270098194884
+num_clusters,4.0
+mean_cluster_size,19308.25
+max_cluster_size,72464.0

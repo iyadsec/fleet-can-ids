@@ -29,8 +29,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--embeddings",
         type=str,
-        default="outputs/embeddings/gcn_node_embeddings.pt",
-        help="GNN embedding file (.pt)",
+        default="data/processed/node_embeddings.csv",
+        help="GNN embedding CSV",
     )
     parser.add_argument(
         "--descriptors",
@@ -55,6 +55,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dbscan-pca-components", type=int, default=8)
     parser.add_argument("--similarity-threshold", type=float, default=0.85)
     parser.add_argument("--min-vehicles", type=int, default=2)
+    parser.add_argument("--method", type=str, default=None, choices=["dbscan", "kmeans", "both"])
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument(
         "--max-samples",
@@ -92,6 +93,7 @@ def main() -> int:
     pca_comp = int(cluster_cfg.get("dbscan_pca_components", args.dbscan_pca_components))
     sim_thr = args.similarity_threshold or float(cluster_cfg.get("similarity_threshold", 0.85))
     min_veh = args.min_vehicles or int(cluster_cfg.get("min_vehicles", 2))
+    method = args.method or str(cluster_cfg.get("method", cluster_cfg.get("clustering_method", "dbscan"))).lower()
 
     logger.info("Embeddings: %s", emb_path)
     logger.info("Descriptors: %s", desc_path)
@@ -112,11 +114,12 @@ def main() -> int:
         dbscan_pca_components=pca_comp,
         random_state=seed,
         max_clustering_samples=max_samples,
+        method=method,
     )
 
     save_campaign_clusters(assignments, out_path)
 
-    for algo in ("kmeans", "dbscan"):
+    for algo in sorted(assignments["algorithm"].unique()):
         sub = assignments[assignments["algorithm"] == algo]
         plot_tsne_clusters(
             X,

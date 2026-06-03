@@ -1,0 +1,6 @@
+metric,value,count
+pct_edges_same_vehicle,99.9768,814294
+pct_edges_cross_vehicle,0.0232,189
+pct_flooding_edges_cross_vehicle,0.0116,5
+total_edges,814483.0,814483
+total_flooding_edges,42957.0,42957

@@ -1,0 +1,6 @@
+fleet_size,total_raw_bandwidth_mb,total_descriptor_bandwidth_mb,bandwidth_reduction_percent
+10,762.1928,42.4984,94.42
+50,3810.9641,212.4919,94.42
+100,7621.9281,424.9837,94.42
+500,38109.6407,2124.9185,94.42
+1000,76219.2813,4249.837,94.42

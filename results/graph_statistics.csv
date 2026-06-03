@@ -1,0 +1,2 @@
+num_nodes,num_edges,similarity_threshold,max_neighbours_per_node,num_cross_vehicle_edges,graph_density,average_degree,connected_components
+77233,5809045,0.85,50,3835298,0.0019477559974050793,150.4290911915891,1

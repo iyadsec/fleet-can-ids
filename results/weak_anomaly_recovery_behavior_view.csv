@@ -1,0 +1,28 @@
+similarity_feature_view,similarity_view_label,feature_columns,removed_features,dominance,graph_stats,edge_bias,flooding_cross_vehicle_similarity,fuzzy_cross_vehicle_similarity,replay_cross_vehicle_similarity,malfunction_cross_vehicle_similarity,cross_vehicle_attack_similarity,fleet_recall,fleet_f1,fleet_fpr,weak_recovery_rate_percent,weak_fpr,weak_f1,selective_recovery_rate_percent,selective_fpr,selective_f1
+behavior_only_vehicle_normalized,Behaviour-Only + Vehicle Normalization,"['anomaly_score', 'frame_count', 'message_rate', 'burstiness', 'mean_inter_arrival_time', 'std_inter_arrival_time', 'can_id_entropy', 'most_common_can_id_ratio']","['byte_mean_0', 'byte_mean_1', 'byte_mean_2', 'byte_mean_3', 'byte_mean_4', 'byte_mean_5', 'byte_mean_6', 'byte_mean_7', 'byte_std_0', 'byte_std_1', 'byte_std_2', 'byte_std_3', 'byte_std_4', 'byte_std_5', 'byte_std_6', 'byte_std_7', 'mean_dlc', 'std_dlc', 'unique_can_id_count']","                    feature  ...           similarity_feature_view
+0             anomaly_score  ...  behavior_only_vehicle_normalized
+1               frame_count  ...  behavior_only_vehicle_normalized
+2              message_rate  ...  behavior_only_vehicle_normalized
+3                burstiness  ...  behavior_only_vehicle_normalized
+4   mean_inter_arrival_time  ...  behavior_only_vehicle_normalized
+5    std_inter_arrival_time  ...  behavior_only_vehicle_normalized
+6            can_id_entropy  ...  behavior_only_vehicle_normalized
+7  most_common_can_id_ratio  ...  behavior_only_vehicle_normalized
+
+[8 rows x 6 columns]","{'num_nodes': 77233.0, 'num_edges': 719905.0, 'average_degree': 18.6424196910647, 'graph_density': 0.00024138206560835794, 'num_cross_vehicle_edges': 7760.0, 'connected_components': 16.0, 'before_num_nodes': 77233.0, 'before_num_edges': 720931.0, 'before_average_degree': 18.6689886447503, 'before_graph_density': 0.00024172608044269604, 'before_num_cross_vehicle_edges': 8200.0, 'before_connected_components': 1.0, 'after_num_nodes': 77233.0, 'after_num_edges': 719905.0, 'after_average_degree': 18.6424196910647, 'after_graph_density': 0.00024138206560835794, 'after_num_cross_vehicle_edges': 7760.0, 'after_connected_components': 16.0, 'top_k_neighbors': 15.0, 'similarity_threshold': 0.95, 'similarity_metric': 'cosine', 'similarity_feature_view': 'behavior_only_vehicle_normalized', 'cross_vehicle_cluster_count': 2.0}","{'pct_same_vehicle_edges': 98.92207999666623, 'pct_cross_vehicle_edges': 1.0779200033337732, 'flooding_cross_vehicle_edge_pct': 0.09870224821787607, 'total_edges': 719905.0}",0.04927873674158007,0.22838975186926314,0.3443347512313351,0.1325585425150767,"    attack_type                                             metric     value
+0      flooding                    average_same_vehicle_similarity  0.157037
+1      flooding                   average_cross_vehicle_similarity  0.049279
+2      flooding       average_same_attack_cross_vehicle_similarity  0.049279
+3         fuzzy                    average_same_vehicle_similarity  0.258147
+4         fuzzy                   average_cross_vehicle_similarity  0.230279
+5         fuzzy       average_same_attack_cross_vehicle_similarity  0.230279
+6        replay                    average_same_vehicle_similarity  0.367034
+7        replay                   average_cross_vehicle_similarity  0.343031
+8        replay       average_same_attack_cross_vehicle_similarity  0.343031
+9   malfunction                    average_same_vehicle_similarity  0.168064
+10  malfunction                   average_cross_vehicle_similarity  0.137044
+11  malfunction       average_same_attack_cross_vehicle_similarity  0.137044
+12     flooding  average_different_attack_cross_vehicle_similarity -0.017680
+13        fuzzy  average_different_attack_cross_vehicle_similarity -0.032880
+14       replay  average_different_attack_cross_vehicle_similarity -0.062574
+15  malfunction  average_different_attack_cross_vehicle_similarity -0.107540",0.9999692667035466,0.9145579627144133,1.0,90.24009514606408,0.9992595883311121,0.7507498222071055,0.0,0.0,0.0

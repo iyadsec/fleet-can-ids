@@ -1,0 +1,2 @@
+num_nodes,num_edges,average_degree,graph_density,num_cross_vehicle_edges,connected_components,descriptor_variant,top_k_neighbors,similarity_threshold,flooding_cross_vehicle_components
+77233.0,690265.0,17.874872140147346,0.00023144385928303482,30254.0,1.0,behaviour_only,15,0.95,1

@@ -1,0 +1,13 @@
+\begin{table}[t]
+\centering
+\begin{tabular}{lrrrrrrrr}
+\toprule
+Graph Construction & Cross-Vehicle Edges & Cross-Vehicle Clusters & Weak Recovery Rate (\textbackslash \%) & Recall Gain (\textbackslash \%) & F1 Gain (\textbackslash \%) & Fleet F1 & Fleet Recall & Silhouette \\
+\midrule
+original\_topk & 189 & 1 & 0.0000 & 0.0000 & 0.0000 & 0.8456 & 0.7933 & 0.1591 \\
+cross\_vehicle\_knn & 384568 & 1 & 100.0000 & 0.0000 & 0.0000 & 0.8456 & 0.7933 & NaN \\
+\bottomrule
+\end{tabular}
+\caption{Comparison of original top-k vs cross-vehicle constrained kNN fleet graphs.}
+\label{tab:graph-construction-comparison}
+\end{table}

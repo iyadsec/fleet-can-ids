@@ -1,0 +1,2 @@
+weak_recovery_rate_percent,weak_recall_gain_percent,weak_f1_gain_percent,weak_fleet_fpr,weak_local_fpr,recovery_eligible,recovered_attacks,cross_vehicle_weak_clusters,cross_vehicle_cluster_rate
+0.0,0.0,,0.0,0.0,0,0,0,0.0

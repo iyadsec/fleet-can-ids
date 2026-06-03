@@ -1,0 +1,2 @@
+num_nodes,num_edges,graph_density,cross_vehicle_edge_count,connected_components,cross_vehicle_cluster_count,local_f1,fleet_f1,local_recall,fleet_recall,recall_gain_percent,f1_gain_percent,fleet_fpr,silhouette_score,promoted_windows
+77233,931770,0.00031241978771073917,384568,1,1,0.8455648100374275,0.8455648100374275,0.7932724814063556,0.7932724814063556,0.0,0.0,0.4445175618984947,,0

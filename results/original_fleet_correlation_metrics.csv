@@ -1,0 +1,2 @@
+local_f1,fleet_f1,local_recall,fleet_recall,recall_gain_percent,f1_gain_percent,fleet_fpr,silhouette_score,promoted_windows
+0.8455648100374275,0.8455648100374275,0.7932724814063556,0.7932724814063556,0.0,0.0,0.4445175618984947,0.15905310213565826,0

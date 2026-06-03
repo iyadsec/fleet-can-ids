@@ -150,6 +150,93 @@ final_decision:
   similarity_threshold: 0.85
   minimum_cluster_size: 2
 
+# Fleet graph similarity (behaviour-focused views for graph construction only)
+fleet_graph:
+  similarity_feature_view: behavior_only_vehicle_normalized
+  feature_dominance_threshold: 5.0
+  allowed_high_dominance_features: []
+  top_k_neighbors: 15
+  top_k_same_vehicle: 10
+  top_k_cross_vehicle: 5
+  similarity_threshold: 0.95
+
+behavior_view_similarity:
+  promotion_mean_score: 0.60
+  promotion_strong_support: 0.40
+
+# Fleet correlation experiment (run_fleet_correlation_evaluation.py)
+# Top-k neighbourhoods + high cosine threshold (Equation 4 / meaningful N(u))
+fleet_correlation:
+  top_k_neighbors: 15
+  similarity_threshold: 0.95
+  minimum_cluster_size: 2
+  minimum_vehicle_count: 3
+  fleet_cluster_score_threshold: 0.7
+  max_graph_viz_nodes: 800
+
+# Weak anomaly recovery (run_weak_anomaly_recovery_evaluation.py)
+weak_anomaly_recovery:
+  top_k_neighbors: 15
+  similarity_threshold: 0.95
+  minimum_cluster_size: 2
+  minimum_vehicle_count: 2
+  recovery_score_threshold: 0.55
+  max_viz_nodes: 1200
+
+fleet_similarity_diagnosis:
+  top_k_neighbors: 15
+  similarity_threshold: 0.95
+  max_pairs_per_category: 50000
+
+graph_construction_comparison:
+  top_k_neighbors: 15
+  top_k_same_vehicle: 10
+  top_k_cross_vehicle: 5
+  similarity_threshold: 0.95
+  fleet_minimum_vehicle_count: 3
+  fleet_cluster_score_threshold: 0.7
+
+selective_weak_promotion:
+  top_k_same_vehicle: 10
+  top_k_cross_vehicle: 5
+  similarity_threshold: 0.95
+  min_vehicles: 2
+  min_cluster_size: 5
+  min_cohesion: 0.97
+  mean_score_thresholds: [0.60, 0.70, 0.80]
+  strong_support_thresholds: [0.40, 0.60, 0.80]
+  meaningful_recovery_min_rate: 1.0
+  max_false_positive_rate: 0.50
+  dbscan_eps: 1.2
+  dbscan_min_samples: 10
+  dbscan_pca_components: 8
+  max_clustering_samples: 20000
+
+# Final weak anomaly recovery optimization (run_weak_recovery_optimization.py)
+weak_recovery_optimization:
+  top_k_same_vehicle: 10
+  top_k_cross_vehicle: 5
+  top_k_neighbors: 15
+  similarity_threshold: 0.95
+  weak_minimum_cluster_size: 2
+  weak_minimum_vehicle_count: 2
+  recovery_score_threshold: 0.55
+  dbscan_pca_components: 8
+  max_clustering_samples: 20000
+  max_cohesion_pairs: 8000
+  ieee_recovery_min_percent: 10.0
+  balanced_max_fpr: 0.10
+  conservative_max_fpr: 0.05
+  # DBSCAN eps is Euclidean distance in scaled 8-D PCA space (not cosine similarity).
+  # Values 0.03–0.20 yield all-noise; extended range includes operational eps (e.g. 1.2).
+  dbscan_eps_values: [0.03, 0.05, 0.07, 0.10, 0.12, 0.15, 0.20, 0.25, 0.35, 0.50, 0.70, 0.90, 1.0, 1.2, 1.5, 2.0]
+  dbscan_min_samples_values: [3, 5, 10, 15]
+  minimum_vehicle_count_values: [2, 3]
+  minimum_cluster_size_values: [3, 5, 10]
+  cluster_mean_score_threshold_values: [0.55, 0.60, 0.65, 0.70, 0.75, 0.80]
+  cluster_cohesion_threshold_values: [0.90, 0.93, 0.95, 0.97]
+  strong_support_threshold_values: [0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80]
+
 research:
   graph_viz_max_nodes: 800
   autoencoder_epochs_report: 15

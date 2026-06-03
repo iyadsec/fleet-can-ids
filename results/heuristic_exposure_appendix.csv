@@ -1,0 +1,3 @@
+view,mean_exposure_score,note
+raw_can_heuristic,1.0,Appendix/debug only; not a primary paper metric
+descriptor_transmit_heuristic,0.1125,Appendix/debug only; not a primary paper metric

@@ -1,0 +1,28 @@
+{
+  "config": {
+    "name": "fleet-can-ids",
+    "seed": 42
+  },
+  "exported_csv": [
+    "vehicle_results.csv",
+    "graph_statistics.csv",
+    "gnn_metrics.csv",
+    "final_detection_outcomes.csv",
+    "final_outcome_summary.csv",
+    "fleet_value_summary.csv",
+    "weak_signal_upgrade_summary.csv",
+    "cross_vehicle_cluster_summary.csv",
+    "raw_vs_descriptor_size.csv",
+    "privacy_vehicle_reidentification.csv",
+    "privacy_reconstruction_risk.csv"
+  ],
+  "exported_figures": [
+    "raw_vs_descriptor_size.png",
+    "gnn_training_loss.png",
+    "gnn_embeddings_tsne.png",
+    "privacy_reid_confusion_full_descriptor.png",
+    "privacy_reid_confusion_transmitted_descriptor.png",
+    "privacy_reid_leakage_comparison.png",
+    "privacy_reconstruction_risk.png"
+  ]
+}

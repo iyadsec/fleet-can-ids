@@ -1,0 +1,5 @@
+cluster_id,cluster_method,cluster_size,num_unique_vehicles,mean_anomaly_score,is_fleet_suspicious_cluster
+0,connected_component,4267,1,0.933294,0
+1,connected_component,194,1,1.0,0
+2,connected_component,308,1,1.0,0
+3,connected_component,72464,2,0.883442,0

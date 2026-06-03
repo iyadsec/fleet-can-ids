@@ -1,0 +1,4 @@
+cluster_id,cluster_size,number_of_vehicles,mean_anomaly_score,attack_labels_present,num_attack_windows
+0,684,1,0.6750091359649123,attack_free,0
+1,9888,1,0.6789850200242719,"attack_free,flooding,fuzzy,malfunction,replay",7147
+2,9634,1,0.679195589786174,"attack_free,flooding,fuzzy,malfunction,replay",6306

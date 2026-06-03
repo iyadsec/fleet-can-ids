@@ -1,0 +1,9 @@
+metric,value
+weak_anomalies_total,20206.0
+weak_anomalies_missed_by_local_ids,20206.0
+weak_attack_anomalies_missed_by_local_ids,13453.0
+recovery_eligible_weak_anomalies,0.0
+newly_recovered_weak_attack_anomalies,0.0
+weak_anomaly_recovery_rate_percent,0.0
+recall_gain_percent,0.0
+f1_gain_percent,0.0

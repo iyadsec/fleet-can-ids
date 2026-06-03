@@ -1,0 +1,2 @@
+cluster_method,mean_anomaly_score_threshold,strong_support_threshold,strong_support_percent,min_cohesion,min_cluster_size,min_vehicles,eligible_clusters,recovery_rate_percent,recall,precision,f1,false_positive_rate,recovered_weak_attacks,recovery_eligible_weak,tp,fp,fn,tn,local_recall,local_f1
+dbscan,0.6,0.8,80.0,0.97,5,2,3,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,13453.0,6753.0,0.0,0.0

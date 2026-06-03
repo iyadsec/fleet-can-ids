@@ -48,6 +48,66 @@ PAYLOAD_TARGET_COLS = [f"byte_mean_{i}" for i in range(8)] + [f"byte_std_{i}" fo
     "std_dlc",
 ]
 
+BYTE_MEAN_COLS = [f"byte_mean_{i}" for i in range(8)]
+BYTE_STD_COLS = [f"byte_std_{i}" for i in range(8)]
+DLC_COLS = ["mean_dlc", "std_dlc"]
+
+ATTACKER_SPECS: list[tuple[str, Any]] = [
+    ("Linear Regression", LinearRegression()),
+    (
+        "Random Forest Regressor",
+        RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1),
+    ),
+    ("MLP Regressor", MLPRegressor(hidden_layer_sizes=(64, 32), max_iter=400, random_state=42)),
+]
+
+INFORMATION_DISCLOSURE_ROWS: list[dict[str, str]] = [
+    {
+        "Information Element": "Timestamp sequence",
+        "Raw CAN Transmission": "Exposed",
+        "Descriptor Transmission": "Aggregated / not directly transmitted",
+        "Security/Privacy Impact": "Reduces exact traffic replay and timing traceability",
+    },
+    {
+        "Information Element": "CAN ID",
+        "Raw CAN Transmission": "Exposed",
+        "Descriptor Transmission": "Not transmitted directly",
+        "Security/Privacy Impact": "Hides vehicle-specific CAN identifier semantics",
+    },
+    {
+        "Information Element": "DLC",
+        "Raw CAN Transmission": "Exposed",
+        "Descriptor Transmission": "Aggregated statistics only",
+        "Security/Privacy Impact": "Reduces direct frame-level reconstruction",
+    },
+    {
+        "Information Element": "Payload bytes",
+        "Raw CAN Transmission": "Exposed",
+        "Descriptor Transmission": "Not transmitted",
+        "Security/Privacy Impact": "Prevents direct payload disclosure",
+    },
+    {
+        "Information Element": "Message sequence",
+        "Raw CAN Transmission": "Exposed",
+        "Descriptor Transmission": "Summarised as behavioural statistics",
+        "Security/Privacy Impact": "Reduces reconstruction of exact CAN traffic stream",
+    },
+    {
+        "Information Element": "Vehicle identity",
+        "Raw CAN Transmission": "Implicitly inferable",
+        "Descriptor Transmission": (
+            "Not explicitly transmitted, but may remain inferable from behavioural patterns"
+        ),
+        "Security/Privacy Impact": "Requires optional anonymisation or feature coarsening",
+    },
+    {
+        "Information Element": "Behavioural anomaly evidence",
+        "Raw CAN Transmission": "Present",
+        "Descriptor Transmission": "Preserved",
+        "Security/Privacy Impact": "Keeps useful IDS signal while reducing raw-data exposure",
+    },
+]
+
 
 @dataclass(frozen=True)
 class SecurityOutputs:
@@ -108,7 +168,6 @@ def estimate_raw_window_bytes(
     can_id_bytes: int = 4,
     dlc_field_bytes: int = 1,
 ) -> float:
-    """Per-window raw CAN size: (timestamp + ID + DLC + payload) × frames."""
     n = float(row.get("frame_count", row.get("n_frames", 0)) or 0)
     mean_dlc = float(row.get("mean_dlc", 8.0) or 8.0)
     payload_per_frame = min(max(mean_dlc, 0.0), 8.0)
@@ -116,26 +175,38 @@ def estimate_raw_window_bytes(
     return n * per_frame
 
 
-def _exposure_checklist_raw() -> dict[str, float]:
-    return {
+def _heuristic_exposure_appendix() -> pd.DataFrame:
+    """Optional appendix metric only — not used in main paper table."""
+    raw_checks = {
         "can_ids_visible": 1.0,
         "payload_bytes_visible": 1.0,
         "message_sequence_visible": 1.0,
         "vehicle_specific_patterns_visible": 1.0,
     }
-
-
-def _exposure_checklist_descriptor_transmit() -> dict[str, float]:
-    return {
+    desc_checks = {
         "raw_can_ids_recoverable": 0.0,
         "raw_payload_bytes_recoverable": 0.25,
         "vehicle_identifiers_visible": 0.0,
         "message_sequence_fully_visible": 0.2,
     }
+    return pd.DataFrame(
+        [
+            {
+                "view": "raw_can_heuristic",
+                "mean_exposure_score": float(np.mean(list(raw_checks.values()))),
+                "note": "Appendix/debug only; not a primary paper metric",
+            },
+            {
+                "view": "descriptor_transmit_heuristic",
+                "mean_exposure_score": float(np.mean(list(desc_checks.values()))),
+                "note": "Appendix/debug only; not a primary paper metric",
+            },
+        ]
+    )
 
 
-def _mean_exposure(checks: dict[str, float]) -> float:
-    return float(np.mean(list(checks.values())))
+def _build_information_disclosure_table() -> pd.DataFrame:
+    return pd.DataFrame(INFORMATION_DISCLOSURE_ROWS)
 
 
 def _train_fingerprint_accuracy(
@@ -158,41 +229,98 @@ def _train_fingerprint_accuracy(
     return float(accuracy_score(y_test, pipe.predict(X_test)))
 
 
-def _reconstruction_errors(
+def _random_baseline_r2(y_train: np.ndarray, y_test: np.ndarray) -> float:
+    """Predict per-target training means; lower attacker capability than learned models."""
+    mean_pred = np.mean(y_train, axis=0, keepdims=True)
+    pred = np.repeat(mean_pred, len(y_test), axis=0)
+    return float(r2_score(y_test, pred, multioutput="uniform_average"))
+
+
+def _make_attacker(name: str, seed: int) -> Any:
+    if name == "Linear Regression":
+        return LinearRegression()
+    if name == "Random Forest Regressor":
+        return RandomForestRegressor(n_estimators=100, random_state=seed, n_jobs=-1)
+    return MLPRegressor(hidden_layer_sizes=(64, 32), max_iter=400, random_state=seed)
+
+
+def _eval_attacker_on_targets(
     X: np.ndarray,
-    y: np.ndarray,
+    y_sub: np.ndarray,
     *,
     seed: int,
-) -> dict[str, float]:
+) -> list[dict[str, Any]]:
+    """Evaluate each attacker on a target column subset."""
+    if y_sub.ndim == 1:
+        y_sub = y_sub.reshape(-1, 1)
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.25, random_state=seed
+        X, y_sub, test_size=0.25, random_state=seed
     )
-    models: dict[str, Any] = {
-        "linear_regression": LinearRegression(),
-        "random_forest": RandomForestRegressor(n_estimators=100, random_state=seed, n_jobs=-1),
-        "mlp": MLPRegressor(hidden_layer_sizes=(64, 32), max_iter=400, random_state=seed),
-    }
-    out: dict[str, float] = {}
-    for name, model in models.items():
+    rows: list[dict[str, Any]] = []
+    for name, _ in ATTACKER_SPECS:
+        model = _make_attacker(name, seed)
         model.fit(X_train, y_train)
         pred = model.predict(X_test)
-        out[f"{name}_mse"] = float(mean_squared_error(y_test, pred))
-        out[f"{name}_r2"] = float(r2_score(y_test, pred, multioutput="uniform_average"))
-    out["payload_reconstruction_error"] = float(
-        np.mean([out["linear_regression_mse"], out["random_forest_mse"], out["mlp_mse"]])
+        rows.append(
+            {
+                "attacker_model": name,
+                "mse": float(mean_squared_error(y_test, pred)),
+                "r2": float(r2_score(y_test, pred, multioutput="uniform_average")),
+            }
+        )
+    return rows
+
+
+def _payload_statistic_reconstruction_analysis(
+    transmit: pd.DataFrame,
+    full_desc: pd.DataFrame,
+    tx_recon_cols: list[str],
+    target_cols: list[str],
+    *,
+    seed: int,
+) -> tuple[pd.DataFrame, float, float, float]:
+    """
+    Returns breakdown table and R² for raw baseline (1.0), descriptor attackers (mean),
+    and random/mean baseline.
+    """
+    X = transmit[tx_recon_cols].fillna(0.0).to_numpy()
+    y_all = full_desc[target_cols].fillna(0.0).to_numpy()
+
+    target_groups: dict[str, list[str]] = {
+        "byte_mean": [c for c in BYTE_MEAN_COLS if c in target_cols],
+        "byte_std": [c for c in BYTE_STD_COLS if c in target_cols],
+        "dlc_statistics": [c for c in DLC_COLS if c in target_cols],
+        "all_targets_average": target_cols,
+    }
+
+    breakdown_rows: list[dict[str, Any]] = []
+    attacker_r2_values: list[float] = []
+
+    for group_name, cols in target_groups.items():
+        if not cols:
+            continue
+        col_indices = [target_cols.index(c) for c in cols]
+        y_sub = y_all[:, col_indices]
+        for row in _eval_attacker_on_targets(X, y_sub, seed=seed):
+            breakdown_rows.append(
+                {
+                    "attacker_model": row["attacker_model"],
+                    "target_type": group_name,
+                    "mse": row["mse"],
+                    "r2": row["r2"],
+                }
+            )
+            if group_name == "all_targets_average":
+                attacker_r2_values.append(row["r2"])
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y_all, test_size=0.25, random_state=seed
     )
-    return out
+    random_r2 = _random_baseline_r2(y_train, y_test)
+    descriptor_r2 = float(np.mean(attacker_r2_values)) if attacker_r2_values else 0.0
+    raw_baseline_r2 = 1.0
 
-
-def _payload_entropy_proxy(row: pd.Series) -> float:
-    means = [float(row.get(f"byte_mean_{i}", 0.0)) for i in range(8)]
-    arr = np.array(means, dtype=np.float64)
-    arr = arr - arr.min()
-    s = arr.sum()
-    if s <= 0:
-        return 0.0
-    p = arr / s
-    return float(-np.sum(p * np.log2(p + 1e-12)))
+    return pd.DataFrame(breakdown_rows), raw_baseline_r2, descriptor_r2, random_r2
 
 
 def load_descriptors_for_experiment(
@@ -202,7 +330,6 @@ def load_descriptors_for_experiment(
     descriptors_path: Path,
     transmit_path: Path,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Load existing descriptors or build from cached predictions (no IDS retrain)."""
     features = load_feature_dataset(features_path)
     if descriptors_path.exists():
         full_desc = pd.read_csv(descriptors_path)
@@ -224,6 +351,96 @@ def load_descriptors_for_experiment(
     return features, full_desc, transmit
 
 
+def _plot_information_disclosure(disclosure_df: pd.DataFrame, out: Path) -> None:
+    """Qualitative comparison: count elements fully exposed vs reduced in descriptor view."""
+    exposed_raw = (disclosure_df["Raw CAN Transmission"] == "Exposed").sum()
+    not_direct = disclosure_df["Descriptor Transmission"].str.contains(
+        "Not transmitted|not directly|Aggregated|Summarised", case=False, regex=True
+    ).sum()
+    fig, ax = plt.subplots(figsize=(5.0, 3.5))
+    categories = ["Fully exposed\n(raw CAN)", "Reduced / not\ndirect (descriptor)"]
+    counts = [int(exposed_raw), int(not_direct)]
+    ax.bar(categories, counts, color=["#C00000", "#4472C4"])
+    ax.set_ylabel("Number of information elements")
+    ax.set_title("Information Disclosure Comparison")
+    ax.set_ylim(0, max(counts) + 1)
+    fig.text(
+        0.5,
+        -0.08,
+        "Raw CAN exposes frame-level identifiers, payloads, and sequences; "
+        "descriptors transmit aggregated behavioural evidence only.",
+        ha="center",
+        fontsize=8,
+        style="italic",
+    )
+    _save_figure(fig, out)
+
+
+def _build_main_comparison_table(
+    *,
+    avg_raw: float,
+    avg_transmit: float,
+    compression_ratio: float,
+    bandwidth_reduction_pct: float,
+    fleet_100_raw_mb: float,
+    fleet_100_desc_mb: float,
+    fleet_bw_reduction_pct: float,
+    r2_raw: float,
+    r2_descriptor: float,
+    r2_random: float,
+    acc_raw: float,
+    acc_desc: float,
+    fingerprint_reduction_pct: float,
+) -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            {"Metric": "Average raw CAN window size (bytes)", "Value": round(avg_raw, 2)},
+            {
+                "Metric": "Average transmitted descriptor size (bytes)",
+                "Value": round(avg_transmit, 2),
+            },
+            {"Metric": "Compression ratio", "Value": round(compression_ratio, 4)},
+            {"Metric": "Bandwidth reduction (%)", "Value": round(bandwidth_reduction_pct, 2)},
+            {
+                "Metric": "Fleet bandwidth at 100 vehicles — raw (MB)",
+                "Value": round(fleet_100_raw_mb, 4),
+            },
+            {
+                "Metric": "Fleet bandwidth at 100 vehicles — descriptor (MB)",
+                "Value": round(fleet_100_desc_mb, 4),
+            },
+            {
+                "Metric": "Fleet bandwidth reduction (%)",
+                "Value": round(fleet_bw_reduction_pct, 2),
+            },
+            {
+                "Metric": "Payload-statistic reconstruction R² — raw baseline",
+                "Value": round(r2_raw, 4),
+            },
+            {
+                "Metric": "Payload-statistic reconstruction R² — descriptor attacker",
+                "Value": round(r2_descriptor, 4),
+            },
+            {
+                "Metric": "Payload-statistic reconstruction R² — random baseline",
+                "Value": round(r2_random, 4),
+            },
+            {
+                "Metric": "Vehicle fingerprinting accuracy — raw CAN",
+                "Value": round(acc_raw, 4),
+            },
+            {
+                "Metric": "Vehicle fingerprinting accuracy — descriptor",
+                "Value": round(acc_desc, 4),
+            },
+            {
+                "Metric": "Vehicle fingerprinting reduction (%)",
+                "Value": round(fingerprint_reduction_pct, 2),
+            },
+        ]
+    )
+
+
 def run_descriptor_security_experiment(
     *,
     features_path: Path,
@@ -243,7 +460,6 @@ def run_descriptor_security_experiment(
         transmit_path=transmit_path,
     )
 
-    # Merge window-level features for raw size + raw fingerprinting
     meta_cols = ["window_id", "vehicle_model", *BEHAVIOURAL_FEATURE_COLUMNS]
     win = features[[c for c in meta_cols if c in features.columns]].copy()
     win["raw_window_bytes"] = win.apply(estimate_raw_window_bytes, axis=1)
@@ -258,21 +474,12 @@ def run_descriptor_security_experiment(
     )
 
     tx_cols = [c for c in TRANSMIT_COLUMNS if c in transmit.columns]
-    desc_with_raw["descriptor_bytes"] = desc_with_raw.apply(
-        lambda r: _serialize_row_bytes(r, list(full_desc.columns)),
-        axis=1,
-    )
-    transmit_bytes = transmit.apply(
-        lambda r: _serialize_row_bytes(r, tx_cols),
-        axis=1,
-    )
-    avg_transmit_bytes = float(transmit_bytes.mean())
+    transmit_bytes = transmit.apply(lambda r: _serialize_row_bytes(r, tx_cols), axis=1)
+    avg_transmit = float(transmit_bytes.mean())
     csv_block = transmit.to_csv(index=False).encode("utf-8")
     avg_transmit_gzip = _gzip_bytes(csv_block) / max(len(transmit), 1)
 
     avg_raw = float(desc_with_raw["raw_window_bytes"].mean())
-    avg_descriptor = float(desc_with_raw["descriptor_bytes"].mean())
-    avg_transmit = avg_transmit_bytes
     compression_ratio = avg_raw / avg_transmit if avg_transmit else 0.0
     bandwidth_reduction_pct = (
         100.0 * (avg_raw - avg_transmit) / avg_raw if avg_raw else 0.0
@@ -283,17 +490,11 @@ def run_descriptor_security_experiment(
     windows_per_vehicle = n_windows / max(n_vehicles_data, 1)
     suspicious_rate = len(full_desc) / max(n_windows, 1)
 
-    # Experiment 2: fleet scalability
     scale_rows: list[dict[str, Any]] = []
     for fleet_n in fleet_sizes:
         total_windows = windows_per_vehicle * fleet_n
         raw_bw_mb = total_windows * avg_raw / 1e6
-        desc_windows = total_windows * suspicious_rate
-        desc_bw_mb = desc_windows * avg_transmit / 1e6
-        raw_storage_mb = raw_bw_mb
-        desc_storage_mb = desc_bw_mb
-        raw_mem_mb = raw_bw_mb * 0.1
-        desc_mem_mb = desc_bw_mb * 0.1
+        desc_bw_mb = total_windows * suspicious_rate * avg_transmit / 1e6
         scale_rows.append(
             {
                 "fleet_size": fleet_n,
@@ -303,26 +504,13 @@ def run_descriptor_security_experiment(
                     100.0 * (raw_bw_mb - desc_bw_mb) / raw_bw_mb if raw_bw_mb else 0.0,
                     2,
                 ),
-                "storage_reduction_percent": round(
-                    100.0 * (raw_storage_mb - desc_storage_mb) / raw_storage_mb
-                    if raw_storage_mb
-                    else 0.0,
-                    2,
-                ),
-                "raw_memory_mb": round(raw_mem_mb, 4),
-                "descriptor_memory_mb": round(desc_mem_mb, 4),
             }
         )
     scalability_df = pd.DataFrame(scale_rows)
+    fleet_100 = scalability_df[scalability_df["fleet_size"] == 100].iloc[0]
 
-    # Experiment 3: exposure
-    raw_exp = _mean_exposure(_exposure_checklist_raw())
-    desc_exp = _mean_exposure(_exposure_checklist_descriptor_transmit())
-    leakage_reduction_pct = (
-        100.0 * (raw_exp - desc_exp) / raw_exp if raw_exp else 0.0
-    )
+    disclosure_df = _build_information_disclosure_table()
 
-    # Experiment 4: payload reconstruction (transmit view without byte stats → payload stats)
     target_cols = [c for c in PAYLOAD_TARGET_COLS if c in full_desc.columns]
     leak_cols = {f"byte_mean_{i}" for i in range(8)} | {f"byte_std_{i}" for i in range(8)}
     tx_recon_cols = [
@@ -332,27 +520,16 @@ def run_descriptor_security_experiment(
         and c not in leak_cols
         and pd.api.types.is_numeric_dtype(transmit[c])
     ]
-    X_tx = transmit[tx_recon_cols].fillna(0.0).to_numpy()
-    y_payload = full_desc[target_cols].fillna(0.0).to_numpy()
-    recon = _reconstruction_errors(X_tx, y_payload, seed=seed)
-    payload_recon_error = recon["payload_reconstruction_error"]
-    payload_recon_r2 = float(
-        np.mean([recon["linear_regression_r2"], recon["random_forest_r2"], recon["mlp_r2"]])
+    breakdown_df, r2_raw, r2_descriptor, r2_random = _payload_statistic_reconstruction_analysis(
+        transmit, full_desc, tx_recon_cols, target_cols, seed=seed
     )
 
-    # Experiment 5: vehicle fingerprinting
     le = LabelEncoder()
     y_vehicle = le.fit_transform(full_desc["vehicle_model"].astype(str))
-    X_raw = win.loc[
-        win["window_id"].isin(full_desc["window_id"])
-        & win["vehicle_model"].isin(full_desc["vehicle_model"]),
-        BEHAVIOURAL_FEATURE_COLUMNS,
-    ].fillna(0.0)
-    if len(X_raw) != len(full_desc):
-        merged = full_desc[["window_id", "vehicle_model"]].merge(
-            win, on=["window_id", "vehicle_model"], how="left"
-        )
-        X_raw = merged[BEHAVIOURAL_FEATURE_COLUMNS].fillna(0.0)
+    merged = full_desc[["window_id", "vehicle_model"]].merge(
+        win, on=["window_id", "vehicle_model"], how="left"
+    )
+    X_raw = merged[BEHAVIOURAL_FEATURE_COLUMNS].fillna(0.0)
     X_desc = transmit[tx_cols].select_dtypes(include=["number"]).fillna(0.0)
     acc_raw = _train_fingerprint_accuracy(X_raw, y_vehicle, seed=seed)
     acc_desc = _train_fingerprint_accuracy(X_desc, y_vehicle, seed=seed)
@@ -360,49 +537,20 @@ def run_descriptor_security_experiment(
         100.0 * (acc_raw - acc_desc) / acc_raw if acc_raw else 0.0
     )
 
-    # Paper comparison table
-    fleet_100 = scalability_df[scalability_df["fleet_size"] == 100].iloc[0]
-    comparison = pd.DataFrame(
-        [
-            {
-                "Metric": "Average Window Size (bytes)",
-                "Raw CAN": round(avg_raw, 2),
-                "Descriptor": round(avg_transmit, 2),
-                "Improvement (%)": round(bandwidth_reduction_pct, 2),
-            },
-            {
-                "Metric": "Fleet Bandwidth (MB)",
-                "Raw CAN": fleet_100["total_raw_bandwidth_mb"],
-                "Descriptor": fleet_100["total_descriptor_bandwidth_mb"],
-                "Improvement (%)": fleet_100["bandwidth_reduction_percent"],
-            },
-            {
-                "Metric": "Cloud Storage (MB)",
-                "Raw CAN": fleet_100["total_raw_bandwidth_mb"],
-                "Descriptor": fleet_100["total_descriptor_bandwidth_mb"],
-                "Improvement (%)": fleet_100["storage_reduction_percent"],
-            },
-            {
-                "Metric": "Exposure Score",
-                "Raw CAN": round(raw_exp, 4),
-                "Descriptor": round(desc_exp, 4),
-                "Improvement (%)": round(leakage_reduction_pct, 2),
-            },
-            {
-                "Metric": "Payload Reconstruction R² (attacker)",
-                "Raw CAN": 1.0,
-                "Descriptor": round(max(0.0, payload_recon_r2), 4),
-                "Improvement (%)": round(
-                    100.0 * (1.0 - min(1.0, max(0.0, payload_recon_r2))), 2
-                ),
-            },
-            {
-                "Metric": "Vehicle Fingerprinting Accuracy",
-                "Raw CAN": round(acc_raw, 4),
-                "Descriptor": round(acc_desc, 4),
-                "Improvement (%)": round(fingerprint_reduction_pct, 2),
-            },
-        ]
+    comparison = _build_main_comparison_table(
+        avg_raw=avg_raw,
+        avg_transmit=avg_transmit,
+        compression_ratio=compression_ratio,
+        bandwidth_reduction_pct=bandwidth_reduction_pct,
+        fleet_100_raw_mb=float(fleet_100["total_raw_bandwidth_mb"]),
+        fleet_100_desc_mb=float(fleet_100["total_descriptor_bandwidth_mb"]),
+        fleet_bw_reduction_pct=float(fleet_100["bandwidth_reduction_percent"]),
+        r2_raw=r2_raw,
+        r2_descriptor=r2_descriptor,
+        r2_random=r2_random,
+        acc_raw=acc_raw,
+        acc_desc=acc_desc,
+        fingerprint_reduction_pct=fingerprint_reduction_pct,
     )
 
     outputs.results_dir.mkdir(parents=True, exist_ok=True)
@@ -414,16 +562,15 @@ def run_descriptor_security_experiment(
         [
             {
                 "avg_raw_window_bytes": avg_raw,
-                "avg_descriptor_bytes_local": avg_descriptor,
                 "avg_descriptor_bytes_transmit": avg_transmit,
                 "avg_descriptor_gzip_bytes": avg_transmit_gzip,
                 "compression_ratio": round(compression_ratio, 4),
                 "bandwidth_reduction_percent": round(bandwidth_reduction_pct, 2),
-                "raw_exposure_score": raw_exp,
-                "descriptor_exposure_score": desc_exp,
-                "leakage_reduction_percent": round(leakage_reduction_pct, 2),
-                "payload_reconstruction_error": round(payload_recon_error, 6),
-                "payload_reconstruction_r2": round(payload_recon_r2, 4),
+                "payload_statistic_reconstruction_r2_raw_baseline": round(r2_raw, 4),
+                "payload_statistic_reconstruction_r2_descriptor_attacker": round(
+                    r2_descriptor, 4
+                ),
+                "payload_statistic_reconstruction_r2_random_baseline": round(r2_random, 4),
                 "vehicle_fingerprint_accuracy_raw": round(acc_raw, 4),
                 "vehicle_fingerprint_accuracy_descriptor": round(acc_desc, 4),
                 "vehicle_fingerprinting_reduction_percent": round(
@@ -436,23 +583,53 @@ def run_descriptor_security_experiment(
         ]
     ).to_csv(metrics_path, index=False)
 
+    _heuristic_exposure_appendix().to_csv(
+        outputs.results_dir / "heuristic_exposure_appendix.csv", index=False
+    )
+    disclosure_df.to_csv(outputs.results_dir / "information_disclosure_comparison.csv", index=False)
+    breakdown_df.to_csv(
+        outputs.results_dir / "payload_statistic_reconstruction_breakdown.csv", index=False
+    )
     scalability_df.to_csv(outputs.results_dir / "descriptor_fleet_scalability.csv", index=False)
     comparison.to_csv(outputs.results_dir / "descriptor_security_comparison_table.csv", index=False)
 
+    (outputs.tables_dir / "table_information_disclosure_comparison.tex").write_text(
+        _df_to_ieee_tex(
+            disclosure_df,
+            "Information disclosure comparison: raw CAN vs descriptor transmission.",
+            "tab:information-disclosure",
+        ),
+        encoding="utf-8",
+    )
+    (outputs.tables_dir / "table_information_disclosure_comparison.md").write_text(
+        "# Information Disclosure Comparison\n\n" + _df_to_markdown(disclosure_df),
+        encoding="utf-8",
+    )
+    (outputs.tables_dir / "table_payload_statistic_reconstruction.tex").write_text(
+        _df_to_ieee_tex(
+            breakdown_df,
+            "Payload-statistic reconstruction attack (lower R² indicates better privacy).",
+            "tab:payload-stat-recon",
+        ),
+        encoding="utf-8",
+    )
+    (outputs.tables_dir / "table_payload_statistic_reconstruction.md").write_text(
+        "# Payload-Statistic Reconstruction\n\n" + _df_to_markdown(breakdown_df),
+        encoding="utf-8",
+    )
     (outputs.tables_dir / "table_descriptor_security.tex").write_text(
         _df_to_ieee_tex(
             comparison,
-            "Raw CAN vs descriptor communication and security comparison.",
+            "Descriptor compactness and defensible security metrics (test dataset).",
             "tab:descriptor-security",
         ),
         encoding="utf-8",
     )
     (outputs.tables_dir / "table_descriptor_security.md").write_text(
-        "# Descriptor Security Comparison\n\n" + _df_to_markdown(comparison),
+        "# Descriptor Security Metrics\n\n" + _df_to_markdown(comparison),
         encoding="utf-8",
     )
 
-    # Figure: bandwidth scaling
     fig, ax = plt.subplots(figsize=(4.5, 3.2))
     ax.plot(
         scalability_df["fleet_size"],
@@ -481,31 +658,29 @@ def run_descriptor_security_experiment(
         ha="center",
         fontsize=8,
         style="italic",
-        wrap=True,
     )
     _save_figure(fig, outputs.figures_dir / "bandwidth_scaling_fleet_sizes")
 
-    # Exposure figure
-    fig, ax = plt.subplots(figsize=(4.0, 3.0))
-    ax.bar(
-        ["Raw CAN", "Descriptor"],
-        [raw_exp * 100, desc_exp * 100],
-        color=["#C00000", "#4472C4"],
-    )
-    ax.set_ylabel("Exposure Score (%)")
-    ax.set_title("Information Exposure")
-    _save_figure(fig, outputs.figures_dir / "raw_vs_descriptor_exposure")
+    _plot_information_disclosure(disclosure_df, outputs.figures_dir / "information_disclosure_comparison")
 
-    # Payload reconstruction figure
-    fig, ax = plt.subplots(figsize=(4.0, 3.0))
-    models = ["Linear", "Random Forest", "MLP"]
-    mses = [recon["linear_regression_mse"], recon["random_forest_mse"], recon["mlp_mse"]]
-    ax.bar(models, mses, color="#548235")
-    ax.set_ylabel("Reconstruction MSE")
-    ax.set_title("Payload Reconstruction Attack")
+    fig, ax = plt.subplots(figsize=(4.2, 3.0))
+    labels = ["Raw baseline", "Descriptor attacker", "Random baseline"]
+    r2_vals = [r2_raw, r2_descriptor, r2_random]
+    ax.bar(labels, r2_vals, color=["#C00000", "#ED7D31", "#A5A5A5"])
+    ax.set_ylabel("Payload-statistic reconstruction R²")
+    ax.set_title("Payload-Statistic Reconstruction Attack")
+    ax.set_ylim(0, 1.05)
+    fig.text(
+        0.5,
+        -0.10,
+        "Lower R² from descriptors limits inference of original payload-derived statistics "
+        "(byte means/stds, DLC); does not reconstruct exact payload bytes.",
+        ha="center",
+        fontsize=8,
+        style="italic",
+    )
     _save_figure(fig, outputs.figures_dir / "payload_reconstruction_error")
 
-    # Fingerprinting figure
     fig, ax = plt.subplots(figsize=(4.0, 3.0))
     ax.bar(
         ["Raw CAN windows", "Descriptors"],
@@ -516,6 +691,10 @@ def run_descriptor_security_experiment(
     ax.set_title("Vehicle Fingerprinting")
     _save_figure(fig, outputs.figures_dir / "vehicle_fingerprinting_comparison")
 
+    mean_mse = float(breakdown_df.loc[
+        breakdown_df["target_type"] == "all_targets_average", "mse"
+    ].mean())
+
     summary_path = outputs.results_dir / "descriptor_compactness_security_summary.md"
     summary_path.write_text(
         "\n".join(
@@ -524,38 +703,57 @@ def run_descriptor_security_experiment(
                 "",
                 "## 1. Compactness",
                 f"- **Average raw CAN window size:** {avg_raw:.2f} bytes",
-                f"- **Average transmitted descriptor size:** {avg_transmit:.2f} bytes "
+                f"- **Transmitted descriptor size:** {avg_transmit:.2f} bytes "
                 f"(gzip ~{avg_transmit_gzip:.2f} bytes/record)",
                 f"- **Compression ratio:** {compression_ratio:.2f}×",
                 f"- **Bandwidth reduction:** {bandwidth_reduction_pct:.2f}%",
                 "",
-                "## 2. Fleet scalability (100 vehicles)",
-                f"- **Raw CAN bandwidth:** {fleet_100['total_raw_bandwidth_mb']:.2f} MB",
-                f"- **Descriptor bandwidth:** {fleet_100['total_descriptor_bandwidth_mb']:.2f} MB",
-                f"- **Storage reduction:** {fleet_100['storage_reduction_percent']:.2f}%",
+                "## 2. Fleet scalability",
+                f"- **Raw bandwidth @ 100 vehicles:** {fleet_100['total_raw_bandwidth_mb']:.2f} MB",
+                f"- **Descriptor bandwidth @ 100 vehicles:** "
+                f"{fleet_100['total_descriptor_bandwidth_mb']:.2f} MB",
+                f"- **Fleet bandwidth reduction:** {fleet_100['bandwidth_reduction_percent']:.2f}%",
                 "",
-                "## 3. Data leakage",
-                f"- **Raw exposure score:** {raw_exp:.4f} (full CAN IDs, payloads, sequences)",
-                f"- **Descriptor exposure score:** {desc_exp:.4f} (privacy-preserving transmit view)",
-                f"- **Leakage reduction:** {leakage_reduction_pct:.2f}%",
+                "## 3. Information disclosure",
+                "Raw CAN transmission exposes timestamp sequences, CAN IDs, DLC, payload bytes, "
+                "and exact message order. Descriptor transmission sends only aggregated "
+                "behavioural/statistical features (timing summaries, anomaly scores, evidence "
+                "flags) and omits frame-level identifiers and raw payloads. See "
+                "`information_disclosure_comparison.csv` and "
+                "`table_information_disclosure_comparison.tex` — not the deprecated heuristic "
+                "exposure score (retained only in `heuristic_exposure_appendix.csv` for debugging).",
                 "",
-                "## 4. Payload reconstruction attack",
-                f"- **Mean reconstruction MSE:** {payload_recon_error:.6f}",
-                f"- **Mean R²:** {payload_recon_r2:.4f} (low ⇒ poor recovery of raw payload statistics)",
+                "## 4. Payload-statistic reconstruction",
+                "Targets: `byte_mean_0..7`, `byte_std_0..7`, `mean_dlc`, `std_dlc` (statistics "
+                "derived from payloads, not exact bytes). Attackers: Linear Regression, Random "
+                "Forest Regressor, MLP Regressor on transmitted descriptor fields excluding "
+                "byte-level aggregates.",
+                f"- **Raw baseline R²:** {r2_raw:.4f} (statistics directly available from raw CAN)",
+                f"- **Descriptor attacker R² (mean):** {r2_descriptor:.4f}",
+                f"- **Random/mean baseline R²:** {r2_random:.4f}",
+                f"- **Mean MSE (descriptor attackers, all targets):** {mean_mse:.4f}",
+                "",
+                "Lower descriptor R² indicates **limited ability to infer payload-derived "
+                "statistics** from the uplink payload; it does **not** claim exact payload-byte "
+                "recovery is impossible in all settings.",
                 "",
                 "## 5. Vehicle fingerprinting",
-                f"- **Accuracy (raw windows):** {acc_raw:.2%}",
+                f"- **Accuracy (raw CAN windows):** {acc_raw:.2%}",
                 f"- **Accuracy (descriptors):** {acc_desc:.2%}",
-                f"- **Fingerprinting reduction:** {fingerprint_reduction_pct:.2f}%",
+                f"- **Reduction:** {fingerprint_reduction_pct:.2f}%",
                 "",
-                "## Conclusion",
+                "High descriptor fingerprinting indicates that some vehicle-specific behavioural "
+                "patterns remain in the transmitted statistics. **Limitation:** future work "
+                "should investigate descriptor anonymisation, feature coarsening, or differential "
+                "privacy for stronger unlinkability.",
                 "",
-                "Anomaly descriptors **reduce bandwidth** and **cloud storage** versus transmitting "
-                "raw CAN windows, especially as fleet size grows. The privacy-preserving descriptor "
-                "payload **reduces information exposure** and limits payload reconstruction and "
-                "vehicle fingerprinting attacks compared with raw CAN data. Descriptors remain "
-                "suitable for fleet-level intrusion detection because they preserve behavioural "
-                "statistics and anomaly scores without exposing exact CAN frames or vehicle identity.",
+                "## 6. Conclusion",
+                "",
+                "The proposed descriptor **substantially reduces communication overhead** and "
+                "**raw CAN data disclosure** while preserving behavioural evidence for fleet-level "
+                "intrusion detection. It **limits payload-statistic reconstruction** relative to "
+                "raw CAN and supports **privacy-preserving fleet analysis**, but does **not** "
+                "guarantee full privacy or complete vehicle anonymisation.",
                 "",
             ]
         ),
@@ -565,7 +763,10 @@ def run_descriptor_security_experiment(
     logger.info("Descriptor security experiment complete: %s", metrics_path)
     return {
         "descriptor_security_metrics": metrics_path,
+        "information_disclosure_comparison": outputs.results_dir
+        / "information_disclosure_comparison.csv",
         "descriptor_compactness_security_summary": summary_path,
         "table_descriptor_security": outputs.tables_dir / "table_descriptor_security.tex",
-        "bandwidth_scaling_fleet_sizes": outputs.figures_dir / "bandwidth_scaling_fleet_sizes.png",
+        "information_disclosure_figure": outputs.figures_dir
+        / "information_disclosure_comparison.png",
     }

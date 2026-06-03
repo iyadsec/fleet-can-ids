@@ -1,0 +1,2 @@
+total_weak_suspicious_signals,weak_signals_not_alerted_locally,weak_signals_upgraded_by_fleet,upgrade_percentage,vehicles_involved,attack_types_involved
+20206,20206,192,0.950213,Kia,"attack_free,flooding,fuzzy,malfunction,replay"
