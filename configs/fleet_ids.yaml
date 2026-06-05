@@ -164,6 +164,14 @@ behavior_view_similarity:
   promotion_mean_score: 0.60
   promotion_strong_support: 0.40
 
+# Cross-vehicle descriptor generalisation (run_cross_vehicle_generalisation.py)
+cross_vehicle_generalisation:
+  max_embedding_samples: 5000
+  max_similarity_pairs: 30000
+  dbscan_eps: 1.2
+  dbscan_min_samples: 10
+  random_forest_estimators: 200
+
 # Fleet correlation experiment (run_fleet_correlation_evaluation.py)
 # Top-k neighbourhoods + high cosine threshold (Equation 4 / meaningful N(u))
 fleet_correlation:

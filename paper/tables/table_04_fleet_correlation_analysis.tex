@@ -1,0 +1,16 @@
+\begin{table}[t]
+\centering
+\begin{tabular}{lrrrrl}
+\toprule
+Evaluation & Local IDS F1 & Fleet-aware F1 & FPR (\%) & Cross-vehicle edges (\%) & Note \\
+\midrule
+Full-dataset detection (strong alerts) & 0.8456 & 0.8456 & 44.4500 & NaN & No F1 gain under top-k graph + ≥3 vehicle cluster gates \\
+Weak anomalies — local baseline & 0.0000 & 0.0013 & 1.5500 & NaN & Selective DBSCAN promotion (eps=1.2, gated) \\
+Weak anomalies — optimized conservative & 0.0000 & 0.0255 & 2.2700 & NaN & Weak recovery 1.31\% (grid search, FPR≤5\%) \\
+Graph connectivity — full descriptor & NaN & NaN & NaN & 0.0232 & Top-k similarity on full descriptor features \\
+Graph connectivity — behaviour-normalized & NaN & NaN & NaN & 1.0779 & Vehicle-normalized behavioural similarity view \\
+\bottomrule
+\end{tabular}
+\caption{Fleet-level correlation analysis: full-dataset detection, weak-anomaly recovery, and graph connectivity.}
+\label{tab:fleet-correlation}
+\end{table}

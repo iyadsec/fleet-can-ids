@@ -1,0 +1,4 @@
+classifier,mean_roc_auc,mean_f1,vehicle_agnostic_score,n_transfer_pairs
+logistic_regression,0.5955,0.8678,0.7316,6
+random_forest,0.7453,0.8963,0.8208,6
+overall_mean_per_pair,0.6704,0.882,0.7762,6

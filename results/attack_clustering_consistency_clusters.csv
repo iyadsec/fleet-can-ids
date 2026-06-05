@@ -1,0 +1,3 @@
+algorithm,cluster_id,cluster_size,n_vehicles,dominant_attack_type,attack_purity,vehicle_composition
+dbscan,0,63583,3,malfunction,0.3686677256499379,"Chevrolet:3533, Hyundai:29381, Kia:30669"
+dbscan,1,1480,2,flooding,1.0,"Hyundai:742, Kia:738"

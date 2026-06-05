@@ -1,0 +1,4 @@
+descriptor_view,descriptor_view_label,n_features,vehicle_classification_accuracy
+full_descriptor,Full Descriptor,24,0.999896421357916
+behaviour_only,Behaviour-Only,8,0.9849293075767777
+behaviour_only_normalized,Behaviour-Only + Vehicle Normalization,8,0.999689264073748

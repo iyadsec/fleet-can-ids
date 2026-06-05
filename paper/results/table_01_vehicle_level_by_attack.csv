@@ -1,0 +1,6 @@
+Attack Type,Recall (%),Precision (%),F1-Score (%),Average Anomaly Score,Detection Latency (ms)
+attack_free,0.0,0.0,0.0,0.5,
+flooding,58.94,100.0,74.17,0.85,77.21
+fuzzy,68.51,100.0,81.31,0.89,52.55
+malfunction,42.02,100.0,59.17,0.75,87.6
+replay,24.88,100.0,39.84,0.71,143.67

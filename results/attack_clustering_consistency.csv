@@ -1,0 +1,3 @@
+algorithm,n_clusters,n_noise,silhouette_score,cluster_purity,ari,nmi,attack_clustering_consistency_percent,multi_vehicle_same_attack_clusters,total_clusters
+dbscan,2,13,0.03671526163816452,0.6843338628249689,0.030543784588152312,0.08756755126106673,50.0,1,2
+hdbscan,0,65076,,,,,,0,0
