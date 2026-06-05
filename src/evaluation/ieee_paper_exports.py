@@ -67,9 +67,13 @@ def _save_figure(fig: plt.Figure, base: Path) -> None:
 
 def _copy_figure(src: Path, dst_base: Path) -> None:
     dst_base.parent.mkdir(parents=True, exist_ok=True)
+    copied = False
     for ext in (".pdf", ".png"):
         if src.with_suffix(ext).exists():
             shutil.copy2(src.with_suffix(ext), dst_base.with_suffix(ext))
+            copied = True
+    if not copied and not any(dst_base.with_suffix(ext).exists() for ext in (".pdf", ".png")):
+        raise FileNotFoundError(f"Figure source missing and no existing output: {src}")
 
 
 def _load_csv(root: Path, name: str) -> pd.DataFrame:

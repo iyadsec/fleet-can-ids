@@ -604,8 +604,8 @@ def _write_summary(
         f"- Mean same-minus-cross gap: **{gap_mean:.4f}** (smaller gap ⇒ more cross-vehicle alignment).",
         "",
         "### 5. Do embeddings cluster by attack type or vehicle?",
-        "See `figures/descriptor_embedding_by_vehicle.pdf` and "
-        "`figures/descriptor_embedding_by_attack.pdf`. "
+        "See `paper/figures/figure_05_cross_vehicle_embedding.pdf` "
+        "(and `figures/descriptor_embedding_by_attack.pdf` when regenerated). "
         "Attack-coloured views should show attack-type groupings spanning multiple vehicle markers.",
         "",
         "### 6. Does behaviour-only normalization reduce vehicle bias?",

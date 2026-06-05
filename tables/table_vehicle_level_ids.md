@@ -1,5 +1,0 @@
-# Table 1: Vehicle-Level IDS Performance
-
-| Model | ROC-AUC | PR-AUC | Recall (%) | Precision (%) | F1-Score (%) | False Positive Rate (%) | Detection Latency (ms) | Selected Threshold Method |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Isolation Forest (self-supervised) | 0.7855 | 0.9273 | 45.96 | 97.28 | 62.43 | 3.95 | 74.78 | FPR<=5% |

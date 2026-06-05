@@ -18,7 +18,7 @@
 - Mean same-minus-cross gap: **0.0492** (smaller gap ⇒ more cross-vehicle alignment).
 
 ### 5. Do embeddings cluster by attack type or vehicle?
-See `figures/descriptor_embedding_by_vehicle.pdf` and `figures/descriptor_embedding_by_attack.pdf`. Attack-coloured views should show attack-type groupings spanning multiple vehicle markers.
+See `paper/figures/figure_05_cross_vehicle_embedding.pdf`. Attack-coloured views should show attack-type groupings spanning multiple vehicle markers.
 
 ### 6. Does behaviour-only normalization reduce vehicle bias?
 - Vehicle classification accuracy — full descriptor: **0.9999**
