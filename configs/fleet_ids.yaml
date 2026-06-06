@@ -204,8 +204,9 @@ final_gnn_fleet_decision:
   campaign_score_threshold: 0.55
   min_cluster_size: 10
   min_vehicles: 2
-  min_dominant_attack_ratio: 0.80
-  dbscan_eps: 1.2
+  min_behavioral_cohesion: 0.85
+  gnn_supervision: structure
+  dbscan_eps: 0.8
   dbscan_min_samples: 10
   dbscan_pca_components: 8
   max_clustering_samples: 20000
@@ -213,7 +214,7 @@ final_gnn_fleet_decision:
   max_embedding_samples: 5000
   embedding_method: tsne
   checkpoint_path: outputs/models/final_graphsage_fleet.pt
-  retrain_gnn: false
+  retrain_gnn: true
 
 # Fleet correlation experiment (run_fleet_correlation_evaluation.py)
 # Top-k neighbourhoods + high cosine threshold (Equation 4 / meaningful N(u))

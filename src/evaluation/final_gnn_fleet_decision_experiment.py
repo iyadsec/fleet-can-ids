@@ -96,7 +96,7 @@ class FinalGnnFleetConfig:
     campaign_score_threshold: float = 0.55
     min_cluster_size: int = 10
     min_vehicles: int = 2
-    min_dominant_attack_ratio: float = 0.80
+    min_behavioral_cohesion: float = 0.85
     dbscan_eps: float = 1.2
     dbscan_min_samples: int = 10
     dbscan_pca_components: int = 8
@@ -104,6 +104,7 @@ class FinalGnnFleetConfig:
     max_graph_viz_nodes: int = 800
     max_embedding_samples: int = 5000
     embedding_method: Literal["tsne", "umap"] = "tsne"
+    gnn_supervision: Literal["structure", "ids"] = "structure"
     checkpoint_path: Path | None = None
     retrain_gnn: bool = True
     seed: int = 42
@@ -194,7 +195,13 @@ def build_final_gnn_fleet_graph(
     df_sub = feat_df.iloc[sub_idx].reset_index(drop=True)
     X_sub = X[sub_idx]
     graph = build_networkx_graph(df_sub, edge_index, edge_weights)
-    pyg_data = build_pyg_data(X_sub, edge_index, edge_weights, df_sub, prefer_ground_truth_labels=True)
+    pyg_data = build_pyg_data(
+        X_sub,
+        edge_index,
+        edge_weights,
+        df_sub,
+        prefer_ground_truth_labels=False,
+    )
     stats = export_campaign_graph_statistics(
         graph,
         similarity_view="gnn_fleet_behavior_normalized",
@@ -241,6 +248,7 @@ def run_gnn_fleet_correlation(
         train_ratio=cfg.gnn_train_ratio,
         val_ratio=cfg.gnn_val_ratio,
         seed=cfg.seed,
+        supervision=cfg.gnn_supervision,
     )
     if cfg.checkpoint_path:
         cfg.checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
@@ -248,13 +256,44 @@ def run_gnn_fleet_correlation(
     return emb, scores, metrics
 
 
+def compute_cluster_behavioral_cohesion(
+    behavior_features: np.ndarray,
+    mask: np.ndarray,
+    *,
+    max_samples: int = 500,
+    seed: int = 42,
+) -> float:
+    """
+    Mean cosine similarity to the cluster centroid in behaviour descriptor space.
+
+    Uses only anomaly-descriptor features (same space as graph edges). No labels or metadata.
+    """
+    Xi = np.asarray(behavior_features[mask], dtype=np.float64)
+    if Xi.shape[0] < 2:
+        return 1.0
+    norms = np.linalg.norm(Xi, axis=1, keepdims=True)
+    norms = np.maximum(norms, 1e-9)
+    Xn = Xi / norms
+    if Xi.shape[0] > max_samples:
+        rng = np.random.default_rng(seed)
+        pick = rng.choice(Xi.shape[0], size=max_samples, replace=False)
+        Xn = Xn[pick]
+    centroid = Xn.mean(axis=0)
+    cn = float(np.linalg.norm(centroid))
+    if cn < 1e-9:
+        return 0.0
+    centroid /= cn
+    return float(np.mean(Xn @ centroid))
+
+
 def cluster_gnn_embeddings(
     embeddings: np.ndarray,
     meta: pd.DataFrame,
     campaign_scores: np.ndarray,
+    behavior_features: np.ndarray,
     cfg: FinalGnnFleetConfig,
 ) -> pd.DataFrame:
-    """DBSCAN clustering on learned GNN embeddings only."""
+    """DBSCAN clustering on learned GNN embeddings; qualify campaigns by behaviour cohesion only."""
     fit_idx = subsample_indices(meta, cfg.max_clustering_samples, seed=cfg.seed)
     fit_labels, projector = run_dbscan(
         embeddings[fit_idx],
@@ -274,6 +313,10 @@ def cluster_gnn_embeddings(
         mask = labels == cid
         size = int(mask.sum())
         n_veh = int(meta.loc[mask, "vehicle_model"].nunique())
+        cohesion = compute_cluster_behavioral_cohesion(
+            behavior_features, mask, seed=cfg.seed + int(cid)
+        )
+        # Evaluation-only metadata (not used for qualification or GNN inputs).
         dom = meta.loc[mask, "attack_type"].mode().iloc[0]
         dom_ratio = float((meta.loc[mask, "attack_type"] == dom).mean())
         rows.append(
@@ -281,16 +324,15 @@ def cluster_gnn_embeddings(
                 "cluster_id": int(cid),
                 "cluster_size": size,
                 "vehicles_in_cluster": n_veh,
-                "dominant_attack_type": dom,
-                "dominant_attack_ratio": round(dom_ratio, 4),
+                "behavioral_cohesion": round(cohesion, 4),
                 "mean_campaign_score": round(float(campaign_scores[mask].mean()), 4),
                 "mean_anomaly_score": round(float(meta.loc[mask, "anomaly_score"].mean()), 4),
-                "cluster_purity": round(dom_ratio, 4),
+                "eval_dominant_attack_type": dom,
+                "eval_attack_type_purity": round(dom_ratio, 4),
                 "is_qualifying_campaign_cluster": bool(
                     size >= cfg.min_cluster_size
                     and n_veh >= cfg.min_vehicles
-                    and dom_ratio >= cfg.min_dominant_attack_ratio
-                    and float(campaign_scores[mask].mean()) >= cfg.campaign_score_threshold
+                    and cohesion >= cfg.min_behavioral_cohesion
                 ),
             }
         )
@@ -330,7 +372,8 @@ def assign_final_decisions(
                 "gnn_campaign_score": round(float(campaign_scores[i]), 4),
                 "cluster_id": cid,
                 "vehicles_in_cluster": int(info["vehicles_in_cluster"]) if info is not None else 0,
-                "dominant_attack_type": str(info["dominant_attack_type"]) if info is not None else "",
+                "behavioral_cohesion": round(float(info["behavioral_cohesion"]), 4) if info is not None else 0.0,
+                "eval_dominant_attack_type": str(info["eval_dominant_attack_type"]) if info is not None else "",
                 "final_decision": final_decision,
             }
         )
@@ -348,7 +391,8 @@ def export_attack_decisions_csv(decisions: pd.DataFrame, path: Path) -> None:
         "gnn_campaign_score",
         "cluster_id",
         "vehicles_in_cluster",
-        "dominant_attack_type",
+        "behavioral_cohesion",
+        "eval_dominant_attack_type",
         "final_decision",
     ]
     decisions[export_cols].to_csv(path, index=False)
@@ -387,14 +431,14 @@ def evaluate_local_vs_gnn(
     detected_campaigns = 0
     for _, tc in ground_truth.groupby("campaign_id"):
         attack = tc["attack_type"].iloc[0]
-        match = qualifying[qualifying["dominant_attack_type"] == attack]
+        match = qualifying[qualifying["eval_dominant_attack_type"] == attack]
         if not match.empty:
             detected_campaigns += 1
     camp_det_rate = detected_campaigns / max(true_campaigns, 1)
     camp_precision = detected_campaigns / max(n_qual, 1) if n_qual else 0.0
     camp_recall = camp_det_rate
     camp_f1 = (2 * camp_precision * camp_recall / (camp_precision + camp_recall)) if (camp_precision + camp_recall) else 0.0
-    purity = float(qualifying["cluster_purity"].mean()) if not qualifying.empty else float("nan")
+    purity = float(qualifying["behavioral_cohesion"].mean()) if not qualifying.empty else float("nan")
     cross_cov = float((qualifying["vehicles_in_cluster"] >= 2).mean()) if not qualifying.empty else 0.0
     false_camp = max(n_qual - detected_campaigns, 0) / max(n_qual, 1) if n_qual else 0.0
 
@@ -422,7 +466,7 @@ def build_attack_decision_summary(decisions: pd.DataFrame) -> pd.DataFrame:
     rows = []
     for decision in (DECISION_ISOLATED, DECISION_COORDINATED):
         sub = decisions[decisions["final_decision"] == decision]
-        dom = sub["attack_type"].mode().iloc[0] if not sub.empty else ""
+        dom = sub["eval_dominant_attack_type"].mode().iloc[0] if "eval_dominant_attack_type" in sub.columns and not sub["eval_dominant_attack_type"].eq("").all() else ""
         rows.append(
             {
                 "Decision Type": decision,
@@ -448,10 +492,10 @@ def build_campaign_by_attack_table(
             continue
         n_veh = int(gt["vehicle_id"].nunique())
         detected = int(
-            not qualifying[qualifying["dominant_attack_type"] == attack].empty
+            not qualifying[qualifying["eval_dominant_attack_type"] == attack].empty
         )
         purity = float(
-            qualifying.loc[qualifying["dominant_attack_type"] == attack, "cluster_purity"].mean()
+            qualifying.loc[qualifying["eval_dominant_attack_type"] == attack, "behavioral_cohesion"].mean()
         ) if detected else float("nan")
         rows.append(
             {
@@ -468,9 +512,9 @@ def build_campaign_by_attack_table(
         {
             "Attack Type": "Overall",
             "Vehicles Involved": int(ground_truth["vehicle_id"].nunique()),
-            "Detected Campaigns": int(qualifying["dominant_attack_type"].nunique()) if not qualifying.empty else 0,
+            "Detected Campaigns": int(qualifying["eval_dominant_attack_type"].nunique()) if not qualifying.empty else 0,
             "Campaign Recall": det_rate,
-            "Campaign Purity": float(qualifying["cluster_purity"].mean()) if not qualifying.empty else float("nan"),
+            "Campaign Purity": float(qualifying["behavioral_cohesion"].mean()) if not qualifying.empty else float("nan"),
             "False Campaign Rate": 0.0,
         }
     )
@@ -583,7 +627,7 @@ def write_final_summary(
     n_iso = int((decisions["final_decision"] == DECISION_ISOLATED).sum())
     n_coord = int((decisions["final_decision"] == DECISION_COORDINATED).sum())
     qual = cluster_df[cluster_df["is_qualifying_campaign_cluster"]] if not cluster_df.empty else pd.DataFrame()
-    attacks = ", ".join(sorted(qual["dominant_attack_type"].unique())) if not qual.empty else "none detected"
+    attacks = ", ".join(sorted(qual["eval_dominant_attack_type"].unique())) if not qual.empty else "none detected"
     n_veh = int(decisions.loc[decisions["final_decision"] == DECISION_COORDINATED, "vehicle_model"].nunique())
 
     lines = [
@@ -591,10 +635,10 @@ def write_final_summary(
         "",
         f"1. **isolated_attack events:** {n_iso}",
         f"2. **coordinated_attack events:** {n_coord}",
-        f"3. **Attack types forming coordinated campaigns:** {attacks}",
+        f"3. **Attack types in detected campaigns (evaluation only):** {attacks}",
         f"4. **Vehicles in coordinated campaigns:** {n_veh}",
-        "5. **GNN fleet IDS added capability:** classifies suspicious activity as isolated vs coordinated using GraphSAGE embeddings and multi-vehicle campaign clusters (local IDS campaign detection = 0).",
-        "6. **Architecture alignment:** Pipeline follows vehicle IDS → descriptors → behaviour-normalized graph → GraphSAGE → DBSCAN on embeddings → final decision.",
+        "5. **GNN fleet IDS added capability:** classifies suspicious activity as isolated vs coordinated using GraphSAGE embeddings, behaviour cohesion, and multi-vehicle campaign clusters (no attack-type metadata in the decision path).",
+        "6. **Architecture alignment:** Pipeline follows vehicle IDS → descriptors → behaviour-normalized graph → GraphSAGE (structure-only, no attack labels) → DBSCAN on embeddings → behaviour-cohesion campaign gate → final decision.",
         f"7. **Final output matches isolated vs coordinated:** Yes — every suspicious event assigned `{DECISION_ISOLATED}` or `{DECISION_COORDINATED}`.",
         "",
         "## Conclusion",
@@ -623,7 +667,7 @@ def run_final_gnn_fleet_decision_experiment(
     descriptors["window_id"] = descriptors["event_id"].map(event_id_to_window_id)
     ground_truth = build_campaign_ground_truth(descriptors)
 
-    graph, pyg_data, graph_stats, _, _ = build_final_gnn_fleet_graph(descriptors, cfg)
+    graph, pyg_data, graph_stats, X_sub, _ = build_final_gnn_fleet_graph(descriptors, cfg)
     graph_stats_path = outputs.results_dir / "final_gnn_graph_statistics.csv"
     graph_stats.to_csv(graph_stats_path, index=False)
 
@@ -638,7 +682,7 @@ def run_final_gnn_fleet_decision_experiment(
     score_df.to_csv(score_path, index=False)
 
     meta = descriptors.set_index("event_id").loc[pyg_data.event_ids].reset_index()
-    cluster_df = cluster_gnn_embeddings(emb, meta, campaign_scores, cfg)
+    cluster_df = cluster_gnn_embeddings(emb, meta, campaign_scores, X_sub, cfg)
     clusters_path = outputs.results_dir / "final_gnn_campaign_clusters.csv"
     cluster_df.to_csv(clusters_path, index=False)
 

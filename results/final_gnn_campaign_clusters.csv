@@ -1,3 +1,9 @@
-cluster_id,cluster_size,vehicles_in_cluster,dominant_attack_type,dominant_attack_ratio,mean_campaign_score,mean_anomaly_score,cluster_purity,is_qualifying_campaign_cluster
-0,876,3,replay,0.5308,0.9994,0.8871,0.5308,False
-1,284,2,flooding,1.0,1.0,1.0,1.0,True
+cluster_id,cluster_size,vehicles_in_cluster,behavioral_cohesion,mean_campaign_score,mean_anomaly_score,eval_dominant_attack_type,eval_attack_type_purity,is_qualifying_campaign_cluster
+0,700,3,0.9459,0.6715,0.8275,malfunction,0.3743,True
+1,309,1,0.9952,0.9923,1.0,flooding,1.0,False
+2,1649,2,0.9841,0.9442,0.9833,replay,1.0,True
+3,3666,2,0.9926,0.9909,1.0,malfunction,1.0,True
+4,48,1,0.9982,0.9787,1.0,flooding,1.0,False
+5,314,2,0.9969,0.9995,1.0,flooding,1.0,True
+6,1042,2,0.998,0.9877,1.0,fuzzy,1.0,True
+7,322,1,0.9916,0.8713,1.0,malfunction,1.0,False

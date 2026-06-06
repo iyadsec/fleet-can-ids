@@ -6,10 +6,10 @@
 | Attack Recall | 0.7932724814063556 | 0.7932724814063556 | 0.0 |
 | Attack F1-score | 0.8455648100374275 | 0.8455648100374275 | 0.0 |
 | False Positive Rate | 0.4445175618984947 | 0.4445175618984947 | 0.0 |
-| Coordinated Campaign Detection | 0.0 | 0.25 | Fleet-only capability |
-| Campaign Recall | 0.0 | 0.25 | Fleet-only capability |
-| Campaign Precision | 0.0 | 1.0 | Fleet-only capability |
-| Campaign F1-score | 0.0 | 0.4 | Fleet-only capability |
-| Campaign Purity | nan | 1.0 | Fleet-only capability |
+| Coordinated Campaign Detection | 0.0 | 1.0 | Fleet-only capability |
+| Campaign Recall | 0.0 | 1.0 | Fleet-only capability |
+| Campaign Precision | 0.0 | 0.8 | Fleet-only capability |
+| Campaign F1-score | 0.0 | 0.8889 | Fleet-only capability |
+| Campaign Purity | nan | 0.9835 | Fleet-only capability |
 | Cross-Vehicle Coverage | 0.0 | 1.0 | Fleet-only capability |
-| False Campaign Rate | nan | 0.0 | Lower is better |
+| False Campaign Rate | nan | 0.2 | Lower is better |

@@ -278,8 +278,16 @@ def train_graphsage_fleet_correlation(
     seed: int = 42,
     device: str | None = None,
     campaign_loss_weight: float = 0.25,
+    supervision: Literal["structure", "ids"] = "structure",
+    anomaly_feature_index: int = 0,
 ) -> tuple[GraphSAGEFleetCorrelator, dict[str, Any], np.ndarray, np.ndarray]:
-    """Train GraphSAGE for fleet correlation embeddings and campaign scores."""
+    """
+    Train GraphSAGE for fleet correlation embeddings and campaign scores.
+
+    ``structure`` (default): no dataset labels — link reconstruction on the behaviour graph
+    plus campaign scores aligned to the descriptor ``anomaly_score`` feature only.
+    ``ids``: supervised on node labels (legacy / ablation).
+    """
     torch.manual_seed(seed)
     _ensure_edges(data)
 
@@ -288,7 +296,6 @@ def train_graphsage_fleet_correlation(
     edge_index = data.edge_index.to(dev)
     y = data.y.long().to(dev)
     num_classes = max(int(y.max().item()) + 1 if y.numel() else 2, 2)
-    attack_target = (y > 0).float()
 
     train_mask, val_mask, test_mask = _random_masks(
         data.num_nodes, train_ratio=train_ratio, val_ratio=val_ratio, seed=seed
@@ -299,39 +306,58 @@ def train_graphsage_fleet_correlation(
     model = GraphSAGEFleetCorrelator(x.size(1), hidden_channels, embedding_dim, num_classes).to(dev)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
+    # Deployment-visible campaign proxy from descriptor anomaly score (no attack labels).
+    anom = x[:, anomaly_feature_index]
+    camp_target = (anom - anom.min()) / (anom.max() - anom.min() + 1e-9)
+
     history: list[dict[str, float]] = []
-    best_val = -1.0
+    best_metric = float("inf") if supervision == "structure" else -1.0
     best_state: dict[str, Any] | None = None
 
     for epoch in range(1, epochs + 1):
         model.train()
         optimizer.zero_grad()
-        _, logits, campaign_score = model(x, edge_index)
-        cls_loss = F.cross_entropy(logits[train_mask], y[train_mask])
-        camp_loss = F.binary_cross_entropy(campaign_score[train_mask], attack_target[train_mask])
-        loss = cls_loss + campaign_loss_weight * camp_loss
+        z, logits, campaign_score = model(x, edge_index)
+        if supervision == "structure":
+            z_norm = F.normalize(z, dim=-1)
+            src, dst = edge_index
+            link_loss = (1.0 - (z_norm[src] * z_norm[dst]).sum(dim=-1)).mean()
+            camp_loss = F.mse_loss(campaign_score, camp_target)
+            loss = link_loss + campaign_loss_weight * camp_loss
+        else:
+            attack_target = (y > 0).float()
+            cls_loss = F.cross_entropy(logits[train_mask], y[train_mask])
+            camp_loss = F.binary_cross_entropy(campaign_score[train_mask], attack_target[train_mask])
+            loss = cls_loss + campaign_loss_weight * camp_loss
         loss.backward()
         optimizer.step()
 
         model.eval()
         with torch.no_grad():
-            _, logits, _ = model(x, edge_index)
-            val_acc = _accuracy(logits, y, val_mask)
+            z_val, logits, _ = model(x, edge_index)
+            if supervision == "structure":
+                z_norm = F.normalize(z_val, dim=-1)
+                src, dst = edge_index
+                val_metric = float((1.0 - (z_norm[src] * z_norm[dst]).sum(dim=-1)).mean().item())
+                improved = val_metric <= best_metric
+            else:
+                val_metric = _accuracy(logits, y, val_mask)
+                improved = val_metric >= best_metric
 
-        history.append(
-            {
-                "epoch": float(epoch),
-                "loss": float(loss.item()),
-                "train_acc": _accuracy(logits, y, train_mask),
-                "val_acc": val_acc,
-            }
-        )
-        if val_acc >= best_val:
-            best_val = val_acc
+        history.append({"epoch": float(epoch), "loss": float(loss.item()), "val_metric": val_metric})
+        if improved:
+            best_metric = val_metric
             best_state = {k: v.cpu().clone() for k, v in model.state_dict().items()}
 
         if epoch == 1 or epoch % max(1, epochs // 5) == 0 or epoch == epochs:
-            logger.info("GraphSAGE epoch %d/%d loss=%.4f val_acc=%.4f", epoch, epochs, loss.item(), val_acc)
+            logger.info(
+                "GraphSAGE epoch %d/%d loss=%.4f val_metric=%.4f mode=%s",
+                epoch,
+                epochs,
+                loss.item(),
+                val_metric,
+                supervision,
+            )
 
     if best_state is not None:
         model.load_state_dict(best_state)
@@ -343,11 +369,12 @@ def train_graphsage_fleet_correlation(
     metrics = {
         "epochs": epochs,
         "architecture": "graphsage",
+        "supervision": supervision,
         "hidden_channels": hidden_channels,
         "embedding_dim": embedding_dim,
         "num_nodes": int(data.num_nodes),
         "num_edges": int(data.edge_index.size(1)),
-        "best_val_acc": float(best_val),
+        "best_val_metric": float(best_metric),
         "history": history,
     }
     return (

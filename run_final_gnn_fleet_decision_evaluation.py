@@ -63,7 +63,7 @@ def main() -> int:
         campaign_score_threshold=float(fd.get("campaign_score_threshold", 0.55)),
         min_cluster_size=int(fd.get("min_cluster_size", 10)),
         min_vehicles=int(fd.get("min_vehicles", 2)),
-        min_dominant_attack_ratio=float(fd.get("min_dominant_attack_ratio", 0.80)),
+        min_behavioral_cohesion=float(fd.get("min_behavioral_cohesion", 0.85)),
         dbscan_eps=float(fd.get("dbscan_eps", config.get("clustering", {}).get("dbscan_eps", 1.2))),
         dbscan_min_samples=int(fd.get("dbscan_min_samples", config.get("clustering", {}).get("dbscan_min_samples", 10))),
         dbscan_pca_components=int(fd.get("dbscan_pca_components", config.get("clustering", {}).get("dbscan_pca_components", 8))),
@@ -71,6 +71,7 @@ def main() -> int:
         max_graph_viz_nodes=int(fd.get("max_graph_viz_nodes", 800)),
         max_embedding_samples=int(fd.get("max_embedding_samples", 5000)),
         embedding_method=str(fd.get("embedding_method", "tsne")),  # type: ignore[arg-type]
+        gnn_supervision=str(fd.get("gnn_supervision", "structure")),  # type: ignore[arg-type]
         checkpoint_path=paths.root / ckpt,
         retrain_gnn=bool(fd.get("retrain_gnn", True)),
         seed=seed,
