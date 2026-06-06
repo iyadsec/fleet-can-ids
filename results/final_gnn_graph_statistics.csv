@@ -1,0 +1,2 @@
+similarity_view,top_k_same_vehicle,top_k_cross_vehicle,similarity_threshold,nodes,edges,density,average_degree,connected_components,cross_vehicle_edge_percentage
+gnn_fleet_behavior_normalized,10,5,0.95,77233,819914,0.00027491,21.2322,36,39.6845

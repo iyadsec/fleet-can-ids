@@ -1,0 +1,3 @@
+cluster_id,cluster_size,vehicles_in_cluster,dominant_attack_type,dominant_attack_ratio,mean_campaign_score,mean_anomaly_score,cluster_purity,is_qualifying_campaign_cluster
+0,876,3,replay,0.5308,0.9994,0.8871,0.5308,False
+1,284,2,flooding,1.0,1.0,1.0,1.0,True

@@ -62,6 +62,32 @@ class GraphSAGEEncoder(nn.Module):
         return z, logits
 
 
+class GraphSAGEFleetCorrelator(nn.Module):
+    """GraphSAGE encoder with attack logits and per-node campaign score."""
+
+    def __init__(
+        self,
+        in_channels: int,
+        hidden_channels: int,
+        embedding_dim: int,
+        num_classes: int,
+    ) -> None:
+        super().__init__()
+        self.conv1 = SAGEConv(in_channels, hidden_channels)
+        self.conv2 = SAGEConv(hidden_channels, embedding_dim)
+        self.classifier = nn.Linear(embedding_dim, num_classes)
+        self.campaign_scorer = nn.Sequential(nn.Linear(embedding_dim, 1), nn.Sigmoid())
+
+    def forward(
+        self, x: torch.Tensor, edge_index: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        h = F.relu(self.conv1(x, edge_index))
+        z = self.conv2(h, edge_index)
+        logits = self.classifier(z)
+        campaign_score = self.campaign_scorer(z).squeeze(-1)
+        return z, logits, campaign_score
+
+
 class GATEncoder(nn.Module):
     """Two-layer GAT encoder for optional experiments."""
 
@@ -237,6 +263,99 @@ def train_gnn(
         "history": history,
     }
     return model, metrics, emb_np
+
+
+def train_graphsage_fleet_correlation(
+    data: Any,
+    *,
+    hidden_channels: int = 64,
+    embedding_dim: int = 32,
+    epochs: int = 30,
+    learning_rate: float = 0.01,
+    weight_decay: float = 5e-4,
+    train_ratio: float = 0.7,
+    val_ratio: float = 0.15,
+    seed: int = 42,
+    device: str | None = None,
+    campaign_loss_weight: float = 0.25,
+) -> tuple[GraphSAGEFleetCorrelator, dict[str, Any], np.ndarray, np.ndarray]:
+    """Train GraphSAGE for fleet correlation embeddings and campaign scores."""
+    torch.manual_seed(seed)
+    _ensure_edges(data)
+
+    dev = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
+    x = data.x.to(dev)
+    edge_index = data.edge_index.to(dev)
+    y = data.y.long().to(dev)
+    num_classes = max(int(y.max().item()) + 1 if y.numel() else 2, 2)
+    attack_target = (y > 0).float()
+
+    train_mask, val_mask, test_mask = _random_masks(
+        data.num_nodes, train_ratio=train_ratio, val_ratio=val_ratio, seed=seed
+    )
+    train_mask = train_mask.to(dev)
+    val_mask = val_mask.to(dev)
+
+    model = GraphSAGEFleetCorrelator(x.size(1), hidden_channels, embedding_dim, num_classes).to(dev)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+
+    history: list[dict[str, float]] = []
+    best_val = -1.0
+    best_state: dict[str, Any] | None = None
+
+    for epoch in range(1, epochs + 1):
+        model.train()
+        optimizer.zero_grad()
+        _, logits, campaign_score = model(x, edge_index)
+        cls_loss = F.cross_entropy(logits[train_mask], y[train_mask])
+        camp_loss = F.binary_cross_entropy(campaign_score[train_mask], attack_target[train_mask])
+        loss = cls_loss + campaign_loss_weight * camp_loss
+        loss.backward()
+        optimizer.step()
+
+        model.eval()
+        with torch.no_grad():
+            _, logits, _ = model(x, edge_index)
+            val_acc = _accuracy(logits, y, val_mask)
+
+        history.append(
+            {
+                "epoch": float(epoch),
+                "loss": float(loss.item()),
+                "train_acc": _accuracy(logits, y, train_mask),
+                "val_acc": val_acc,
+            }
+        )
+        if val_acc >= best_val:
+            best_val = val_acc
+            best_state = {k: v.cpu().clone() for k, v in model.state_dict().items()}
+
+        if epoch == 1 or epoch % max(1, epochs // 5) == 0 or epoch == epochs:
+            logger.info("GraphSAGE epoch %d/%d loss=%.4f val_acc=%.4f", epoch, epochs, loss.item(), val_acc)
+
+    if best_state is not None:
+        model.load_state_dict(best_state)
+
+    model.eval()
+    with torch.no_grad():
+        embeddings, _, campaign_scores = model(x, edge_index)
+
+    metrics = {
+        "epochs": epochs,
+        "architecture": "graphsage",
+        "hidden_channels": hidden_channels,
+        "embedding_dim": embedding_dim,
+        "num_nodes": int(data.num_nodes),
+        "num_edges": int(data.edge_index.size(1)),
+        "best_val_acc": float(best_val),
+        "history": history,
+    }
+    return (
+        model,
+        metrics,
+        embeddings.cpu().numpy().astype(np.float32),
+        campaign_scores.cpu().numpy().astype(np.float32),
+    )
 
 
 def save_node_embeddings(
