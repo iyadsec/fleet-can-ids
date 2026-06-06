@@ -5,7 +5,7 @@ Generate final research deliverables for the fleet-aware CAN IDS paper.
 Runs the existing end-to-end pipeline and then exports publication-ready outputs:
 
   data loading → preprocessing → window generation → self-supervised training
-  → descriptor generation → compression analysis → graph construction → GNN
+  → descriptor generation → compression analysis → graph construction → [optional GNN]
   → clustering → evaluation → evidence package export
 
 Usage:

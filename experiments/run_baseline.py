@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Baseline experiment entry point (data + graph scaffold; no models yet)."""
+"""Deprecated baseline scaffold — use run_all_experiments.py or run_*.py evaluations instead."""
 
 from __future__ import annotations
 
@@ -7,41 +7,28 @@ import argparse
 import sys
 from pathlib import Path
 
-# Allow running as: python experiments/run_baseline.py
 _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from src.graph import build_fleet_graph
-from src.utils import get_logger, load_config
-from src.utils.paths import ProjectPaths
+from src.utils import get_logger
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Fleet-Aware CAN-IDS baseline scaffold")
-    parser.add_argument(
-        "--config",
-        type=str,
-        default="configs/default.yaml",
-        help="Path to YAML config (relative to project root)",
-    )
+    parser = argparse.ArgumentParser(description="Deprecated — use run_all_experiments.py")
+    parser.add_argument("--config", type=str, default="configs/default.yaml")
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
     logger = get_logger("experiments.run_baseline")
-    config = load_config(args.config)
-    paths = ProjectPaths.from_root(_ROOT)
-
-    logger.info("Project root: %s", paths.root)
-    logger.info("Experiment: %s", config.get("experiment", {}).get("name", "unnamed"))
-    logger.info("Models are not implemented yet — graph scaffold only.")
-
-    # Empty trace list until loaders are implemented
-    graph = build_fleet_graph([], config)
-    logger.info("Fleet graph: %d nodes, %d edges", graph.n_nodes, graph.n_edges)
-
+    logger.warning(
+        "experiments/run_baseline.py is deprecated. "
+        "Vehicle IDS, fleet graphs, and campaign detection are implemented under src/ "
+        "and run via run_all_experiments.py or run_*.py (see README.md)."
+    )
+    logger.info("Config argument ignored: %s", args.config)
     return 0
 
 

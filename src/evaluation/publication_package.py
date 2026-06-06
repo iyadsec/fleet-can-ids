@@ -194,7 +194,9 @@ def export_publication_package(
         "### Notes",
         "",
         "- Vehicle IDS uses **self-supervised Isolation Forest** trained only on benign windows.",
-        "- Fleet IDS uses a behavioural similarity graph and GNN embeddings + clustering.",
+        "- Fleet campaign detection (IEEE) uses a **behaviour-normalized similarity graph** and "
+        "**DBSCAN clustering** on descriptor features — not a trained FCGNN.",
+        "- An optional PyTorch Geometric GNN step (`train_gnn`) exists for legacy pipeline clustering only.",
         "",
     ]
     summary_path.write_text("\n".join(summary_lines), encoding="utf-8")

@@ -1,0 +1,16 @@
+\begin{table}[t]
+\centering
+\begin{tabular}{llrl}
+\toprule
+Metric & Local IDS & Fleet-Aware IDS & Improvement / Added Capability \\
+\midrule
+Attack detection recall & 0.7933 & 0.7933 & Same local evidence (no retraining) \\
+Campaign-level detection rate & 0.0 & 0.2500 & Fleet-only capability \\
+Cross-vehicle correlation & 0.0 & 1.0000 & Fleet-only capability \\
+Campaign purity & -- & 1.0000 & Fleet-only capability \\
+False campaign rate & -- & 0.0000 & Lower is better \\
+\bottomrule
+\end{tabular}
+\caption{Local IDS vs fleet-aware coordinated campaign detection.}
+\label{tab:local-vs-fleet-campaign}
+\end{table}

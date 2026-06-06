@@ -1,0 +1,5 @@
+campaign_id,attack_type,vehicles_involved,true_campaign_windows,detected,matching_clusters,fragmentation,campaign_purity
+CAMP-flooding,flooding,3,5209,True,1,1,1.0
+CAMP-fuzzy,fuzzy,3,20179,False,0,0,
+CAMP-malfunction,malfunction,3,23447,False,0,0,
+CAMP-replay,replay,2,16241,False,0,0,

@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 
 from src.utils.logging import get_logger
@@ -206,111 +205,95 @@ def _build_table_03_agnostic_score(src: Path) -> pd.DataFrame:
     return _load_csv(src, "vehicle_agnostic_score.csv").round(4)
 
 
-def _build_table_04_fleet_correlation(src: Path) -> pd.DataFrame:
-    local = _load_csv(src, "local_only_detection_metrics.csv").iloc[0]
-    fleet = _load_csv(src, "fleet_level_detection_metrics.csv").iloc[0]
-    weak_local = _load_csv(src, "weak_anomaly_local_metrics.csv").iloc[0]
-    selective = _load_csv(src, "selective_weak_promotion_operating_point.csv").iloc[0]
-    conservative = _load_csv(src, "weak_recovery_best_configurations.csv")
-    cons = conservative[conservative["Configuration Name"] == "Conservative"].iloc[0]
-    ablation = _load_csv(src, "behavior_view_fleet_graph_statistics.csv")
-    full_row = ablation[ablation["similarity_view"] == "full_descriptor"].iloc[0]
-    norm_row = ablation[ablation["similarity_view"] == "behavior_only_vehicle_normalized"].iloc[0]
-    full_cross_pct = 100.0 * float(full_row["num_cross_vehicle_edges"]) / max(float(full_row["num_edges"]), 1.0)
-    norm_cross_pct = 100.0 * float(norm_row["num_cross_vehicle_edges"]) / max(float(norm_row["num_edges"]), 1.0)
+def _build_table_04_campaign_detection(src: Path) -> pd.DataFrame:
+    from src.evaluation.campaign_detection_experiment import build_campaign_results_table
 
-    return pd.DataFrame(
-        [
-            {
-                "Evaluation": "Full-dataset detection (strong alerts)",
-                "Local IDS F1": round(float(local["f1"]), 4),
-                "Fleet-aware F1": round(float(fleet["f1"]), 4),
-                "FPR (%)": round(float(fleet["false_positive_rate"]) * 100, 2),
-                "Cross-vehicle edges (%)": float("nan"),
-                "Note": "No F1 gain under top-k graph + ≥3 vehicle cluster gates",
-            },
-            {
-                "Evaluation": "Weak anomalies — local baseline",
-                "Local IDS F1": round(float(weak_local["f1"]), 4),
-                "Fleet-aware F1": round(float(selective["f1"]), 4),
-                "FPR (%)": round(float(selective["false_positive_rate"]) * 100, 2),
-                "Cross-vehicle edges (%)": float("nan"),
-                "Note": "Selective DBSCAN promotion (eps=1.2, gated)",
-            },
-            {
-                "Evaluation": "Weak anomalies — optimized conservative",
-                "Local IDS F1": 0.0,
-                "Fleet-aware F1": round(float(cons["F1"]), 4),
-                "FPR (%)": round(float(cons["FPR"]) * 100, 2),
-                "Cross-vehicle edges (%)": float("nan"),
-                "Note": f"Weak recovery {cons['Recovery Rate']:.2f}% (grid search, FPR≤5%)",
-            },
-            {
-                "Evaluation": "Graph connectivity — full descriptor",
-                "Local IDS F1": float("nan"),
-                "Fleet-aware F1": float("nan"),
-                "FPR (%)": float("nan"),
-                "Cross-vehicle edges (%)": round(full_cross_pct, 4),
-                "Note": "Top-k similarity on full descriptor features",
-            },
-            {
-                "Evaluation": "Graph connectivity — behaviour-normalized",
-                "Local IDS F1": float("nan"),
-                "Fleet-aware F1": float("nan"),
-                "FPR (%)": float("nan"),
-                "Cross-vehicle edges (%)": round(norm_cross_pct, 4),
-                "Note": "Vehicle-normalized behavioural similarity view",
-            },
-        ]
+    per_type = _load_csv(src, "campaign_detection_by_type.csv")
+    metrics_raw = _load_csv(src, "campaign_detection_metrics.csv")
+    metrics = {str(r["metric"]): float(r["value"]) for _, r in metrics_raw.iterrows()}
+    return build_campaign_results_table(per_type, metrics)
+
+
+def _build_table_04_local_vs_fleet_campaign(src: Path) -> pd.DataFrame:
+    return _load_csv(src, "local_vs_fleet_campaign_comparison.csv")
+
+
+def _ensure_campaign_detection_results(repo_root: Path) -> None:
+    """Run campaign detection if IEEE Contribution 4 artifacts are missing."""
+    required = repo_root / "results" / "campaign_ground_truth.csv"
+    if required.exists():
+        return
+    logger.info("Campaign detection results missing; running evaluation before IEEE export.")
+    from src.evaluation.campaign_detection_experiment import (
+        CampaignDetectionConfig,
+        CampaignDetectionOutputs,
+        run_campaign_detection_experiment,
+    )
+    from src.graph.fleet_similarity_features import parse_fleet_graph_similarity_settings
+    from src.utils.config import get_nested, load_config
+    from src.utils.paths import ProjectPaths
+
+    paths = ProjectPaths.from_root(repo_root)
+    config = load_config(repo_root / "configs" / "fleet_ids.yaml")
+    pub = config.get("publication", {})
+    artifacts = get_nested(config, "pipeline", "artifacts", default={}) or {}
+    cd = config.get("campaign_detection", {})
+    fg = parse_fleet_graph_similarity_settings(config)
+    fleet_graph_cfg = config.get("fleet_graph", {})
+    seed = int(get_nested(config, "project", "seed", default=42))
+    cfg = CampaignDetectionConfig(
+        top_k_same_vehicle=int(cd.get("top_k_same_vehicle", fleet_graph_cfg.get("top_k_same_vehicle", 10))),
+        top_k_cross_vehicle=int(cd.get("top_k_cross_vehicle", fleet_graph_cfg.get("top_k_cross_vehicle", 5))),
+        similarity_threshold=float(cd.get("similarity_threshold", fleet_graph_cfg.get("similarity_threshold", 0.95))),
+        similarity_feature_view=fg["similarity_feature_view"],
+        feature_dominance_threshold=float(fg["feature_dominance_threshold"]),
+        allowed_high_dominance_features=fg["allowed_high_dominance_features"],
+        min_vehicles=int(cd.get("min_vehicles", 2)),
+        min_cluster_size=int(cd.get("min_cluster_size", 10)),
+        min_cohesion=float(cd.get("min_cohesion", 0.85)),
+        min_dominant_attack_ratio=float(cd.get("min_dominant_attack_ratio", 0.60)),
+        campaign_match_recall=float(cd.get("campaign_match_recall", 0.10)),
+        campaign_match_min_nodes=int(cd.get("campaign_match_min_nodes", 15)),
+        dbscan_eps=float(cd.get("dbscan_eps", config.get("clustering", {}).get("dbscan_eps", 1.2))),
+        dbscan_min_samples=int(cd.get("dbscan_min_samples", config.get("clustering", {}).get("dbscan_min_samples", 10))),
+        dbscan_pca_components=int(cd.get("dbscan_pca_components", config.get("clustering", {}).get("dbscan_pca_components", 8))),
+        max_clustering_samples=int(cd.get("max_clustering_samples", config.get("clustering", {}).get("max_clustering_samples", 20000))),
+        max_graph_viz_nodes=int(cd.get("max_graph_viz_nodes", 800)),
+        max_embedding_samples=int(cd.get("max_embedding_samples", 5000)),
+        embedding_method=str(cd.get("embedding_method", "tsne")),  # type: ignore[arg-type]
+        seed=seed,
+    )
+    run_campaign_detection_experiment(
+        descriptors_path=paths.root / artifacts.get("anomaly_descriptors", "data/processed/anomaly_descriptors.csv"),
+        features_path=paths.root / artifacts.get("window_features", "data/processed/window_features.csv"),
+        outputs=CampaignDetectionOutputs(
+            results_dir=paths.root / str(pub.get("results_dir", "results")),
+            tables_dir=paths.root / str(pub.get("tables_dir", "tables")),
+            figures_dir=paths.root / str(pub.get("figures_dir", "figures")),
+        ),
+        cfg=cfg,
     )
 
 
-def _figure_06_fleet_correlation(src: Path, outputs: IeeePaperOutputs) -> Path:
-    """Two-panel fleet correlation summary (connectivity + weak recovery trade-off)."""
-    ablation = pd.read_csv(src / "behavior_view_topk_vehicle_bias.csv")
-    ops = pd.read_csv(src / "weak_recovery_best_configurations.csv")
-    ops = ops[ops["Configuration Name"].isin(["Conservative", "Balanced", "Maximum Recovery"])]
-
-    fig, axes = plt.subplots(1, 2, figsize=(10, 4))
-    labels = ["Full\nDescriptor", "Behaviour-\nOnly", "Behaviour-\nNormalized"]
-    x = np.arange(len(labels))
-    same = ablation["pct_same_vehicle_edges"].to_numpy()
-    cross = ablation["pct_cross_vehicle_edges"].to_numpy()
-    w = 0.35
-    axes[0].bar(x - w / 2, same, width=w, label="Same-vehicle", color="#4472C4")
-    axes[0].bar(x + w / 2, cross, width=w, label="Cross-vehicle", color="#ED7D31")
-    axes[0].set_xticks(x)
-    axes[0].set_xticklabels(labels, fontsize=8)
-    axes[0].set_ylabel("Edge share (%)")
-    axes[0].set_title("(a) Fleet graph connectivity")
-    axes[0].legend(fontsize=7)
-    axes[0].grid(axis="y", alpha=0.3)
-
-    axes[1].scatter(
-        ops["FPR"] * 100,
-        ops["Recovery Rate"],
-        s=80,
-        c=["#70AD47", "#4472C4", "#C00000"],
-        edgecolors="k",
-        linewidths=0.5,
-    )
-    for _, row in ops.iterrows():
-        axes[1].annotate(
-            row["Configuration Name"].replace(" ", "\n"),
-            (row["FPR"] * 100, row["Recovery Rate"]),
-            fontsize=6,
-            xytext=(4, 4),
-            textcoords="offset points",
-        )
-    axes[1].set_xlabel("False positive rate (%)")
-    axes[1].set_ylabel("Weak recovery rate (%)")
-    axes[1].set_title("(b) Weak anomaly recovery operating points")
-    axes[1].grid(True, alpha=0.3)
-    fig.suptitle("Fleet-level correlation analysis", fontsize=11)
-    fig.tight_layout()
-    base = outputs.figures_dir / "figure_06_fleet_correlation_analysis"
-    _save_figure(fig, base)
-    return base.with_suffix(".pdf")
+def _copy_campaign_supporting_results(src: Path, outputs: IeeePaperOutputs) -> dict[str, Path]:
+    """Mirror campaign CSVs into the paper bundle."""
+    names = [
+        "campaign_ground_truth.csv",
+        "campaign_graph_statistics.csv",
+        "detected_campaign_clusters.csv",
+        "campaign_detection_metrics.csv",
+        "campaign_detection_by_type.csv",
+        "local_vs_fleet_campaign_comparison.csv",
+        "campaign_detection_summary.md",
+    ]
+    copied: dict[str, Path] = {}
+    for name in names:
+        src_path = src / name
+        if src_path.exists():
+            dst = outputs.results_dir / name
+            shutil.copy2(src_path, dst)
+            copied[name] = dst
+    return copied
 
 
 def _write_interpretations(path: Path, sections: dict[str, str]) -> None:
@@ -328,6 +311,7 @@ def _write_interpretations(path: Path, sections: dict[str, str]) -> None:
 
 def run_ieee_paper_exports(*, repo_root: Path) -> dict[str, Any]:
     plt.rcParams.update(IEEE_RC)
+    _ensure_campaign_detection_results(repo_root)
     src = repo_root / "results"
     src_fig = repo_root / "figures"
     paper = repo_root / "paper"
@@ -387,18 +371,34 @@ def run_ieee_paper_exports(*, repo_root: Path) -> dict[str, Any]:
     agnostic.to_csv(outputs.results_dir / "table_03_vehicle_agnostic_score.csv", index=False)
     _copy_figure(src_fig / "descriptor_embedding_by_attack", outputs.figures_dir / "figure_05_cross_vehicle_embedding")
 
-    # --- Contribution 4: Fleet-Level Correlation ---
-    t4 = _build_table_04_fleet_correlation(src)
+    # --- Contribution 4: Fleet Campaign Detection ---
+    t4 = _build_table_04_campaign_detection(src)
     written["table_04"] = _export_table_bundle(
         t4,
-        stem="table_04_fleet_correlation_analysis",
-        caption="Fleet-level correlation analysis: full-dataset detection, weak-anomaly recovery, and graph connectivity.",
-        label="tab:fleet-correlation",
-        title="Table 4: Fleet-Level Correlation Analysis",
+        stem="table_04_campaign_detection_results",
+        caption="Coordinated campaign detection on controlled multi-vehicle attack scenarios "
+        "(behaviour-normalized descriptor similarity graph; scenarios constructed from labelled windows).",
+        label="tab:campaign-detection-results",
+        title="Table 4: Coordinated Campaign Detection Results",
         outputs=outputs,
     )
-    fig6 = _figure_06_fleet_correlation(src, outputs)
-    written["figure_06"] = fig6
+    t4b = _build_table_04_local_vs_fleet_campaign(src)
+    written["table_04_local_vs_fleet"] = _export_table_bundle(
+        t4b,
+        stem="table_04_local_vs_fleet_campaign_detection",
+        caption="Local IDS vs fleet-aware coordinated campaign detection.",
+        label="tab:local-vs-fleet-campaign",
+        title="Table 4 (supplementary): Local IDS vs Fleet-Aware Campaign Detection",
+        outputs=outputs,
+    )
+    written["campaign_supporting"] = _copy_campaign_supporting_results(src, outputs)
+    _copy_figure(src_fig / "fleet_campaign_graph", outputs.figures_dir / "figure_06_fleet_campaign_graph")
+    _copy_figure(
+        src_fig / "campaign_descriptor_embedding",
+        outputs.figures_dir / "figure_07_campaign_descriptor_embedding",
+    )
+    written["figure_06"] = outputs.figures_dir / "figure_06_fleet_campaign_graph.pdf"
+    written["figure_07"] = outputs.figures_dir / "figure_07_campaign_descriptor_embedding.pdf"
 
     # Mirror numbered tables to repo tables/ for convenience
     mirror_tables = repo_root / "tables"
@@ -410,6 +410,13 @@ def run_ieee_paper_exports(*, repo_root: Path) -> dict[str, Any]:
                 shutil.copy2(p, mirror_tables / p.name.replace("table_0", "ieee_table_0"))
             else:
                 shutil.copy2(p, mirror_tables / p.name)
+    for fmt in ("csv", "md", "tex"):
+        p = written["table_04_local_vs_fleet"][fmt if fmt != "csv" else "csv"]
+        if fmt == "csv":
+            dst = mirror_tables / "ieee_table_04_local_vs_fleet_campaign_detection.csv"
+        else:
+            dst = mirror_tables / p.name
+        shutil.copy2(p, dst)
 
     interpretations = {
         "Contribution 1 — Vehicle-Level IDS Effectiveness": """
@@ -417,8 +424,8 @@ The self-supervised Isolation Forest achieves **ROC-AUC 0.786** and **PR-AUC 0.9
 Precision is high (**97.3%**) but recall is moderate (**46.0%**, F1 **62.4%**), indicating conservative strong-alert generation.
 Per-attack F1 ranges from **39.8% (replay)** to **81.3% (fuzzy)**; replay remains the hardest class at the chosen threshold.
 
-**Interpretation:** The vehicle-level IDS provides a usable local baseline with low false alarms, but does not fully recover weak or replay-dominated attacks without fleet-level correlation.
-**Limitation:** Threshold selection trades recall for FPR; weak anomalies are largely deferred to the fleet layer.
+**Interpretation:** The vehicle-level IDS provides a usable local baseline with low false alarms, but cannot group cross-vehicle attack behaviour into coordinated campaigns.
+**Limitation:** Threshold selection trades recall for FPR; campaign-level reasoning requires the fleet correlation layer.
         """,
         "Contribution 2 — Descriptor Compactness and Security": """
 Descriptors compress raw CAN windows by **12.6×** (**92%** bandwidth reduction), with **94%** fleet bandwidth reduction at 100 vehicles.
@@ -440,16 +447,19 @@ Embeddings (Figure 5) show attack-type structure spanning multiple vehicle marke
 **Interpretation:** Descriptor features encode attack behaviour that transfers across heterogeneous vehicles, supporting fleet deployment.
 **Limitation:** ROC-AUC is moderate for linear models (0.60); Chevrolet's smaller corpus limits some pairs; descriptors still permit vehicle classification.
         """,
-        "Contribution 4 — Fleet-Level Correlation Analysis": """
-On the **full labelled dataset**, fleet graph correlation with **≥3 vehicle cluster gates** does **not** improve strong-alert F1 over local IDS (**0.846 vs 0.846**) under the original top-k similarity graph.
-**Behaviour-normalized** graph construction increases cross-vehicle edges from **≈0.02%** to **≈1.08%**, enabling cross-platform correlation that identity-dominated similarity suppresses.
+        "Contribution 4 — Fleet Campaign Detection": """
+Controlled campaign scenarios were constructed from labelled attack windows across **four attack types** (flooding, fuzzy, replay, malfunction) spanning **2–3 vehicles** each.
+These scenarios evaluate fleet-level campaign reasoning; they **do not** represent externally synchronized real-world campaigns.
 
-For **weak anomalies**, ungated connected-component promotion inflates FPR; **selective DBSCAN promotion** achieves modest recovery (**≈1.3%**, conservative grid-search point) at **FPR ≈ 1.6%** (operating point) to **2.3%** (optimized conservative).
-The full-dataset strong-alert evaluation reports identical local and fleet F1 (**0.846**) at **FPR ≈ 44%** — a different operating context from the vehicle-level threshold in Table 1 (FPR ≤ 5%).
-The IEEE recovery target (≥10% at FPR ≤ 10%) was **not achieved** in systematic optimization (max recovery **1.41%**).
+The behaviour-normalized fleet graph achieves **≈42%** cross-vehicle edges.
+DBSCAN clustering on behavioural descriptors yields **one valid cross-vehicle campaign cluster** (flooding, Hyundai+Kia, purity **100%**, mean similarity **0.99**).
+Overall **campaign detection rate is 25%** (1/4 scenarios), with **campaign precision 100%** and **false campaign rate 0%** under current gates.
+Fuzzy, replay, and malfunction campaigns were **not** recovered as distinct multi-vehicle clusters at the chosen similarity/cohesion thresholds.
 
-**Interpretation:** Fleet correlation adds value primarily through (i) cross-vehicle graph connectivity and (ii) gated weak-anomaly promotion, not through blanket cluster escalation.
-**Limitation:** Strong-anomaly fleet gains are null under current gates; weak recovery remains low despite cross-vehicle connectivity improvements.
+Local IDS retains the same per-window attack recall (**≈79%** on campaign windows) but **cannot** perform campaign-level detection (**0%** vs **25%** fleet scenario detection rate).
+
+**Interpretation:** The fleet-aware correlation layer enables campaign-level detection by grouping behaviourally similar anomaly descriptors across multiple vehicles — a capability unavailable to isolated vehicle-level IDS models.
+**Limitation:** Detection is strongest for flooding; other attack types overlap behaviourally or form larger mixed clusters; campaign scenarios are synthetically defined from the public dataset labels.
         """,
     }
     interp_path = outputs.results_dir / "ieee_experimental_evaluation_interpretations.md"
@@ -468,7 +478,8 @@ The IEEE recovery target (≥10% at FPR ≤ 10%) was **not achieved** in systema
                 "| Table 1 | `paper/tables/table_01_vehicle_level_ids.tex` | Vehicle-Level IDS |",
                 "| Table 2 | `paper/tables/table_02_descriptor_compactness_security.tex` | Descriptor Compactness & Security |",
                 "| Table 3 | `paper/tables/table_03_cross_vehicle_generalisation.tex` | Cross-Vehicle Generalisation |",
-                "| Table 4 | `paper/tables/table_04_fleet_correlation_analysis.tex` | Fleet Correlation |",
+                "| Table 4 | `paper/tables/table_04_campaign_detection_results.tex` | Fleet Campaign Detection |",
+                "| Table 4 (supp.) | `paper/tables/table_04_local_vs_fleet_campaign_detection.tex` | Fleet Campaign Detection |",
                 "",
                 "## Figures",
                 "| Figure | File | Contribution |",
@@ -478,7 +489,8 @@ The IEEE recovery target (≥10% at FPR ≤ 10%) was **not achieved** in systema
                 "| Figure 3 | `paper/figures/figure_03_descriptor_bandwidth_exposure.pdf` | Descriptor Security |",
                 "| Figure 4 | `paper/figures/figure_04_payload_reconstruction_risk.pdf` | Descriptor Security |",
                 "| Figure 5 | `paper/figures/figure_05_cross_vehicle_embedding.pdf` | Cross-Vehicle Generalisation |",
-                "| Figure 6 | `paper/figures/figure_06_fleet_correlation_analysis.pdf` | Fleet Correlation |",
+                "| Figure 6 | `paper/figures/figure_06_fleet_campaign_graph.pdf` | Fleet Campaign Detection |",
+                "| Figure 7 | `paper/figures/figure_07_campaign_descriptor_embedding.pdf` | Fleet Campaign Detection |",
                 "",
                 "## Supporting CSVs",
                 "All under `paper/results/`.",

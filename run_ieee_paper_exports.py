@@ -2,6 +2,8 @@
 """
 Generate publication-quality IEEE Experimental Evaluation exports (4 contributions).
 
+Runs campaign detection first if Contribution 4 results are missing.
+
 Usage:
   python3 run_ieee_paper_exports.py
 """

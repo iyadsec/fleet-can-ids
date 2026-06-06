@@ -172,6 +172,25 @@ cross_vehicle_generalisation:
   dbscan_min_samples: 10
   random_forest_estimators: 200
 
+# Coordinated campaign detection (run_campaign_detection_evaluation.py)
+campaign_detection:
+  top_k_same_vehicle: 10
+  top_k_cross_vehicle: 5
+  similarity_threshold: 0.95
+  min_vehicles: 2
+  min_cluster_size: 10
+  min_cohesion: 0.85
+  min_dominant_attack_ratio: 0.60
+  campaign_match_recall: 0.10
+  campaign_match_min_nodes: 15
+  dbscan_eps: 1.2
+  dbscan_min_samples: 10
+  dbscan_pca_components: 8
+  max_clustering_samples: 20000
+  max_graph_viz_nodes: 800
+  max_embedding_samples: 5000
+  embedding_method: tsne
+
 # Fleet correlation experiment (run_fleet_correlation_evaluation.py)
 # Top-k neighbourhoods + high cosine threshold (Equation 4 / meaningful N(u))
 fleet_correlation:

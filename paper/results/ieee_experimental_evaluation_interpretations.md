@@ -9,8 +9,8 @@ The self-supervised Isolation Forest achieves **ROC-AUC 0.786** and **PR-AUC 0.9
 Precision is high (**97.3%**) but recall is moderate (**46.0%**, F1 **62.4%**), indicating conservative strong-alert generation.
 Per-attack F1 ranges from **39.8% (replay)** to **81.3% (fuzzy)**; replay remains the hardest class at the chosen threshold.
 
-**Interpretation:** The vehicle-level IDS provides a usable local baseline with low false alarms, but does not fully recover weak or replay-dominated attacks without fleet-level correlation.
-**Limitation:** Threshold selection trades recall for FPR; weak anomalies are largely deferred to the fleet layer.
+**Interpretation:** The vehicle-level IDS provides a usable local baseline with low false alarms, but cannot group cross-vehicle attack behaviour into coordinated campaigns.
+**Limitation:** Threshold selection trades recall for FPR; campaign-level reasoning requires the fleet correlation layer.
 
 ## Contribution 2 — Descriptor Compactness and Security
 
@@ -34,14 +34,17 @@ Embeddings (Figure 5) show attack-type structure spanning multiple vehicle marke
 **Interpretation:** Descriptor features encode attack behaviour that transfers across heterogeneous vehicles, supporting fleet deployment.
 **Limitation:** ROC-AUC is moderate for linear models (0.60); Chevrolet's smaller corpus limits some pairs; descriptors still permit vehicle classification.
 
-## Contribution 4 — Fleet-Level Correlation Analysis
+## Contribution 4 — Fleet Campaign Detection
 
-On the **full labelled dataset**, fleet graph correlation with **≥3 vehicle cluster gates** does **not** improve strong-alert F1 over local IDS (**0.846 vs 0.846**) under the original top-k similarity graph.
-**Behaviour-normalized** graph construction increases cross-vehicle edges from **≈0.02%** to **≈1.08%**, enabling cross-platform correlation that identity-dominated similarity suppresses.
+Controlled campaign scenarios were constructed from labelled attack windows across **four attack types** (flooding, fuzzy, replay, malfunction) spanning **2–3 vehicles** each.
+These scenarios evaluate fleet-level campaign reasoning; they **do not** represent externally synchronized real-world campaigns.
 
-For **weak anomalies**, ungated connected-component promotion inflates FPR; **selective DBSCAN promotion** achieves modest recovery (**≈1.3%**, conservative grid-search point) at **FPR ≈ 1.6%** (operating point) to **2.3%** (optimized conservative).
-The full-dataset strong-alert evaluation reports identical local and fleet F1 (**0.846**) at **FPR ≈ 44%** — a different operating context from the vehicle-level threshold in Table 1 (FPR ≤ 5%).
-The IEEE recovery target (≥10% at FPR ≤ 10%) was **not achieved** in systematic optimization (max recovery **1.41%**).
+The behaviour-normalized fleet graph achieves **≈42%** cross-vehicle edges.
+DBSCAN clustering on behavioural descriptors yields **one valid cross-vehicle campaign cluster** (flooding, Hyundai+Kia, purity **100%**, mean similarity **0.99**).
+Overall **campaign detection rate is 25%** (1/4 scenarios), with **campaign precision 100%** and **false campaign rate 0%** under current gates.
+Fuzzy, replay, and malfunction campaigns were **not** recovered as distinct multi-vehicle clusters at the chosen similarity/cohesion thresholds.
 
-**Interpretation:** Fleet correlation adds value primarily through (i) cross-vehicle graph connectivity and (ii) gated weak-anomaly promotion, not through blanket cluster escalation.
-**Limitation:** Strong-anomaly fleet gains are null under current gates; weak recovery remains low despite cross-vehicle connectivity improvements.
+Local IDS retains the same per-window attack recall (**≈79%** on campaign windows) but **cannot** perform campaign-level detection (**0%** vs **25%** fleet scenario detection rate).
+
+**Interpretation:** The fleet-aware correlation layer enables campaign-level detection by grouping behaviourally similar anomaly descriptors across multiple vehicles — a capability unavailable to isolated vehicle-level IDS models.
+**Limitation:** Detection is strongest for flooding; other attack types overlap behaviourally or form larger mixed clusters; campaign scenarios are synthetically defined from the public dataset labels.
