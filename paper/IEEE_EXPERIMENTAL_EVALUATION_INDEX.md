@@ -23,10 +23,10 @@ Vehicle IDS → Anomaly Descriptors → Behaviour Graph → GraphSAGE (structure
 | Figure 6 | `paper/figures/figure_06_cross_vehicle_descriptor_embedding.pdf` | H3 |
 | Figure 7 | `paper/figures/figure_07_gnn_fleet_campaign_graph.pdf` | H4 |
 | Figure 8 | `paper/figures/figure_08_final_attack_decision_distribution.pdf` | H4 |
-| Figure 9 | `paper/figures/figure_09_campaign_detection_by_attack_type.pdf` | H4 |
 
 Figure 7 node colour = `isolated_attack` vs `coordinated_attack` (runtime decision).
-Attack types in Figures 6 and 9 are evaluation/visualisation only.
+Per-attack-type evaluation metrics are in Table 5 only (no Figure 9).
+Attack types in Figure 6 are evaluation/visualisation only.
 
 ## Supporting CSVs
 All under `paper/results/`.

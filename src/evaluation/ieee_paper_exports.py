@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 
 from src.utils.logging import get_logger
@@ -32,6 +31,7 @@ OBSOLETE_PAPER_STEMS = (
     "figure_05_cross_vehicle_embedding",
     "figure_06_fleet_campaign_graph",
     "figure_07_campaign_descriptor_embedding",
+    "figure_09_campaign_detection_by_attack_type",
     "table_04_campaign_detection_results",
     "table_04_local_vs_fleet_campaign_detection",
 )
@@ -242,28 +242,6 @@ def _build_table_04_local_vs_gnn_fleet(src: Path) -> pd.DataFrame:
 
 def _build_table_05_coordinated_campaigns(src: Path) -> pd.DataFrame:
     return _load_csv(src, "table_final_campaign_detection_by_attack_type.csv").round(4)
-
-
-def _plot_figure_09_campaign_by_attack_type(df: Path, out_base: Path) -> None:
-    """Bar chart of evaluation campaign recall and behavioural cohesion by attack type."""
-    data = pd.read_csv(df)
-    data = data[data["Attack Type"] != "Overall"].copy()
-    attacks = data["Attack Type"].tolist()
-    recall = data["Campaign Recall"].astype(float).to_numpy()
-    purity = data["Campaign Purity"].astype(float).to_numpy()
-    x = np.arange(len(attacks))
-    width = 0.35
-    fig, ax = plt.subplots(figsize=(7, 4))
-    ax.bar(x - width / 2, recall, width, label="Campaign recall (eval)", color="#4472C4")
-    ax.bar(x + width / 2, purity, width, label="Behavioural cohesion", color="#C00000")
-    ax.set_xticks(x)
-    ax.set_xticklabels(attacks)
-    ax.set_ylim(0, 1.05)
-    ax.set_ylabel("Score")
-    ax.set_title("Campaign Detection by Attack Type (Evaluation)")
-    ax.legend(fontsize=7)
-    fig.tight_layout()
-    _save_figure(fig, out_base)
 
 
 def _ensure_prerequisite_experiments(repo_root: Path) -> None:
@@ -482,11 +460,8 @@ def run_ieee_paper_exports(*, repo_root: Path) -> dict[str, Any]:
 
     _copy_figure(src_fig / "final_gnn_fleet_campaign_graph", outputs.figures_dir / "figure_07_gnn_fleet_campaign_graph")
     _copy_figure(src_fig / "final_attack_decision_distribution", outputs.figures_dir / "figure_08_final_attack_decision_distribution")
-    fig9_base = outputs.figures_dir / "figure_09_campaign_detection_by_attack_type"
-    _plot_figure_09_campaign_by_attack_type(src / "table_final_campaign_detection_by_attack_type.csv", fig9_base)
     written["figure_07"] = outputs.figures_dir / "figure_07_gnn_fleet_campaign_graph.pdf"
     written["figure_08"] = outputs.figures_dir / "figure_08_final_attack_decision_distribution.pdf"
-    written["figure_09"] = fig9_base.with_suffix(".pdf")
 
     mirror_tables = repo_root / "tables"
     mirror_tables.mkdir(exist_ok=True)
@@ -519,7 +494,7 @@ Cross-vehicle descriptor embeddings (Figure 6) show attack-behaviour structure s
 
 **Interpretation:** H3 is supported — behavioural descriptors generalise across heterogeneous vehicles, enabling fleet-scale correlation without vehicle-identity features in the GNN input.
         """,
-        "H4 — Fleet-Aware GNN Correlation (Tables 4–5; Figures 7–9)": """
+        "H4 — Fleet-Aware GNN Correlation (Tables 4–5; Figures 7–8)": """
 The fleet layer follows: **Vehicle IDS → anomaly descriptors → behaviour-normalized graph → GraphSAGE (structure-only) → DBSCAN → final decision** (`isolated_attack` | `coordinated_attack`).
 Runtime decisions use **behavioural cluster cohesion** and multi-vehicle structure — **not** attack-type labels.
 
@@ -527,10 +502,10 @@ On evaluation scenarios (four multi-vehicle attack families), the GNN fleet IDS 
 **7,267** locally suspicious events are classified as `coordinated_attack`; **49,760** as `isolated_attack` (Figure 8).
 Campaign precision is **80%** with behavioural cohesion **0.984** (Table 4); one qualifying cluster is unmatched under evaluation mapping (false campaign rate **20%**).
 
-Figure 7 colours nodes by final fleet decision; Figure 9 summarises per-attack-type evaluation recall and cohesion.
+Figure 7 colours nodes by final fleet decision. Per-attack-type evaluation metrics are reported in Table 5 only.
 
 **Interpretation:** H4 is supported — GraphSAGE fleet correlation adds coordinated-campaign classification beyond isolated local detection.
-**Limitation:** Evaluation scenarios are synthetically defined from labelled windows; attack-type names appear only in evaluation tables/figures.
+**Limitation:** Evaluation scenarios are synthetically defined from labelled windows; attack-type names appear only in evaluation tables.
         """,
     }
     interp_path = outputs.results_dir / "ieee_experimental_evaluation_interpretations.md"
@@ -566,10 +541,10 @@ Figure 7 colours nodes by final fleet decision; Figure 9 summarises per-attack-t
                 "| Figure 6 | `paper/figures/figure_06_cross_vehicle_descriptor_embedding.pdf` | H3 |",
                 "| Figure 7 | `paper/figures/figure_07_gnn_fleet_campaign_graph.pdf` | H4 |",
                 "| Figure 8 | `paper/figures/figure_08_final_attack_decision_distribution.pdf` | H4 |",
-                "| Figure 9 | `paper/figures/figure_09_campaign_detection_by_attack_type.pdf` | H4 |",
                 "",
                 "Figure 7 node colour = `isolated_attack` vs `coordinated_attack` (runtime decision).",
-                "Attack types in Figures 6 and 9 are evaluation/visualisation only.",
+                "Per-attack-type evaluation metrics are in Table 5 only (no Figure 9).",
+                "Attack types in Figure 6 are evaluation/visualisation only.",
                 "",
                 "## Supporting CSVs",
                 "All under `paper/results/`.",

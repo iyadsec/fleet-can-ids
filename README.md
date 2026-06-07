@@ -2,37 +2,44 @@
 
 Research codebase for **Fleet-Aware Intrusion Detection for Coordinated CAN Attack Campaigns in Connected Vehicles**.
 
-The system combines:
+## Architecture (IEEE evaluation)
 
-1. **Vehicle-level IDS** — self-supervised Isolation Forest on CAN window features  
-2. **Compact anomaly descriptors** — uplink-friendly behavioural summaries of suspicious windows  
-3. **Fleet behavioural similarity graph** — cosine-similarity edges between descriptor nodes (no raw CAN payloads)  
-4. **Fleet campaign detection** — cross-vehicle clustering on behaviour-normalized descriptors (DBSCAN / connected components)
+```
+Vehicle CAN traffic
+  → Vehicle-Level IDS (Isolation Forest)
+  → Anomaly Descriptors (behaviour-only uplink)
+  → Behaviour-Normalized Fleet Graph (cosine kNN, cross-vehicle edges)
+  → GraphSAGE Fleet Correlation (structure-only training)
+  → DBSCAN on GNN embeddings
+  → Final decision: isolated_attack | coordinated_attack
+```
 
-This is **not** an end-to-end learned Fleet CAN GNN (FCGNN). The fleet layer builds an explicit **behavioural similarity graph** and applies **graph-aware clustering**; it does not train a dedicated fleet-correlation GNN as the primary detection method in the IEEE evaluation.
-
-## What is implemented
-
-| Layer | Module | Method | Used in IEEE paper? |
-|-------|--------|--------|---------------------|
-| Data & windows | `src/data/`, `src/features/` | Car-Hacking dataset loading, sliding windows, behavioural features | Yes |
-| Vehicle IDS | `src/models/vehicle_ids.py` | Isolation Forest (+ optional autoencoder) | Yes (Table 1) |
-| Descriptors | `src/features/descriptor_generator.py` | Suspicious-window behavioural descriptors | Yes (Table 2) |
-| Fleet graph | `src/graph/fleet_graph_builder.py`, `fleet_similarity_features.py` | Cosine similarity, top-k / cross-vehicle kNN | Yes (campaign graph) |
-| Campaign detection | `src/evaluation/campaign_detection_experiment.py` | DBSCAN on behaviour-normalized features | Yes (Table 4, Figs 6–7) |
-| Cross-vehicle transfer | `src/evaluation/cross_vehicle_generalisation_experiment.py` | Leave-one-vehicle-out RF/LR | Yes (Table 3) |
-| Descriptor security | `src/evaluation/descriptor_security_experiment.py` | Compression + privacy metrics | Yes (Table 2) |
-| Optional GNN step | `src/models/gnn_models.py` | PyTorch Geometric GraphSAGE / GCN / GAT node embeddings | **No** (legacy pipeline only) |
-
-The optional GNN step (`experiments/07_train_gnn.py`) trains a standard 2-layer PyG encoder on the **pre-built similarity graph**. It exports node embeddings for the legacy `cluster_campaigns` pipeline step. The **IEEE Experimental Evaluation** uses `run_campaign_detection_evaluation.py`, which clusters **behaviour-normalized descriptor features** directly and does **not** depend on GNN training.
+Runtime fleet decisions use **behavioural cluster cohesion** and **multi-vehicle structure**. Attack-type labels are used **only** for evaluation tables and visualisation (e.g. Figure 6), not for GNN inputs or coordinated-attack gating.
 
 ---
 
-## Reproduce the IEEE paper bundle (recommended)
+## What is implemented
+
+| Layer | Module | Method | IEEE paper |
+|-------|--------|--------|------------|
+| Data & windows | `src/data/`, `src/features/` | Car-Hacking dataset, sliding windows | H1–H4 |
+| Vehicle IDS | `src/models/vehicle_ids.py` | Isolation Forest | **Table 1**, Figs 2–3 |
+| Descriptors | `src/features/descriptor_generator.py` | Compact behavioural descriptors | **Table 2**, Figs 4–5 |
+| Cross-vehicle transfer | `src/evaluation/cross_vehicle_generalisation_experiment.py` | Leave-one-vehicle-out RF | **Table 3**, Fig 6 |
+| Fleet graph | `src/graph/fleet_graph_builder.py` | Cosine similarity, cross-vehicle kNN | H4 |
+| GNN fleet correlation | `src/models/gnn_models.py`, `final_gnn_fleet_decision_experiment.py` | GraphSAGE (structure-only) + DBSCAN | **Tables 4–5**, Figs 7–8 |
+| Descriptor security | `src/evaluation/descriptor_security_experiment.py` | Compression + privacy metrics | **Table 2**, Figs 4–5 |
+| IEEE export | `src/evaluation/ieee_paper_exports.py` | Bundles `paper/` | All |
+
+**Legacy (not in main IEEE bundle):** `run_campaign_detection_evaluation.py` (DBSCAN on descriptors without GNN), `experiments/07_train_gnn.py` (optional PyG step for old pipeline), weak-anomaly recovery scripts.
+
+---
+
+## Reproduce the IEEE paper bundle
 
 ### Requirements
 
-- **Python**: 3.11 or 3.12 recommended (3.13 may fail for `torch-geometric` if you run the optional GNN step)
+- **Python**: 3.11 or 3.12 recommended (3.13+ may need a recent PyTorch / PyG build for GNN training)
 - macOS / Linux / Windows
 
 ### 1) Clone and install
@@ -46,11 +53,13 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Sanity check (paper experiments; no PyTorch required):
+Sanity check:
 
 ```bash
-python3 -c "import numpy,pandas,sklearn,matplotlib,networkx; print('deps ok')"
+python3 -c "import numpy,pandas,sklearn,matplotlib,networkx,torch; print('deps ok')"
 ```
+
+PyTorch Geometric is required for **`run_final_gnn_fleet_decision_evaluation.py`** (H4). Other H1–H3 scripts do not need PyG.
 
 ### 2) Point the config to your local dataset
 
@@ -65,58 +74,60 @@ Use an **absolute path**. Do not commit datasets to GitHub.
 
 ### 3) Ensure processed inputs exist
 
-The evaluation scripts expect pipeline artefacts under `data/processed/` (at minimum `window_features.csv`, `anomaly_descriptors.csv`, and vehicle IDS predictions). If you do not have them yet, run the data pipeline once:
+Minimum artefacts under `data/processed/`:
+
+- `window_features.csv`
+- `anomaly_descriptors.csv`
+- `vehicle_anomaly_predictions.csv`
+
+If missing, run the data pipeline:
 
 ```bash
 python3 run_all_experiments.py --config configs/fleet_ids.yaml --skip-existing
 ```
 
-Or run individual stages under `experiments/01_load_dataset.py` … `experiments/05_generate_descriptors.py`.
+Or stages `experiments/01_load_dataset.py` … `experiments/05_generate_descriptors.py`.
 
-### 4) Run the four IEEE evaluation contributions
+### 4) Run evaluations (H1–H4) and export
 
 ```bash
 python3 run_vehicle_level_evaluation.py --config configs/fleet_ids.yaml
 python3 run_descriptor_security_experiment.py --config configs/fleet_ids.yaml
 python3 run_cross_vehicle_generalisation.py --config configs/fleet_ids.yaml
-python3 run_campaign_detection_evaluation.py --config configs/fleet_ids.yaml
+python3 run_final_gnn_fleet_decision_evaluation.py --config configs/fleet_ids.yaml
 python3 run_ieee_paper_exports.py
 ```
 
-### 5) Paper-ready outputs
+`run_ieee_paper_exports.py` re-runs missing prerequisite experiments automatically.
 
-All IEEE assets are collected under `paper/`:
+### 5) Paper-ready outputs (`paper/`)
 
-| Contribution | Table | Figures |
-|--------------|-------|---------|
-| Vehicle-Level IDS | `paper/tables/table_01_*.tex` | `figure_01`, `figure_02` |
-| Descriptor Compactness & Security | `paper/tables/table_02_*.tex` | `figure_03`, `figure_04` |
-| Cross-Vehicle Generalisation | `paper/tables/table_03_*.tex` | `figure_05` |
-| Fleet Campaign Detection | `paper/tables/table_04_*.tex` | `figure_06`, `figure_07` |
+| Hypothesis | Table | Figures |
+|------------|-------|---------|
+| **H1** — Vehicle-Level IDS | Table 1 | Figure 2 (ROC), Figure 3 (score distribution) |
+| **H2** — Descriptor security | Table 2 | Figure 4 (bandwidth scaling), Figure 5 (payload reconstruction) |
+| **H3** — Cross-vehicle generalisation | Table 3 | Figure 6 (descriptor embedding) |
+| **H4** — GNN fleet IDS | Tables 4–5 | Figure 7 (GNN campaign graph), Figure 8 (decision distribution) |
 
-See `paper/IEEE_EXPERIMENTAL_EVALUATION_INDEX.md` for the full file list and `paper/results/ieee_experimental_evaluation_interpretations.md` for narrative text.
+Per-attack-type **evaluation** metrics (campaign recall, behavioural cohesion) are in **Table 5 only** — no Figure 9.
 
-Supporting CSVs and mirrored LaTeX also appear under `results/`, `figures/`, and `tables/`.
+See `paper/IEEE_EXPERIMENTAL_EVALUATION_INDEX.md` and `paper/results/ieee_experimental_evaluation_interpretations.md`.
 
 ---
 
 ## Evaluation scripts (`run_*.py`)
 
-| Script | Purpose | IEEE paper? |
-|--------|---------|-------------|
-| `run_vehicle_level_evaluation.py` | Vehicle IDS ROC/PR, thresholds, Table 1 | Yes |
-| `run_descriptor_security_experiment.py` | Compression, privacy, reconstruction risk | Yes |
-| `run_cross_vehicle_generalisation.py` | Leave-one-vehicle-out transfer | Yes |
-| `run_campaign_detection_evaluation.py` | Coordinated campaign detection (main fleet experiment) | Yes |
-| `run_ieee_paper_exports.py` | Bundle `paper/` tables, figures, interpretations | Yes |
-| `run_all_experiments.py` | Full data pipeline + publication CSV export | Supporting |
-| `run_fleet_correlation_evaluation.py` | Local vs fleet strong-alert correlation (legacy) | No |
-| `run_weak_anomaly_recovery_evaluation.py` | Weak-signal recovery experiment (legacy) | No |
-| `run_weak_recovery_optimization.py` | Parameter sweep for weak recovery | No |
-| `run_selective_weak_promotion.py` | Gated weak-signal promotion | No |
-| `run_behavior_view_similarity.py` | Similarity-view ablation | No |
-| `run_graph_construction_comparison.py` | Graph construction comparison | No |
-| `run_fleet_similarity_diagnosis.py` | Feature-dominance / bias diagnosis | No |
+| Script | Purpose | IEEE paper |
+|--------|---------|------------|
+| `run_vehicle_level_evaluation.py` | Vehicle IDS metrics, ROC, Table 1 | H1 |
+| `run_descriptor_security_experiment.py` | Compression, privacy, reconstruction | H2 |
+| `run_cross_vehicle_generalisation.py` | Leave-one-vehicle-out transfer | H3 |
+| `run_final_gnn_fleet_decision_evaluation.py` | GraphSAGE + DBSCAN → isolated/coordinated | **H4 (main fleet experiment)** |
+| `run_ieee_paper_exports.py` | Bundle `paper/` tables, figures, interpretations | All |
+| `run_all_experiments.py` | Full data pipeline | Supporting |
+| `run_campaign_detection_evaluation.py` | Legacy DBSCAN-on-descriptors path | No (superseded by GNN final decision) |
+| `run_fleet_correlation_evaluation.py` | Legacy local vs fleet correlation | No |
+| `run_weak_anomaly_recovery_evaluation.py` | Weak-signal recovery ablation | No |
 
 ---
 
@@ -124,72 +135,36 @@ Supporting CSVs and mirrored LaTeX also appear under `results/`, `figures/`, and
 
 ```
 src/
-├── data/                  # Dataset loading, validation, release loader
-├── features/              # Windows, behavioural features, anomaly descriptors
-├── graph/                 # Fleet behavioural similarity graph construction
-│   ├── fleet_graph_builder.py      # Nodes/edges, PyG export, top-k graphs
-│   └── fleet_similarity_features.py  # Behaviour-only / vehicle-normalized views
+├── data/                  # Dataset loading, validation
+├── features/              # Windows, features, anomaly descriptors
+├── graph/                 # Behaviour-normalized fleet similarity graph
 ├── models/
-│   ├── vehicle_ids.py     # Isolation Forest vehicle-level IDS (primary)
-│   └── gnn_models.py      # Optional PyG GraphSAGE/GCN/GAT (legacy pipeline)
-├── evaluation/            # Metrics, experiments, IEEE export
+│   ├── vehicle_ids.py     # Isolation Forest (vehicle-level IDS)
+│   └── gnn_models.py      # GraphSAGE fleet correlator (H4)
+├── evaluation/
 │   ├── vehicle_level_evaluation.py
 │   ├── descriptor_security_experiment.py
 │   ├── cross_vehicle_generalisation_experiment.py
-│   ├── campaign_detection_experiment.py   # IEEE Contribution 4
+│   ├── final_gnn_fleet_decision_experiment.py   # H4: final fleet decisions
 │   ├── ieee_paper_exports.py
-│   ├── campaign_clustering.py             # Legacy clustering (GNN or feature fallback)
-│   ├── final_decision.py
-│   └── …                  # Additional fleet-correlation / ablation experiments
-├── pipeline/              # YAML-driven full pipeline runner
-└── utils/                 # Config, paths, logging
+│   ├── campaign_detection_experiment.py         # Legacy fleet experiment
+│   └── …
+├── pipeline/
+└── utils/
 ```
-
-Legacy scaffold (do not use for paper reproduction): `experiments/run_baseline.py` predates the current implementation.
 
 ---
 
-## Full data pipeline (optional)
+## Configuration (`configs/fleet_ids.yaml`)
 
-End-to-end processing from raw CAN logs to research artefacts:
+Key blocks:
 
-`Raw CAN → windows → features → vehicle IDS → descriptors → fleet similarity graph → [optional GNN] → clustering → final outcomes`
+- `final_gnn_fleet_decision:` — GraphSAGE, DBSCAN, behavioural cohesion thresholds, `gnn_supervision: structure`
+- `fleet_graph:` — top-k neighbours, similarity threshold
+- `campaign_detection:` — legacy experiment (optional)
+- `publication:` — `paper/`, `results/`, `figures/`, `tables/` paths
 
-```bash
-python3 experiments/run_full_pipeline.py --config configs/fleet_ids.yaml
-# or
-python3 run_all_experiments.py --config configs/fleet_ids.yaml
-```
-
-### Stage-by-stage (`experiments/`)
-
-| Step | Script | Output |
-|------|--------|--------|
-| Load data | `01_load_dataset.py` | `data/processed/clean_can_data.csv` |
-| Windows | `02_generate_windows.py` | `data/processed/window_metadata.csv` |
-| Features | `03_extract_features.py` | `data/processed/window_features.csv` |
-| Vehicle IDS | `04_train_vehicle_ids.py` | `data/processed/vehicle_anomaly_predictions.csv` |
-| Descriptors | `05_generate_descriptors.py` | `data/processed/anomaly_descriptors.csv` |
-| **Fleet graph** | `06_build_graph.py` | `data/processed/fleet_graph.pt`, `fleet_edges.csv` |
-| **Optional GNN** | `07_train_gnn.py` | `data/processed/node_embeddings.csv` |
-| Legacy clustering | `08_cluster_campaigns.py` | `data/processed/fleet_cluster_results.csv` |
-| Final outcomes | `09_final_decision.py` | `outputs/metrics/final_detection_outcomes.csv` |
-
-**Build fleet anomaly graph** (`06_build_graph.py`): constructs an undirected graph whose nodes are anomaly descriptors and whose edges connect behaviourally similar pairs (cosine similarity above a threshold, with bounded neighbours). This is a **similarity graph**, not a learned FCGNN.
-
-**Optional GNN** (`07_train_gnn.py`): if PyTorch Geometric is installed, trains a shallow GraphSAGE/GCN/GAT encoder on that graph for node embeddings used by the legacy clustering step. Skip this entirely for IEEE paper reproduction.
-
-**Campaign detection (paper)**: uses `run_campaign_detection_evaluation.py` with a **vehicle-normalized behavioural similarity view** and DBSCAN — independent of the GNN step.
-
----
-
-## Configuration
-
-- `configs/fleet_ids.yaml` — paper deliverables and evaluation defaults (recommended)
-- `configs/default.yaml` — default pipeline configuration
-
-Campaign detection settings: `campaign_detection:` block in `fleet_ids.yaml`.  
-Fleet graph similarity views: `fleet_graph:` block (`behavior_only_vehicle_normalized` for paper experiments).
+After the first GNN train, set `retrain_gnn: false` to reuse `outputs/models/final_graphsage_fleet.pt`.
 
 ---
 
@@ -197,52 +172,38 @@ Fleet graph similarity views: `fleet_graph:` block (`behavior_only_vehicle_norma
 
 ```
 .
-├── configs/              # YAML experiment configuration
-├── data/
-│   ├── raw/              # Local samples (not versioned)
-│   └── processed/        # Derived tables and graph artefacts
-├── experiments/          # Pipeline stage scripts (01–09)
-├── paper/                # IEEE Experimental Evaluation bundle (generated)
-├── results/              # Evaluation CSVs and summaries
-├── figures/              # Evaluation figures
-├── tables/               # LaTeX / markdown tables
-├── run_*.py              # Evaluation entry points
-└── src/                  # Library code (see above)
+├── configs/
+├── data/processed/         # Pipeline artefacts
+├── paper/                  # IEEE bundle (generated)
+├── results/                # Evaluation CSVs
+├── figures/                # Source figures copied into paper/
+├── tables/                 # LaTeX / markdown tables
+├── run_*.py                # Evaluation entry points
+└── src/
 ```
 
 ---
 
 ## Component status
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| Data pipeline | Implemented | `src/data/`, `experiments/01–03` |
-| Vehicle IDS | Implemented | Isolation Forest in `src/models/vehicle_ids.py` |
-| Anomaly descriptors | Implemented | `src/features/descriptor_generator.py` |
-| Fleet behavioural graph | Implemented | Similarity graph in `src/graph/`; not a trained FCGNN |
-| Fleet campaign detection (paper) | Implemented | `run_campaign_detection_evaluation.py` |
-| IEEE paper export | Implemented | `run_ieee_paper_exports.py` → `paper/` |
-| Optional GNN embeddings | Implemented (optional) | PyG GraphSAGE/GCN/GAT; legacy pipeline only |
-| Legacy fleet correlation / weak recovery | Implemented (supporting) | Not in IEEE main tables |
-
----
-
-## Data
-
-Raw datasets should not be committed to GitHub.
-
-- Set `data.external_dataset_dir` in `configs/fleet_ids.yaml` to your local Car-Hacking dataset folder.
-- Preprocessing writes derived artefacts to `data/processed/` and `outputs/`.
+| Component | Status |
+|-----------|--------|
+| Vehicle IDS | Implemented |
+| Anomaly descriptors | Implemented |
+| Fleet behavioural graph | Implemented |
+| GNN fleet final decision (H4) | Implemented — `run_final_gnn_fleet_decision_evaluation.py` |
+| IEEE paper export | Implemented — `run_ieee_paper_exports.py` |
+| Legacy campaign detection (no GNN) | Implemented, not in main paper bundle |
 
 ---
 
 ## Troubleshooting
 
 - **`python: command not found`**: use `python3`.
-- **Missing packages**: activate the venv and run `pip install -r requirements.txt`.
-- **Dataset not found**: verify `external_dataset_dir` is correct and absolute.
-- **`torch-geometric` install fails**: only required for `experiments/07_train_gnn.py`; IEEE paper scripts do not need it.
-- **`experiments/run_baseline.py`**: deprecated scaffold; use `run_all_experiments.py` or the `run_*.py` scripts listed in this README.
+- **Missing packages**: `pip install -r requirements.txt` inside `.venv`.
+- **Dataset not found**: check `external_dataset_dir` is absolute and correct.
+- **PyG / torch errors on H4**: install matching `torch` and `torch-geometric` wheels for your Python/CUDA version.
+- **Slow GNN run**: set `retrain_gnn: false` after the first successful train.
 
 ---
 

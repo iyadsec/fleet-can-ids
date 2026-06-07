@@ -27,7 +27,7 @@ Cross-vehicle descriptor embeddings (Figure 6) show attack-behaviour structure s
 
 **Interpretation:** H3 is supported — behavioural descriptors generalise across heterogeneous vehicles, enabling fleet-scale correlation without vehicle-identity features in the GNN input.
 
-## H4 — Fleet-Aware GNN Correlation (Tables 4–5; Figures 7–9)
+## H4 — Fleet-Aware GNN Correlation (Tables 4–5; Figures 7–8)
 
 The fleet layer follows: **Vehicle IDS → anomaly descriptors → behaviour-normalized graph → GraphSAGE (structure-only) → DBSCAN → final decision** (`isolated_attack` | `coordinated_attack`).
 Runtime decisions use **behavioural cluster cohesion** and multi-vehicle structure — **not** attack-type labels.
@@ -36,7 +36,7 @@ On evaluation scenarios (four multi-vehicle attack families), the GNN fleet IDS 
 **7,267** locally suspicious events are classified as `coordinated_attack`; **49,760** as `isolated_attack` (Figure 8).
 Campaign precision is **80%** with behavioural cohesion **0.984** (Table 4); one qualifying cluster is unmatched under evaluation mapping (false campaign rate **20%**).
 
-Figure 7 colours nodes by final fleet decision; Figure 9 summarises per-attack-type evaluation recall and cohesion.
+Figure 7 colours nodes by final fleet decision. Per-attack-type evaluation metrics are reported in Table 5 only.
 
 **Interpretation:** H4 is supported — GraphSAGE fleet correlation adds coordinated-campaign classification beyond isolated local detection.
-**Limitation:** Evaluation scenarios are synthetically defined from labelled windows; attack-type names appear only in evaluation tables/figures.
+**Limitation:** Evaluation scenarios are synthetically defined from labelled windows; attack-type names appear only in evaluation tables.
