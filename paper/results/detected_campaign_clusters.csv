@@ -1,3 +1,0 @@
-detected_cluster_id,algorithm,raw_cluster_id,cluster_size,vehicles_in_cluster,vehicle_models,dominant_attack_type,dominant_attack_ratio,mean_similarity,mean_anomaly_score,is_valid_campaign_cluster
-dbscan-0,dbscan,0,9529,3,"Chevrolet,Hyundai,Kia",attack_free,0.3167,0.6697,0.9031,False
-dbscan-1,dbscan,1,1445,2,"Hyundai,Kia",flooding,1.0,0.9945,1.0,True

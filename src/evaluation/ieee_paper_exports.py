@@ -1,4 +1,4 @@
-"""Publication-quality exports for the IEEE Experimental Evaluation section (4 contributions)."""
+"""Publication-quality exports for the IEEE Experimental Evaluation section (H1–H4)."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 from src.utils.logging import get_logger
@@ -22,6 +23,28 @@ IEEE_RC = {
     "savefig.dpi": 300,
     "savefig.bbox": "tight",
 }
+
+OBSOLETE_PAPER_STEMS = (
+    "figure_01_vehicle_ids_roc",
+    "figure_02_vehicle_ids_score_distribution",
+    "figure_03_descriptor_bandwidth_exposure",
+    "figure_04_payload_reconstruction_risk",
+    "figure_05_cross_vehicle_embedding",
+    "figure_06_fleet_campaign_graph",
+    "figure_07_campaign_descriptor_embedding",
+    "table_04_campaign_detection_results",
+    "table_04_local_vs_fleet_campaign_detection",
+)
+
+LEGACY_CAMPAIGN_RESULT_FILES = (
+    "campaign_ground_truth.csv",
+    "campaign_graph_statistics.csv",
+    "detected_campaign_clusters.csv",
+    "campaign_detection_metrics.csv",
+    "campaign_detection_by_type.csv",
+    "local_vs_fleet_campaign_comparison.csv",
+    "campaign_detection_summary.md",
+)
 
 
 @dataclass(frozen=True)
@@ -71,8 +94,8 @@ def _copy_figure(src: Path, dst_base: Path) -> None:
         if src.with_suffix(ext).exists():
             shutil.copy2(src.with_suffix(ext), dst_base.with_suffix(ext))
             copied = True
-    if not copied and not any(dst_base.with_suffix(ext).exists() for ext in (".pdf", ".png")):
-        raise FileNotFoundError(f"Figure source missing and no existing output: {src}")
+    if not copied:
+        raise FileNotFoundError(f"Figure source missing: {src}")
 
 
 def _load_csv(root: Path, name: str) -> pd.DataFrame:
@@ -100,9 +123,21 @@ def _export_table_bundle(
     return {"csv": csv_path, "md": md_path, "tex": tex_path}
 
 
+def _cleanup_obsolete_paper_artifacts(outputs: IeeePaperOutputs) -> None:
+    for stem in OBSOLETE_PAPER_STEMS:
+        for folder in (outputs.figures_dir, outputs.tables_dir, outputs.results_dir):
+            for ext in (".pdf", ".png", ".md", ".tex", ".csv"):
+                path = folder / f"{stem}{ext}"
+                if path.exists():
+                    path.unlink()
+    for name in LEGACY_CAMPAIGN_RESULT_FILES:
+        path = outputs.results_dir / name
+        if path.exists():
+            path.unlink()
+
+
 def _build_table_01_vehicle_ids(src: Path) -> pd.DataFrame:
-    metrics = _load_csv(src, "vehicle_level_metrics.csv")
-    return metrics.round(4)
+    return _load_csv(src, "vehicle_level_metrics.csv").round(4)
 
 
 def _build_table_02_descriptor_security(src: Path) -> pd.DataFrame:
@@ -170,11 +205,6 @@ def _build_table_02_descriptor_security(src: Path) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def _build_table_01_attack_breakdown(src: Path) -> pd.DataFrame:
-    df = _load_csv(src, "vehicle_level_by_attack_type.csv")
-    return df.round(2)
-
-
 def _build_table_03_cross_vehicle(src: Path) -> pd.DataFrame:
     df = _load_csv(src, "cross_vehicle_generalisation.csv")
     rf = df[df["classifier"] == "random_forest"].copy()
@@ -201,33 +231,82 @@ def _build_table_03_cross_vehicle(src: Path) -> pd.DataFrame:
     ).round(4)
 
 
-def _build_table_03_agnostic_score(src: Path) -> pd.DataFrame:
-    return _load_csv(src, "vehicle_agnostic_score.csv").round(4)
+def _build_table_04_local_vs_gnn_fleet(src: Path) -> pd.DataFrame:
+    df = _load_csv(src, "table_final_local_vs_gnn_fleet_ids.csv")
+    numeric_cols = ["Local IDS", "GNN-Based Fleet IDS"]
+    out = df.copy()
+    for col in numeric_cols:
+        out[col] = pd.to_numeric(out[col], errors="coerce")
+    return out.round(4)
 
 
-def _build_table_04_campaign_detection(src: Path) -> pd.DataFrame:
-    from src.evaluation.campaign_detection_experiment import build_campaign_results_table
-
-    per_type = _load_csv(src, "campaign_detection_by_type.csv")
-    metrics_raw = _load_csv(src, "campaign_detection_metrics.csv")
-    metrics = {str(r["metric"]): float(r["value"]) for _, r in metrics_raw.iterrows()}
-    return build_campaign_results_table(per_type, metrics)
+def _build_table_05_coordinated_campaigns(src: Path) -> pd.DataFrame:
+    return _load_csv(src, "table_final_campaign_detection_by_attack_type.csv").round(4)
 
 
-def _build_table_04_local_vs_fleet_campaign(src: Path) -> pd.DataFrame:
-    return _load_csv(src, "local_vs_fleet_campaign_comparison.csv")
+def _plot_figure_09_campaign_by_attack_type(df: Path, out_base: Path) -> None:
+    """Bar chart of evaluation campaign recall and behavioural cohesion by attack type."""
+    data = pd.read_csv(df)
+    data = data[data["Attack Type"] != "Overall"].copy()
+    attacks = data["Attack Type"].tolist()
+    recall = data["Campaign Recall"].astype(float).to_numpy()
+    purity = data["Campaign Purity"].astype(float).to_numpy()
+    x = np.arange(len(attacks))
+    width = 0.35
+    fig, ax = plt.subplots(figsize=(7, 4))
+    ax.bar(x - width / 2, recall, width, label="Campaign recall (eval)", color="#4472C4")
+    ax.bar(x + width / 2, purity, width, label="Behavioural cohesion", color="#C00000")
+    ax.set_xticks(x)
+    ax.set_xticklabels(attacks)
+    ax.set_ylim(0, 1.05)
+    ax.set_ylabel("Score")
+    ax.set_title("Campaign Detection by Attack Type (Evaluation)")
+    ax.legend(fontsize=7)
+    fig.tight_layout()
+    _save_figure(fig, out_base)
 
 
-def _ensure_campaign_detection_results(repo_root: Path) -> None:
-    """Run campaign detection if IEEE Contribution 4 artifacts are missing."""
-    required = repo_root / "results" / "campaign_ground_truth.csv"
+def _ensure_prerequisite_experiments(repo_root: Path) -> None:
+    """Run upstream experiments when required CSVs or figures are missing."""
+    src = repo_root / "results"
+    fig = repo_root / "figures"
+    config_path = repo_root / "configs" / "fleet_ids.yaml"
+
+    need_vehicle = not (src / "vehicle_level_metrics.csv").exists() or not (fig / "local_ids_roc_curve.pdf").exists()
+    need_descriptor = not (src / "descriptor_security_comparison_table.csv").exists() or not (
+        fig / "payload_reconstruction_error.pdf"
+    ).exists() or not (fig / "bandwidth_scaling_fleet_sizes.pdf").exists()
+    need_cross = not (src / "cross_vehicle_generalisation.csv").exists() or not (
+        fig / "descriptor_embedding_by_attack.pdf"
+    ).exists()
+
+    if need_vehicle:
+        logger.info("Running vehicle-level evaluation for IEEE H1 artifacts.")
+        import run_vehicle_level_evaluation
+
+        run_vehicle_level_evaluation.main()
+    if need_descriptor:
+        logger.info("Running descriptor security experiment for IEEE H2 artifacts.")
+        import run_descriptor_security_experiment
+
+        run_descriptor_security_experiment.main()
+    if need_cross:
+        logger.info("Running cross-vehicle generalisation for IEEE H3 artifacts.")
+        import run_cross_vehicle_generalisation
+
+        run_cross_vehicle_generalisation.main()
+
+
+def _ensure_final_gnn_fleet_decision_results(repo_root: Path) -> None:
+    """Run final GNN fleet decision pipeline if artifacts are missing."""
+    required = repo_root / "results" / "final_attack_decisions.csv"
     if required.exists():
         return
-    logger.info("Campaign detection results missing; running evaluation before IEEE export.")
-    from src.evaluation.campaign_detection_experiment import (
-        CampaignDetectionConfig,
-        CampaignDetectionOutputs,
-        run_campaign_detection_experiment,
+    logger.info("Final GNN fleet decision results missing; running evaluation before IEEE export.")
+    from src.evaluation.final_gnn_fleet_decision_experiment import (
+        FinalGnnFleetConfig,
+        FinalGnnFleetOutputs,
+        run_final_gnn_fleet_decision_experiment,
     )
     from src.graph.fleet_similarity_features import parse_fleet_graph_similarity_settings
     from src.utils.config import get_nested, load_config
@@ -237,36 +316,42 @@ def _ensure_campaign_detection_results(repo_root: Path) -> None:
     config = load_config(repo_root / "configs" / "fleet_ids.yaml")
     pub = config.get("publication", {})
     artifacts = get_nested(config, "pipeline", "artifacts", default={}) or {}
-    cd = config.get("campaign_detection", {})
     fg = parse_fleet_graph_similarity_settings(config)
     fleet_graph_cfg = config.get("fleet_graph", {})
+    gnn_cfg = config.get("gnn", {})
+    fd = config.get("final_gnn_fleet_decision", {})
     seed = int(get_nested(config, "project", "seed", default=42))
-    cfg = CampaignDetectionConfig(
-        top_k_same_vehicle=int(cd.get("top_k_same_vehicle", fleet_graph_cfg.get("top_k_same_vehicle", 10))),
-        top_k_cross_vehicle=int(cd.get("top_k_cross_vehicle", fleet_graph_cfg.get("top_k_cross_vehicle", 5))),
-        similarity_threshold=float(cd.get("similarity_threshold", fleet_graph_cfg.get("similarity_threshold", 0.95))),
-        similarity_feature_view=fg["similarity_feature_view"],
+    ckpt = fd.get("checkpoint_path", "outputs/models/final_graphsage_fleet.pt")
+    cfg = FinalGnnFleetConfig(
+        top_k_same_vehicle=int(fd.get("top_k_same_vehicle", fleet_graph_cfg.get("top_k_same_vehicle", 10))),
+        top_k_cross_vehicle=int(fd.get("top_k_cross_vehicle", fleet_graph_cfg.get("top_k_cross_vehicle", 5))),
+        similarity_threshold=float(fd.get("similarity_threshold", fleet_graph_cfg.get("similarity_threshold", 0.95))),
         feature_dominance_threshold=float(fg["feature_dominance_threshold"]),
-        allowed_high_dominance_features=fg["allowed_high_dominance_features"],
-        min_vehicles=int(cd.get("min_vehicles", 2)),
-        min_cluster_size=int(cd.get("min_cluster_size", 10)),
-        min_cohesion=float(cd.get("min_cohesion", 0.85)),
-        min_dominant_attack_ratio=float(cd.get("min_dominant_attack_ratio", 0.60)),
-        campaign_match_recall=float(cd.get("campaign_match_recall", 0.10)),
-        campaign_match_min_nodes=int(cd.get("campaign_match_min_nodes", 15)),
-        dbscan_eps=float(cd.get("dbscan_eps", config.get("clustering", {}).get("dbscan_eps", 1.2))),
-        dbscan_min_samples=int(cd.get("dbscan_min_samples", config.get("clustering", {}).get("dbscan_min_samples", 10))),
-        dbscan_pca_components=int(cd.get("dbscan_pca_components", config.get("clustering", {}).get("dbscan_pca_components", 8))),
-        max_clustering_samples=int(cd.get("max_clustering_samples", config.get("clustering", {}).get("max_clustering_samples", 20000))),
-        max_graph_viz_nodes=int(cd.get("max_graph_viz_nodes", 800)),
-        max_embedding_samples=int(cd.get("max_embedding_samples", 5000)),
-        embedding_method=str(cd.get("embedding_method", "tsne")),  # type: ignore[arg-type]
+        gnn_hidden_channels=int(fd.get("gnn_hidden_channels", gnn_cfg.get("hidden_channels", 64))),
+        gnn_embedding_dim=int(fd.get("gnn_embedding_dim", gnn_cfg.get("embedding_dim", 32))),
+        gnn_epochs=int(fd.get("gnn_epochs", gnn_cfg.get("epochs", 30))),
+        gnn_learning_rate=float(fd.get("gnn_learning_rate", gnn_cfg.get("learning_rate", 0.01))),
+        gnn_weight_decay=float(fd.get("gnn_weight_decay", gnn_cfg.get("weight_decay", 5e-4))),
+        campaign_score_threshold=float(fd.get("campaign_score_threshold", 0.55)),
+        min_cluster_size=int(fd.get("min_cluster_size", 10)),
+        min_vehicles=int(fd.get("min_vehicles", 2)),
+        min_behavioral_cohesion=float(fd.get("min_behavioral_cohesion", 0.85)),
+        dbscan_eps=float(fd.get("dbscan_eps", 0.8)),
+        dbscan_min_samples=int(fd.get("dbscan_min_samples", 10)),
+        dbscan_pca_components=int(fd.get("dbscan_pca_components", 8)),
+        max_clustering_samples=int(fd.get("max_clustering_samples", 20000)),
+        max_graph_viz_nodes=int(fd.get("max_graph_viz_nodes", 800)),
+        max_embedding_samples=int(fd.get("max_embedding_samples", 5000)),
+        embedding_method=str(fd.get("embedding_method", "tsne")),  # type: ignore[arg-type]
+        gnn_supervision=str(fd.get("gnn_supervision", "structure")),  # type: ignore[arg-type]
+        checkpoint_path=paths.root / ckpt,
+        retrain_gnn=bool(fd.get("retrain_gnn", False)),
         seed=seed,
     )
-    run_campaign_detection_experiment(
+    run_final_gnn_fleet_decision_experiment(
         descriptors_path=paths.root / artifacts.get("anomaly_descriptors", "data/processed/anomaly_descriptors.csv"),
         features_path=paths.root / artifacts.get("window_features", "data/processed/window_features.csv"),
-        outputs=CampaignDetectionOutputs(
+        outputs=FinalGnnFleetOutputs(
             results_dir=paths.root / str(pub.get("results_dir", "results")),
             tables_dir=paths.root / str(pub.get("tables_dir", "tables")),
             figures_dir=paths.root / str(pub.get("figures_dir", "figures")),
@@ -275,16 +360,14 @@ def _ensure_campaign_detection_results(repo_root: Path) -> None:
     )
 
 
-def _copy_campaign_supporting_results(src: Path, outputs: IeeePaperOutputs) -> dict[str, Path]:
-    """Mirror campaign CSVs into the paper bundle."""
+def _copy_gnn_supporting_results(src: Path, outputs: IeeePaperOutputs) -> dict[str, Path]:
     names = [
-        "campaign_ground_truth.csv",
-        "campaign_graph_statistics.csv",
-        "detected_campaign_clusters.csv",
-        "campaign_detection_metrics.csv",
-        "campaign_detection_by_type.csv",
-        "local_vs_fleet_campaign_comparison.csv",
-        "campaign_detection_summary.md",
+        "final_gnn_graph_statistics.csv",
+        "final_gnn_campaign_clusters.csv",
+        "final_attack_decisions.csv",
+        "final_gnn_fleet_decision_summary.md",
+        "table_final_attack_decision_summary.csv",
+        "final_local_vs_gnn_fleet_metrics.csv",
     ]
     copied: dict[str, Path] = {}
     for name in names:
@@ -300,8 +383,9 @@ def _write_interpretations(path: Path, sections: dict[str, str]) -> None:
     lines = [
         "# IEEE Experimental Evaluation — Interpretations",
         "",
-        "This document supports the four validated contributions in the Experimental Evaluation section.",
-        "Claims are limited to what the exported evidence supports.",
+        "Evidence supports hypotheses **H1–H4** under the deployment-realistic fleet architecture:",
+        "Vehicle IDS → Anomaly Descriptors → Behaviour Graph → GraphSAGE (structure-only) → DBSCAN →",
+        "`isolated_attack` / `coordinated_attack`. Attack-type labels are used **only** for evaluation plots and tables.",
         "",
     ]
     for title, body in sections.items():
@@ -311,7 +395,8 @@ def _write_interpretations(path: Path, sections: dict[str, str]) -> None:
 
 def run_ieee_paper_exports(*, repo_root: Path) -> dict[str, Any]:
     plt.rcParams.update(IEEE_RC)
-    _ensure_campaign_detection_results(repo_root)
+    _ensure_prerequisite_experiments(repo_root)
+    _ensure_final_gnn_fleet_decision_results(repo_root)
     src = repo_root / "results"
     src_fig = repo_root / "figures"
     paper = repo_root / "paper"
@@ -325,10 +410,11 @@ def run_ieee_paper_exports(*, repo_root: Path) -> dict[str, Any]:
     )
     for d in (outputs.results_dir, outputs.tables_dir, outputs.figures_dir):
         d.mkdir(parents=True, exist_ok=True)
+    _cleanup_obsolete_paper_artifacts(outputs)
 
     written: dict[str, Any] = {}
 
-    # --- Contribution 1: Vehicle-Level IDS ---
+    # --- H1: Vehicle-Level IDS ---
     t1 = _build_table_01_vehicle_ids(src)
     written["table_01"] = _export_table_bundle(
         t1,
@@ -338,13 +424,13 @@ def run_ieee_paper_exports(*, repo_root: Path) -> dict[str, Any]:
         title="Table 1: Vehicle-Level IDS Performance",
         outputs=outputs,
     )
-    t1_attack = _build_table_01_attack_breakdown(src)
-    t1_attack.to_csv(outputs.results_dir / "table_01_vehicle_level_by_attack.csv", index=False)
+    if (src / "vehicle_level_by_attack_type.csv").exists():
+        shutil.copy2(src / "vehicle_level_by_attack_type.csv", outputs.results_dir / "table_01_vehicle_level_by_attack.csv")
 
-    _copy_figure(src_fig / "local_ids_roc_curve", outputs.figures_dir / "figure_01_vehicle_ids_roc")
-    _copy_figure(src_fig / "local_ids_anomaly_score_distribution", outputs.figures_dir / "figure_02_vehicle_ids_score_distribution")
+    _copy_figure(src_fig / "local_ids_roc_curve", outputs.figures_dir / "figure_02_vehicle_level_roc")
+    _copy_figure(src_fig / "local_ids_anomaly_score_distribution", outputs.figures_dir / "figure_03_anomaly_score_distribution")
 
-    # --- Contribution 2: Descriptor Compactness and Security ---
+    # --- H2: Descriptor Compactness and Security ---
     t2 = _build_table_02_descriptor_security(src)
     written["table_02"] = _export_table_bundle(
         t2,
@@ -354,10 +440,10 @@ def run_ieee_paper_exports(*, repo_root: Path) -> dict[str, Any]:
         title="Table 2: Descriptor Compactness and Security",
         outputs=outputs,
     )
-    _copy_figure(src_fig / "raw_vs_descriptor_exposure", outputs.figures_dir / "figure_03_descriptor_bandwidth_exposure")
-    _copy_figure(src_fig / "payload_reconstruction_error", outputs.figures_dir / "figure_04_payload_reconstruction_risk")
+    _copy_figure(src_fig / "bandwidth_scaling_fleet_sizes", outputs.figures_dir / "figure_04_bandwidth_scaling")
+    _copy_figure(src_fig / "payload_reconstruction_error", outputs.figures_dir / "figure_05_payload_reconstruction_risk")
 
-    # --- Contribution 3: Cross-Vehicle Generalisation ---
+    # --- H3: Cross-Vehicle Generalisation ---
     t3 = _build_table_03_cross_vehicle(src)
     written["table_03"] = _export_table_bundle(
         t3,
@@ -367,99 +453,84 @@ def run_ieee_paper_exports(*, repo_root: Path) -> dict[str, Any]:
         title="Table 3: Cross-Vehicle Descriptor Generalisation",
         outputs=outputs,
     )
-    agnostic = _build_table_03_agnostic_score(src)
-    agnostic.to_csv(outputs.results_dir / "table_03_vehicle_agnostic_score.csv", index=False)
-    _copy_figure(src_fig / "descriptor_embedding_by_attack", outputs.figures_dir / "figure_05_cross_vehicle_embedding")
+    if (src / "vehicle_agnostic_score.csv").exists():
+        shutil.copy2(src / "vehicle_agnostic_score.csv", outputs.results_dir / "table_03_vehicle_agnostic_score.csv")
+    _copy_figure(src_fig / "descriptor_embedding_by_attack", outputs.figures_dir / "figure_06_cross_vehicle_descriptor_embedding")
 
-    # --- Contribution 4: Fleet Campaign Detection ---
-    t4 = _build_table_04_campaign_detection(src)
+    # --- H4: Fleet-Aware GNN IDS ---
+    t4 = _build_table_04_local_vs_gnn_fleet(src)
     written["table_04"] = _export_table_bundle(
         t4,
-        stem="table_04_campaign_detection_results",
-        caption="Coordinated campaign detection on controlled multi-vehicle attack scenarios "
-        "(behaviour-normalized descriptor similarity graph; scenarios constructed from labelled windows).",
-        label="tab:campaign-detection-results",
-        title="Table 4: Coordinated Campaign Detection Results",
+        stem="table_04_local_vs_gnn_fleet_ids",
+        caption="Local IDS vs fleet-aware GNN IDS (GraphSAGE + DBSCAN; final decisions "
+        "use behavioural cohesion, not attack-type metadata).",
+        label="tab:local-vs-gnn-fleet",
+        title="Table 4: Local IDS vs Fleet-Aware GNN IDS",
         outputs=outputs,
     )
-    t4b = _build_table_04_local_vs_fleet_campaign(src)
-    written["table_04_local_vs_fleet"] = _export_table_bundle(
-        t4b,
-        stem="table_04_local_vs_fleet_campaign_detection",
-        caption="Local IDS vs fleet-aware coordinated campaign detection.",
-        label="tab:local-vs-fleet-campaign",
-        title="Table 4 (supplementary): Local IDS vs Fleet-Aware Campaign Detection",
+    t5 = _build_table_05_coordinated_campaigns(src)
+    written["table_05"] = _export_table_bundle(
+        t5,
+        stem="table_05_coordinated_campaign_detection",
+        caption="Coordinated campaign detection by attack type (evaluation scenarios; "
+        "attack types used for scoring only).",
+        label="tab:coordinated-campaign-detection",
+        title="Table 5: Coordinated Campaign Detection Results",
         outputs=outputs,
     )
-    written["campaign_supporting"] = _copy_campaign_supporting_results(src, outputs)
-    _copy_figure(src_fig / "fleet_campaign_graph", outputs.figures_dir / "figure_06_fleet_campaign_graph")
-    _copy_figure(
-        src_fig / "campaign_descriptor_embedding",
-        outputs.figures_dir / "figure_07_campaign_descriptor_embedding",
-    )
-    written["figure_06"] = outputs.figures_dir / "figure_06_fleet_campaign_graph.pdf"
-    written["figure_07"] = outputs.figures_dir / "figure_07_campaign_descriptor_embedding.pdf"
+    written["gnn_supporting"] = _copy_gnn_supporting_results(src, outputs)
 
-    # Mirror numbered tables to repo tables/ for convenience
+    _copy_figure(src_fig / "final_gnn_fleet_campaign_graph", outputs.figures_dir / "figure_07_gnn_fleet_campaign_graph")
+    _copy_figure(src_fig / "final_attack_decision_distribution", outputs.figures_dir / "figure_08_final_attack_decision_distribution")
+    fig9_base = outputs.figures_dir / "figure_09_campaign_detection_by_attack_type"
+    _plot_figure_09_campaign_by_attack_type(src / "table_final_campaign_detection_by_attack_type.csv", fig9_base)
+    written["figure_07"] = outputs.figures_dir / "figure_07_gnn_fleet_campaign_graph.pdf"
+    written["figure_08"] = outputs.figures_dir / "figure_08_final_attack_decision_distribution.pdf"
+    written["figure_09"] = fig9_base.with_suffix(".pdf")
+
     mirror_tables = repo_root / "tables"
     mirror_tables.mkdir(exist_ok=True)
-    for key in ("table_01", "table_02", "table_03", "table_04"):
+    for key in ("table_01", "table_02", "table_03", "table_04", "table_05"):
         for fmt in ("csv", "md", "tex"):
             p = written[key][fmt if fmt != "csv" else "csv"]
             if fmt == "csv":
                 shutil.copy2(p, mirror_tables / p.name.replace("table_0", "ieee_table_0"))
             else:
                 shutil.copy2(p, mirror_tables / p.name)
-    for fmt in ("csv", "md", "tex"):
-        p = written["table_04_local_vs_fleet"][fmt if fmt != "csv" else "csv"]
-        if fmt == "csv":
-            dst = mirror_tables / "ieee_table_04_local_vs_fleet_campaign_detection.csv"
-        else:
-            dst = mirror_tables / p.name
-        shutil.copy2(p, dst)
 
     interpretations = {
-        "Contribution 1 — Vehicle-Level IDS Effectiveness": """
-The self-supervised Isolation Forest achieves **ROC-AUC 0.786** and **PR-AUC 0.927** at an operating point selected for **FPR ≤ 5%**.
-Precision is high (**97.3%**) but recall is moderate (**46.0%**, F1 **62.4%**), indicating conservative strong-alert generation.
-Per-attack F1 ranges from **39.8% (replay)** to **81.3% (fuzzy)**; replay remains the hardest class at the chosen threshold.
+        "H1 — Vehicle-Level IDS Effectiveness (Table 1; Figures 2–3)": """
+The self-supervised Isolation Forest achieves **ROC-AUC 0.786** and **PR-AUC 0.927** at **FPR ≤ 5%**.
+Precision is high (**97.3%**) with moderate recall (**46.0%**, F1 **62.4%**), yielding a conservative local alert stream suitable for uplink to the fleet layer.
 
-**Interpretation:** The vehicle-level IDS provides a usable local baseline with low false alarms, but cannot group cross-vehicle attack behaviour into coordinated campaigns.
-**Limitation:** Threshold selection trades recall for FPR; campaign-level reasoning requires the fleet correlation layer.
+**Interpretation:** H1 is supported — the vehicle IDS detects suspicious CAN windows locally but cannot classify coordinated multi-vehicle campaigns.
         """,
-        "Contribution 2 — Descriptor Compactness and Security": """
-Descriptors compress raw CAN windows by **12.6×** (**92%** bandwidth reduction), with **94%** fleet bandwidth reduction at 100 vehicles.
-Frame-level CAN IDs, payloads, and exact message order are not transmitted; only aggregated behavioural statistics and anomaly evidence are uplinked.
+        "H2 — Descriptor Compactness and Security (Table 2; Figures 4–5)": """
+Descriptors compress raw CAN windows by **12.6×** (**92%** bandwidth reduction) with **94%** fleet bandwidth reduction at 100 vehicles.
+Raw payloads and exact frame order are not transmitted; only aggregated behavioural statistics and anomaly evidence are uplinked.
+Payload-statistic reconstruction from descriptors yields **R² ≈ 0.44** vs **R² = 1.0** for raw CAN exposure.
 
-Payload-statistic reconstruction from descriptors yields **R² ≈ 0.44**, well below the raw-CAN baseline (**R² = 1.0**), indicating limited inference of payload-derived statistics from the uplink alone.
-Vehicle fingerprinting remains high (**≈99.97%**) on behavioural descriptors — **anonymisation is not fully achieved**.
-
-**Interpretation:** The descriptor layer substantially reduces data exposure and communication cost while preserving anomaly evidence.
-**Limitation:** Residual vehicle-specific patterns remain; privacy-hardening is future work.
+**Interpretation:** H2 is supported — descriptors reduce communication cost and payload disclosure while preserving anomaly evidence.
+**Limitation:** Residual vehicle fingerprinting remains high (~99.97%).
         """,
-        "Contribution 3 — Vehicle-Agnostic Descriptor Generalisation": """
-Leave-one-vehicle-out transfer (Random Forest on behavioural descriptor features) yields mean **ROC-AUC 0.745**, mean **F1 0.896**, and vehicle-agnostic score **0.821**.
-Transfer is strongest for Kia→Chevrolet (**ROC-AUC 0.856**) and weakest when Chevrolet is the training platform (small sample size).
+        "H3 — Cross-Vehicle Descriptor Generalisation (Table 3; Figure 6)": """
+Leave-one-vehicle-out transfer yields mean **ROC-AUC 0.745**, mean **F1 0.896**, and vehicle-agnostic score **0.821**.
+Cross-vehicle descriptor embeddings (Figure 6) show attack-behaviour structure spanning vehicle platforms without transmitting raw CAN payloads.
 
-Cross-vehicle attack similarity gaps are smallest for **replay** and **fuzzy** (≈0.03 cosine gap), supporting behavioural alignment across platforms.
-Embeddings (Figure 5) show attack-type structure spanning multiple vehicle markers.
-
-**Interpretation:** Descriptor features encode attack behaviour that transfers across heterogeneous vehicles, supporting fleet deployment.
-**Limitation:** ROC-AUC is moderate for linear models (0.60); Chevrolet's smaller corpus limits some pairs; descriptors still permit vehicle classification.
+**Interpretation:** H3 is supported — behavioural descriptors generalise across heterogeneous vehicles, enabling fleet-scale correlation without vehicle-identity features in the GNN input.
         """,
-        "Contribution 4 — Fleet Campaign Detection": """
-Controlled campaign scenarios were constructed from labelled attack windows across **four attack types** (flooding, fuzzy, replay, malfunction) spanning **2–3 vehicles** each.
-These scenarios evaluate fleet-level campaign reasoning; they **do not** represent externally synchronized real-world campaigns.
+        "H4 — Fleet-Aware GNN Correlation (Tables 4–5; Figures 7–9)": """
+The fleet layer follows: **Vehicle IDS → anomaly descriptors → behaviour-normalized graph → GraphSAGE (structure-only) → DBSCAN → final decision** (`isolated_attack` | `coordinated_attack`).
+Runtime decisions use **behavioural cluster cohesion** and multi-vehicle structure — **not** attack-type labels.
 
-The behaviour-normalized fleet graph achieves **≈42%** cross-vehicle edges.
-DBSCAN clustering on behavioural descriptors yields **one valid cross-vehicle campaign cluster** (flooding, Hyundai+Kia, purity **100%**, mean similarity **0.99**).
-Overall **campaign detection rate is 25%** (1/4 scenarios), with **campaign precision 100%** and **false campaign rate 0%** under current gates.
-Fuzzy, replay, and malfunction campaigns were **not** recovered as distinct multi-vehicle clusters at the chosen similarity/cohesion thresholds.
+On evaluation scenarios (four multi-vehicle attack families), the GNN fleet IDS achieves **100% campaign recall (4/4)** vs **0%** for local IDS alone (Table 5).
+**7,267** locally suspicious events are classified as `coordinated_attack`; **49,760** as `isolated_attack` (Figure 8).
+Campaign precision is **80%** with behavioural cohesion **0.984** (Table 4); one qualifying cluster is unmatched under evaluation mapping (false campaign rate **20%**).
 
-Local IDS retains the same per-window attack recall (**≈79%** on campaign windows) but **cannot** perform campaign-level detection (**0%** vs **25%** fleet scenario detection rate).
+Figure 7 colours nodes by final fleet decision; Figure 9 summarises per-attack-type evaluation recall and cohesion.
 
-**Interpretation:** The fleet-aware correlation layer enables campaign-level detection by grouping behaviourally similar anomaly descriptors across multiple vehicles — a capability unavailable to isolated vehicle-level IDS models.
-**Limitation:** Detection is strongest for flooding; other attack types overlap behaviourally or form larger mixed clusters; campaign scenarios are synthetically defined from the public dataset labels.
+**Interpretation:** H4 is supported — GraphSAGE fleet correlation adds coordinated-campaign classification beyond isolated local detection.
+**Limitation:** Evaluation scenarios are synthetically defined from labelled windows; attack-type names appear only in evaluation tables/figures.
         """,
     }
     interp_path = outputs.results_dir / "ieee_experimental_evaluation_interpretations.md"
@@ -472,25 +543,33 @@ Local IDS retains the same per-window attack recall (**≈79%** on campaign wind
             [
                 "# IEEE Experimental Evaluation — Export Index",
                 "",
+                "## Architecture (final)",
+                "Vehicle IDS → Anomaly Descriptors → Behaviour Graph → GraphSAGE (structure-only) → DBSCAN →",
+                "`isolated_attack` / `coordinated_attack`",
+                "",
                 "## Tables",
-                "| Table | File | Contribution |",
-                "|-------|------|--------------|",
-                "| Table 1 | `paper/tables/table_01_vehicle_level_ids.tex` | Vehicle-Level IDS |",
-                "| Table 2 | `paper/tables/table_02_descriptor_compactness_security.tex` | Descriptor Compactness & Security |",
-                "| Table 3 | `paper/tables/table_03_cross_vehicle_generalisation.tex` | Cross-Vehicle Generalisation |",
-                "| Table 4 | `paper/tables/table_04_campaign_detection_results.tex` | Fleet Campaign Detection |",
-                "| Table 4 (supp.) | `paper/tables/table_04_local_vs_fleet_campaign_detection.tex` | Fleet Campaign Detection |",
+                "| Table | File | Hypothesis |",
+                "|-------|------|------------|",
+                "| Table 1 | `paper/tables/table_01_vehicle_level_ids.tex` | H1 — Vehicle-Level IDS |",
+                "| Table 2 | `paper/tables/table_02_descriptor_compactness_security.tex` | H2 — Descriptor Security |",
+                "| Table 3 | `paper/tables/table_03_cross_vehicle_generalisation.tex` | H3 — Cross-Vehicle Generalisation |",
+                "| Table 4 | `paper/tables/table_04_local_vs_gnn_fleet_ids.tex` | H4 — Fleet GNN IDS |",
+                "| Table 5 | `paper/tables/table_05_coordinated_campaign_detection.tex` | H4 — Campaign Detection |",
                 "",
                 "## Figures",
-                "| Figure | File | Contribution |",
-                "|--------|------|--------------|",
-                "| Figure 1 | `paper/figures/figure_01_vehicle_ids_roc.pdf` | Vehicle-Level IDS |",
-                "| Figure 2 | `paper/figures/figure_02_vehicle_ids_score_distribution.pdf` | Vehicle-Level IDS |",
-                "| Figure 3 | `paper/figures/figure_03_descriptor_bandwidth_exposure.pdf` | Descriptor Security |",
-                "| Figure 4 | `paper/figures/figure_04_payload_reconstruction_risk.pdf` | Descriptor Security |",
-                "| Figure 5 | `paper/figures/figure_05_cross_vehicle_embedding.pdf` | Cross-Vehicle Generalisation |",
-                "| Figure 6 | `paper/figures/figure_06_fleet_campaign_graph.pdf` | Fleet Campaign Detection |",
-                "| Figure 7 | `paper/figures/figure_07_campaign_descriptor_embedding.pdf` | Fleet Campaign Detection |",
+                "| Figure | File | Hypothesis |",
+                "|--------|------|------------|",
+                "| Figure 2 | `paper/figures/figure_02_vehicle_level_roc.pdf` | H1 |",
+                "| Figure 3 | `paper/figures/figure_03_anomaly_score_distribution.pdf` | H1 |",
+                "| Figure 4 | `paper/figures/figure_04_bandwidth_scaling.pdf` | H2 |",
+                "| Figure 5 | `paper/figures/figure_05_payload_reconstruction_risk.pdf` | H2 |",
+                "| Figure 6 | `paper/figures/figure_06_cross_vehicle_descriptor_embedding.pdf` | H3 |",
+                "| Figure 7 | `paper/figures/figure_07_gnn_fleet_campaign_graph.pdf` | H4 |",
+                "| Figure 8 | `paper/figures/figure_08_final_attack_decision_distribution.pdf` | H4 |",
+                "| Figure 9 | `paper/figures/figure_09_campaign_detection_by_attack_type.pdf` | H4 |",
+                "",
+                "Figure 7 node colour = `isolated_attack` vs `coordinated_attack` (runtime decision).",
+                "Attack types in Figures 6 and 9 are evaluation/visualisation only.",
                 "",
                 "## Supporting CSVs",
                 "All under `paper/results/`.",

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Generate publication-quality IEEE Experimental Evaluation exports (4 contributions).
+Generate publication-quality IEEE Experimental Evaluation exports (H1–H4).
 
-Runs campaign detection first if Contribution 4 results are missing.
+Runs final GNN fleet decision evaluation first if H4 artifacts are missing.
 
 Usage:
   python3 run_ieee_paper_exports.py
