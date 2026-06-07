@@ -4,22 +4,28 @@ Evidence supports hypotheses **H1–H4** under the deployment-realistic fleet ar
 Vehicle IDS → Anomaly Descriptors → Behaviour Graph → GraphSAGE (structure-only) → DBSCAN →
 `isolated_attack` / `coordinated_attack`. Attack-type labels are used **only** for evaluation plots and tables.
 
-## H1 — Vehicle-Level IDS Effectiveness (Table 1; Figures 2–3)
+## H1 — Vehicle-Level IDS Effectiveness (Table 1; Figure 2)
 
-The self-supervised Isolation Forest achieves **PR-AUC 0.927** (Figure 2) and **ROC-AUC 0.786** (Table 1) at **FPR ≤ 5%**.
-Precision is high (**97.3%**) with moderate pooled recall (**46.0%**, F1 **62.4%**), yielding a conservative local alert stream suitable for uplink to the fleet layer.
-Figure 3 shows uneven per-attack F1 (strong on fuzzy/flooding, weaker on replay), motivating fleet-level correlation beyond window scores.
+We introduce a **lightweight, self-supervised** Isolation Forest vehicle IDS that flags suspicious CAN windows without attack labels at training time.
+On the held-out test split it achieves **PR-AUC 0.927** (Figure 2) and **ROC-AUC 0.786** (Table 1) with **FPR ≤ 5%**, **97.3% precision**, and **46.0% recall** (F1 **62.4%**).
+This produces a compact local alert stream uplinked as anomaly descriptors to the fleet correlation layer.
 
-**Interpretation:** H1 is supported — the vehicle IDS detects suspicious CAN windows locally but cannot classify coordinated multi-vehicle campaigns.
+**Interpretation:** H1 is supported — self-supervised local detection is effective enough to feed the fleet pipeline but does not classify coordinated campaigns.
 
 ## H2 — Descriptor Compactness and Security (Table 2; Figures 4–5)
 
-Descriptors compress raw CAN windows by **12.6×** (**92%** bandwidth reduction) with **94%** fleet bandwidth reduction at 100 vehicles.
-Raw payloads and exact frame order are not transmitted; only aggregated behavioural statistics and anomaly evidence are uplinked.
-Payload-statistic reconstruction from descriptors yields **R² ≈ 0.44** vs **R² = 1.0** for raw CAN exposure.
+H2 is evaluated on **two complementary axes** — less data sent, and safer content in what is sent:
 
-**Interpretation:** H2 is supported — descriptors reduce communication cost and payload disclosure while preserving anomaly evidence.
-**Limitation:** Residual vehicle fingerprinting remains high (~99.97%).
+1. **Compactness (Figure 4; Table 2)** — *How much* leaves the vehicle?
+   Per-window uplink drops from **~2,076 bytes** (raw CAN window) to **~165 bytes** (descriptor), i.e. **12.6×** compression and **92%** bandwidth reduction; at 100 vehicles, fleet uplink falls from **~7.6 GB** to **~425 MB** (**94%** reduction, Figure 4).
+
+2. **Security / privacy (Figure 5; Table 2)** — *What sensitive content* is in that uplink?
+   Figure 5 compares raw CAN vs descriptor uplink element-by-element: payload bytes and per-frame CAN IDs are **not transmitted**; message order is summarised; anomaly evidence is **preserved** for fleet IDS.
+
+Together, Figure 4 shows the **volume** reduction; Figure 5 shows the **content** reduction. Table 2 reports the numeric compactness metrics plus disclosure rows (e.g. raw payload bytes: Exposed → descriptor: Not transmitted).
+
+**Interpretation:** H2 is supported — descriptors are a smaller *and* safer fleet uplink than raw CAN, while keeping anomaly evidence for correlation.
+**Limitation:** Residual vehicle fingerprinting from behavioural patterns remains high (~99.97%); this is a linkability limit, not a claim of full anonymisation.
 
 ## H3 — Cross-Vehicle Descriptor Generalisation (Table 3; Figure 6)
 

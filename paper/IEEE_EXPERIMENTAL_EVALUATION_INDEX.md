@@ -16,17 +16,22 @@ Vehicle IDS → Anomaly Descriptors → Behaviour Graph → GraphSAGE (structure
 ## Figures
 | Figure | File | Hypothesis |
 |--------|------|------------|
-| Figure 2 | `paper/figures/figure_02_vehicle_level_pr.pdf` | H1 — PR curve (local IDS) |
-| Figure 3 | `paper/figures/figure_03_local_ids_f1_by_attack.pdf` | H1 — F1 by attack type |
-| Figure 4 | `paper/figures/figure_04_bandwidth_scaling.pdf` | H2 |
-| Figure 5 | `paper/figures/figure_05_payload_reconstruction_risk.pdf` | H2 |
+| Figure 2 | `paper/figures/figure_02_vehicle_level_pr.pdf` | H1 — PR curve (self-supervised local IDS) |
+| Figure 4 | `paper/figures/figure_04_bandwidth_scaling.pdf` | H2 — bandwidth scaling (colour line chart) |
+| Figure 5 | `paper/figures/figure_05_descriptor_information_disclosure.pdf` | H2 — information disclosure matrix (colour) |
 | Figure 6 | `paper/figures/figure_06_cross_vehicle_descriptor_embedding.pdf` | H3 |
 | Figure 7 | `paper/figures/figure_07_gnn_fleet_campaign_graph.pdf` | H4 |
 | Figure 8 | `paper/figures/figure_08_final_attack_decision_distribution.pdf` | H4 |
 
-Figure 7 node colour = `isolated_attack` vs `coordinated_attack` (runtime decision).
-Per-attack-type evaluation metrics are in Table 5 only (no Figure 9).
+Figure 7 node colour = `isolated_attack` vs `coordinated_attack` (runtime decision).  
+Per-attack-type evaluation metrics are in Table 5 only (no Figure 9).  
 Attack types in Figure 6 are evaluation/visualisation only.
+
+## Figure captions (H2)
+
+**Figure 4.** Bandwidth scaling comparison between raw CAN transmission and descriptor-based transmission across different fleet sizes.
+
+**Figure 5.** Information exposure comparison between raw CAN transmission and descriptor-based uplink. Descriptor abstraction removes raw identifiers and payload content while preserving behavioural anomaly evidence required for fleet-level intrusion detection.
 
 ## Supporting CSVs
 All under `paper/results/`.

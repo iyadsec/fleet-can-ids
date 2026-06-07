@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gzip
 import io
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -39,6 +40,57 @@ IEEE_RC = {
     "figure.dpi": 300,
     "savefig.dpi": 300,
     "savefig.bbox": "tight",
+}
+
+# Publication figure width (readable in IEEE two-column layout).
+PAPER_FIG_WIDTH = 7.0
+PAPER_FIG_FONTS = {
+    "title": 14,
+    "label": 13,
+    "tick": 12,
+    "legend": 12,
+    "annotation": 11,
+}
+
+RAW_CAN_COLOR = "#C00000"
+DESCRIPTOR_COLOR = "#4472C4"
+
+PRIVACY_COMPARISON_ROWS: list[tuple[str, bool, bool]] = [
+    # (element, raw_exposed, descriptor_exposed) — True → ✗, False → ✓
+    ("CAN IDs", True, False),
+    ("Payload Bytes", True, False),
+    ("Vehicle Identity", True, True),
+    ("Message Sequence", True, False),
+    ("Behavioural Evidence", False, False),
+]
+
+_DISCLOSURE_SHORT_LABELS: dict[str, tuple[str, str]] = {
+    "Exposed": ("Full exposure", "#C00000"),
+    "Present": ("Available", "#C00000"),
+    "Implicitly inferable": ("Inferable", "#ED7D31"),
+    "Not transmitted": ("Not transmitted", "#548235"),
+    "Not transmitted directly": ("IDs omitted", "#548235"),
+    "Aggregated statistics only": ("Stats only", "#FFC000"),
+    "Aggregated / not directly transmitted": ("Aggregated", "#FFC000"),
+    "Summarised as behavioural statistics": ("Summarised", "#FFC000"),
+    "Not explicitly transmitted, but may remain inferable from behavioural patterns": (
+        "No ID field",
+        "#ED7D31",
+    ),
+    "Preserved": ("Preserved", "#4472C4"),
+}
+
+PAPER_FIGURE_CAPTIONS = {
+    "figure_04_bandwidth_scaling": (
+        "Bandwidth scaling comparison between raw CAN transmission and "
+        "descriptor-based transmission across different fleet sizes."
+    ),
+    "figure_05_descriptor_information_disclosure": (
+        "Information exposure comparison between raw CAN transmission and "
+        "descriptor-based uplink. Descriptor abstraction removes raw identifiers "
+        "and payload content while preserving behavioural anomaly evidence "
+        "required for fleet-level intrusion detection."
+    ),
 }
 
 FLEET_SIZES = (10, 50, 100, 500, 1000)
@@ -351,29 +403,352 @@ def load_descriptors_for_experiment(
     return features, full_desc, transmit
 
 
-def _plot_information_disclosure(disclosure_df: pd.DataFrame, out: Path) -> None:
-    """Qualitative comparison: count elements fully exposed vs reduced in descriptor view."""
-    exposed_raw = (disclosure_df["Raw CAN Transmission"] == "Exposed").sum()
-    not_direct = disclosure_df["Descriptor Transmission"].str.contains(
-        "Not transmitted|not directly|Aggregated|Summarised", case=False, regex=True
-    ).sum()
-    fig, ax = plt.subplots(figsize=(5.0, 3.5))
-    categories = ["Fully exposed\n(raw CAN)", "Reduced / not\ndirect (descriptor)"]
-    counts = [int(exposed_raw), int(not_direct)]
-    ax.bar(categories, counts, color=["#C00000", "#4472C4"])
-    ax.set_ylabel("Number of information elements")
-    ax.set_title("Information Disclosure Comparison")
-    ax.set_ylim(0, max(counts) + 1)
-    fig.text(
-        0.5,
-        -0.08,
-        "Raw CAN exposes frame-level identifiers, payloads, and sequences; "
-        "descriptors transmit aggregated behavioural evidence only.",
-        ha="center",
-        fontsize=8,
-        style="italic",
+def _compute_exposure_score_metrics() -> tuple[float, float, float]:
+    """Return raw score, descriptor score, and leakage reduction (%)."""
+    appendix = _heuristic_exposure_appendix()
+    raw = float(
+        appendix.loc[appendix["view"] == "raw_can_heuristic", "mean_exposure_score"].iloc[0]
     )
-    _save_figure(fig, out)
+    desc = float(
+        appendix.loc[
+            appendix["view"] == "descriptor_transmit_heuristic", "mean_exposure_score"
+        ].iloc[0]
+    )
+    reduction = 100.0 * (raw - desc) / raw if raw else 0.0
+    return raw, desc, reduction
+
+
+def _apply_publication_fonts(ax: plt.Axes, *, title: str) -> None:
+    fonts = PAPER_FIG_FONTS
+    ax.set_title(title, fontsize=fonts["title"], fontweight="bold", pad=10)
+    ax.set_xlabel(ax.get_xlabel(), fontsize=fonts["label"])
+    ax.set_ylabel(ax.get_ylabel(), fontsize=fonts["label"])
+    ax.tick_params(axis="both", labelsize=fonts["tick"])
+    legend = ax.get_legend()
+    if legend is not None:
+        for text in legend.get_texts():
+            text.set_fontsize(fonts["legend"])
+
+
+def _format_bandwidth_label(value_mb: float) -> str:
+    if value_mb >= 1000.0:
+        return f"{value_mb / 1000.0:.1f}k"
+    return f"{int(round(value_mb))}"
+
+
+def _annotate_bar_values(ax: plt.Axes, bars: Any, *, fontsize: int) -> None:
+    for bar in bars:
+        height = float(bar.get_height())
+        if height <= 0:
+            continue
+        y = height * 1.08 if ax.get_yscale() == "log" else height + ax.get_ylim()[1] * 0.01
+        ax.text(
+            bar.get_x() + bar.get_width() / 2.0,
+            y,
+            _format_bandwidth_label(height),
+            ha="center",
+            va="bottom",
+            fontsize=fontsize,
+            clip_on=False,
+        )
+
+
+def _plot_bandwidth_scaling_line(scalability_df: pd.DataFrame, out: Path) -> None:
+    """Line chart: raw CAN vs descriptor fleet bandwidth (full color)."""
+    with plt.rc_context(IEEE_RC):
+        fig, ax = plt.subplots(figsize=(PAPER_FIG_WIDTH, 4.5))
+        ax.plot(
+            scalability_df["fleet_size"],
+            scalability_df["total_raw_bandwidth_mb"],
+            "o-",
+            linewidth=2.2,
+            markersize=8,
+            label="Raw CAN Transmission",
+            color=RAW_CAN_COLOR,
+        )
+        ax.plot(
+            scalability_df["fleet_size"],
+            scalability_df["total_descriptor_bandwidth_mb"],
+            "s-",
+            linewidth=2.2,
+            markersize=8,
+            label="Descriptor Transmission",
+            color=DESCRIPTOR_COLOR,
+        )
+        ax.set_xlabel("Fleet Size")
+        ax.set_ylabel("Bandwidth Usage (MB)")
+        ax.grid(True, alpha=0.3)
+        ax.legend(loc="upper left", frameon=False)
+        _apply_publication_fonts(ax, title="Bandwidth Scaling Across Fleet Sizes")
+        fig.tight_layout()
+        _save_figure(fig, out)
+
+
+def _plot_bandwidth_scaling_grouped(scalability_df: pd.DataFrame, out: Path) -> None:
+    """Grouped bar chart: raw CAN vs descriptor fleet bandwidth (full color)."""
+    fonts = PAPER_FIG_FONTS
+    fleet_sizes = scalability_df["fleet_size"].to_numpy()
+    raw_mb = scalability_df["total_raw_bandwidth_mb"].to_numpy()
+    desc_mb = scalability_df["total_descriptor_bandwidth_mb"].to_numpy()
+    x = np.arange(len(fleet_sizes), dtype=float)
+    bar_width = 0.34
+
+    with plt.rc_context(IEEE_RC):
+        fig, ax = plt.subplots(figsize=(PAPER_FIG_WIDTH, 4.5))
+        bars_raw = ax.bar(
+            x - bar_width / 2,
+            raw_mb,
+            bar_width,
+            label="Raw CAN Transmission",
+            color=RAW_CAN_COLOR,
+            edgecolor="white",
+            linewidth=0.6,
+        )
+        bars_desc = ax.bar(
+            x + bar_width / 2,
+            desc_mb,
+            bar_width,
+            label="Descriptor Transmission",
+            color=DESCRIPTOR_COLOR,
+            edgecolor="white",
+            linewidth=0.6,
+        )
+        ax.set_yscale("log")
+        ax.set_xticks(x)
+        ax.set_xticklabels([str(int(v)) for v in fleet_sizes])
+        ax.set_xlabel("Fleet Size")
+        ax.set_ylabel("Bandwidth Usage (MB)")
+        ax.grid(True, axis="y", which="major", alpha=0.3)
+        ax.legend(loc="upper left", frameon=False)
+        _apply_publication_fonts(ax, title="Bandwidth Scaling Comparison")
+        _annotate_bar_values(ax, bars_raw, fontsize=fonts["tick"] - 1)
+        _annotate_bar_values(ax, bars_desc, fontsize=fonts["tick"] - 1)
+        fig.tight_layout()
+        _save_figure(fig, out)
+
+
+def _disclosure_cell(value: str) -> tuple[str, str]:
+    text = str(value).strip()
+    if text in _DISCLOSURE_SHORT_LABELS:
+        return _DISCLOSURE_SHORT_LABELS[text]
+    lowered = text.lower()
+    if "not transmitted" in lowered:
+        return ("Not transmitted", "#548235")
+    if "aggregated" in lowered or "summar" in lowered:
+        return ("Aggregated", "#FFC000")
+    if "preserved" in lowered:
+        return ("Preserved", "#4472C4")
+    if "infer" in lowered:
+        return ("Inferable", "#ED7D31")
+    return ("Exposed", "#C00000")
+
+
+def _plot_information_disclosure(disclosure_df: pd.DataFrame, out: Path) -> None:
+    """Colored disclosure matrix: raw CAN vs descriptor uplink."""
+    fonts = PAPER_FIG_FONTS
+    elements = disclosure_df["Information Element"].tolist()
+    raw_vals = disclosure_df["Raw CAN Transmission"].tolist()
+    desc_vals = disclosure_df["Descriptor Transmission"].tolist()
+    n_rows = len(elements)
+
+    with plt.rc_context(IEEE_RC):
+        fig, ax = plt.subplots(figsize=(PAPER_FIG_WIDTH, 0.72 * n_rows + 2.0))
+        ax.set_xlim(-0.5, 1.5)
+        ax.set_ylim(-0.5, n_rows - 0.5)
+        ax.invert_yaxis()
+        ax.set_xticks([0, 1])
+        ax.set_xticklabels(["Raw CAN uplink", "Descriptor uplink"], fontsize=fonts["label"], fontweight="bold")
+        ax.set_yticks(range(n_rows))
+        ax.set_yticklabels(elements, fontsize=fonts["tick"])
+        ax.set_title(
+            "Information Disclosure: Raw CAN vs Descriptor Uplink",
+            fontsize=fonts["title"],
+            fontweight="bold",
+            pad=12,
+        )
+        ax.tick_params(axis="x", length=0)
+        ax.tick_params(axis="y", length=0)
+
+        for row_idx, (raw_text, desc_text) in enumerate(zip(raw_vals, desc_vals)):
+            for col_idx, value in enumerate((raw_text, desc_text)):
+                label, colour = _disclosure_cell(value)
+                ax.add_patch(
+                    plt.Rectangle(
+                        (col_idx - 0.42, row_idx - 0.34),
+                        0.84,
+                        0.68,
+                        facecolor=colour,
+                        edgecolor="white",
+                        linewidth=1.5,
+                    )
+                )
+                text_colour = "white" if colour in {"#C00000", "#548235", "#4472C4"} else "black"
+                ax.text(
+                    col_idx,
+                    row_idx,
+                    label,
+                    ha="center",
+                    va="center",
+                    fontsize=fonts["tick"] - 1,
+                    fontweight="bold",
+                    color=text_colour,
+                )
+
+        legend_handles = [
+            plt.Rectangle((0, 0), 1, 1, facecolor="#C00000", edgecolor="white"),
+            plt.Rectangle((0, 0), 1, 1, facecolor="#FFC000", edgecolor="white"),
+            plt.Rectangle((0, 0), 1, 1, facecolor="#548235", edgecolor="white"),
+            plt.Rectangle((0, 0), 1, 1, facecolor="#4472C4", edgecolor="white"),
+            plt.Rectangle((0, 0), 1, 1, facecolor="#ED7D31", edgecolor="white"),
+        ]
+        ax.legend(
+            legend_handles,
+            [
+                "Full exposure",
+                "Aggregated only",
+                "Not transmitted",
+                "Utility preserved",
+                "Residual inferability",
+            ],
+            loc="upper center",
+            bbox_to_anchor=(0.5, -0.08),
+            ncol=3,
+            frameon=False,
+            fontsize=fonts["legend"],
+        )
+        for spine in ax.spines.values():
+            spine.set_visible(False)
+        fig.tight_layout()
+        _save_figure(fig, out)
+
+
+def _plot_privacy_preservation_comparison(out: Path) -> None:
+    """Colored checkmark privacy matrix with exposure-score summary."""
+    fonts = PAPER_FIG_FONTS
+    raw_score, desc_score, leakage_reduction = _compute_exposure_score_metrics()
+    columns = ["Raw CAN", "Descriptor"]
+    n_rows = len(PRIVACY_COMPARISON_ROWS)
+    exposed_colour = "#F4CCCC"
+    protected_colour = "#D9EAD3"
+    cross_colour = "#C00000"
+    check_colour = "#38761D"
+
+    with plt.rc_context(IEEE_RC):
+        fig = plt.figure(figsize=(PAPER_FIG_WIDTH, 0.58 * n_rows + 2.2))
+        grid = fig.add_gridspec(nrows=2, ncols=1, height_ratios=[n_rows + 0.55, 1.0], hspace=0.25)
+        ax = fig.add_subplot(grid[0, 0])
+        ax.set_xlim(-0.5, len(columns) - 0.5)
+        ax.set_ylim(-0.5, n_rows - 0.5)
+        ax.invert_yaxis()
+        ax.set_xticks(range(len(columns)))
+        ax.set_xticklabels(columns, fontsize=fonts["label"], fontweight="bold")
+        ax.set_yticks(range(n_rows))
+        ax.set_yticklabels([row[0] for row in PRIVACY_COMPARISON_ROWS], fontsize=fonts["tick"])
+        ax.set_title(
+            "Privacy Preservation: Raw CAN vs Descriptor Uplink",
+            fontsize=fonts["title"],
+            fontweight="bold",
+            pad=10,
+        )
+        ax.tick_params(axis="x", length=0)
+        ax.tick_params(axis="y", length=0)
+        for spine in ax.spines.values():
+            spine.set_visible(False)
+
+        for row_idx, (_, raw_exposed, desc_exposed) in enumerate(PRIVACY_COMPARISON_ROWS):
+            for col_idx, is_exposed in enumerate((raw_exposed, desc_exposed)):
+                face = exposed_colour if is_exposed else protected_colour
+                symbol = "\u2717" if is_exposed else "\u2713"
+                symbol_colour = cross_colour if is_exposed else check_colour
+                ax.add_patch(
+                    plt.Rectangle(
+                        (col_idx - 0.38, row_idx - 0.34),
+                        0.76,
+                        0.68,
+                        facecolor=face,
+                        edgecolor="#999999",
+                        linewidth=0.8,
+                    )
+                )
+                ax.text(
+                    col_idx,
+                    row_idx,
+                    symbol,
+                    ha="center",
+                    va="center",
+                    fontsize=fonts["title"] + 2,
+                    fontweight="bold",
+                    color=symbol_colour,
+                )
+
+        legend_handles = [
+            plt.Rectangle((0, 0), 1, 1, facecolor=protected_colour, edgecolor="#999999"),
+            plt.Rectangle((0, 0), 1, 1, facecolor=exposed_colour, edgecolor="#999999"),
+        ]
+        ax.legend(
+            legend_handles,
+            ["Protected / preserved", "Exposed / inferable"],
+            loc="upper center",
+            bbox_to_anchor=(0.5, -0.05),
+            ncol=2,
+            frameon=False,
+            fontsize=fonts["legend"],
+        )
+
+        summary_ax = fig.add_subplot(grid[1, 0])
+        summary_ax.axis("off")
+        summary_ax.text(
+            0.5,
+            0.5,
+            (
+                f"Exposure Score — Raw CAN: {raw_score:.2f}  |  "
+                f"Descriptor: {desc_score:.2f}  |  "
+                f"Leakage Reduction: {leakage_reduction:.2f}%"
+            ),
+            ha="center",
+            va="center",
+            fontsize=fonts["annotation"],
+            fontweight="bold",
+            transform=summary_ax.transAxes,
+            bbox={
+                "boxstyle": "round,pad=0.45",
+                "facecolor": "#EAF2FB",
+                "edgecolor": DESCRIPTOR_COLOR,
+                "linewidth": 0.9,
+            },
+        )
+        _save_figure(fig, out)
+
+
+def export_h2_publication_figures(
+    *,
+    scalability_csv: Path,
+    paper_figures_dir: Path,
+    source_figures_dir: Path | None = None,
+) -> dict[str, Path]:
+    """Regenerate H2 paper figures (Fig. 4–5) and copy into ``paper/figures/``."""
+    scalability_df = pd.read_csv(scalability_csv)
+    source_dir = source_figures_dir or scalability_csv.parent.parent / "figures"
+    source_dir.mkdir(parents=True, exist_ok=True)
+    paper_figures_dir.mkdir(parents=True, exist_ok=True)
+
+    fig4_src = source_dir / "bandwidth_scaling_fleet_sizes"
+    fig5_src = source_dir / "information_disclosure_comparison"
+    disclosure_df = _build_information_disclosure_table()
+    _plot_bandwidth_scaling_line(scalability_df, fig4_src)
+    _plot_information_disclosure(disclosure_df, fig5_src)
+
+    written: dict[str, Path] = {}
+    for stem, src in (
+        ("figure_04_bandwidth_scaling", fig4_src),
+        ("figure_05_descriptor_information_disclosure", fig5_src),
+    ):
+        for ext in (".pdf", ".png"):
+            dest = paper_figures_dir / f"{stem}{ext}"
+            shutil.copy2(src.with_suffix(ext), dest)
+            if ext == ".pdf":
+                written[stem] = dest
+    return written
 
 
 def _build_main_comparison_table(
@@ -630,38 +1005,17 @@ def run_descriptor_security_experiment(
         encoding="utf-8",
     )
 
-    fig, ax = plt.subplots(figsize=(4.5, 3.2))
-    ax.plot(
-        scalability_df["fleet_size"],
-        scalability_df["total_raw_bandwidth_mb"],
-        "o-",
-        linewidth=1.8,
-        label="Raw CAN Transmission",
+    _plot_bandwidth_scaling_line(
+        scalability_df, outputs.figures_dir / "bandwidth_scaling_fleet_sizes"
     )
-    ax.plot(
-        scalability_df["fleet_size"],
-        scalability_df["total_descriptor_bandwidth_mb"],
-        "s-",
-        linewidth=1.8,
-        label="Descriptor Transmission",
-    )
-    ax.set_xlabel("Fleet Size")
-    ax.set_ylabel("Bandwidth Usage (MB)")
-    ax.set_title("Bandwidth Scaling Across Fleet Sizes")
-    ax.legend()
-    ax.grid(True, alpha=0.3)
-    fig.text(
-        0.5,
-        -0.12,
-        "Descriptor abstraction significantly reduces communication overhead as fleet size "
-        "increases, demonstrating improved scalability compared with raw CAN transmission.",
-        ha="center",
-        fontsize=8,
-        style="italic",
-    )
-    _save_figure(fig, outputs.figures_dir / "bandwidth_scaling_fleet_sizes")
 
-    _plot_information_disclosure(disclosure_df, outputs.figures_dir / "information_disclosure_comparison")
+    _plot_information_disclosure(
+        disclosure_df, outputs.figures_dir / "information_disclosure_comparison"
+    )
+
+    _plot_privacy_preservation_comparison(
+        outputs.figures_dir / "privacy_preservation_comparison"
+    )
 
     fig, ax = plt.subplots(figsize=(4.2, 3.0))
     labels = ["Raw baseline", "Descriptor attacker", "Random baseline"]

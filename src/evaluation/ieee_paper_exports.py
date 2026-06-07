@@ -10,9 +10,8 @@ from typing import Any
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from src.evaluation.descriptor_security_experiment import PAPER_FIGURE_CAPTIONS, export_h2_publication_figures
 from src.utils.logging import get_logger
-
-logger = get_logger(__name__)
 
 IEEE_RC = {
     "font.size": 10,
@@ -28,8 +27,10 @@ OBSOLETE_PAPER_STEMS = (
     "figure_02_vehicle_ids_score_distribution",
     "figure_02_vehicle_level_roc",
     "figure_03_anomaly_score_distribution",
+    "figure_03_local_ids_f1_by_attack",
     "figure_03_descriptor_bandwidth_exposure",
     "figure_04_payload_reconstruction_risk",
+    "figure_05_payload_reconstruction_risk",
     "figure_05_cross_vehicle_embedding",
     "figure_06_fleet_campaign_graph",
     "figure_07_campaign_descriptor_embedding",
@@ -254,9 +255,9 @@ def _ensure_prerequisite_experiments(repo_root: Path) -> None:
 
     need_vehicle = not (src / "vehicle_level_metrics.csv").exists() or not (
         fig / "local_ids_pr_curve.pdf"
-    ).exists() or not (fig / "local_ids_f1_by_attack_type.pdf").exists()
+    ).exists()
     need_descriptor = not (src / "descriptor_security_comparison_table.csv").exists() or not (
-        fig / "payload_reconstruction_error.pdf"
+        fig / "information_disclosure_comparison.pdf"
     ).exists() or not (fig / "bandwidth_scaling_fleet_sizes.pdf").exists()
     need_cross = not (src / "cross_vehicle_generalisation.csv").exists() or not (
         fig / "descriptor_embedding_by_attack.pdf"
@@ -410,7 +411,6 @@ def run_ieee_paper_exports(*, repo_root: Path) -> dict[str, Any]:
         shutil.copy2(src / "vehicle_level_by_attack_type.csv", outputs.results_dir / "table_01_vehicle_level_by_attack.csv")
 
     _copy_figure(src_fig / "local_ids_pr_curve", outputs.figures_dir / "figure_02_vehicle_level_pr")
-    _copy_figure(src_fig / "local_ids_f1_by_attack_type", outputs.figures_dir / "figure_03_local_ids_f1_by_attack")
 
     # --- H2: Descriptor Compactness and Security ---
     t2 = _build_table_02_descriptor_security(src)
@@ -422,8 +422,13 @@ def run_ieee_paper_exports(*, repo_root: Path) -> dict[str, Any]:
         title="Table 2: Descriptor Compactness and Security",
         outputs=outputs,
     )
-    _copy_figure(src_fig / "bandwidth_scaling_fleet_sizes", outputs.figures_dir / "figure_04_bandwidth_scaling")
-    _copy_figure(src_fig / "payload_reconstruction_error", outputs.figures_dir / "figure_05_payload_reconstruction_risk")
+    h2_figs = export_h2_publication_figures(
+        scalability_csv=src / "descriptor_fleet_scalability.csv",
+        paper_figures_dir=outputs.figures_dir,
+        source_figures_dir=src_fig,
+    )
+    written["figure_04"] = h2_figs["figure_04_bandwidth_scaling"]
+    written["figure_05"] = h2_figs["figure_05_descriptor_information_disclosure"]
 
     # --- H3: Cross-Vehicle Generalisation ---
     t3 = _build_table_03_cross_vehicle(src)
@@ -478,20 +483,26 @@ def run_ieee_paper_exports(*, repo_root: Path) -> dict[str, Any]:
                 shutil.copy2(p, mirror_tables / p.name)
 
     interpretations = {
-        "H1 — Vehicle-Level IDS Effectiveness (Table 1; Figures 2–3)": """
-The self-supervised Isolation Forest achieves **PR-AUC 0.927** (Figure 2) and **ROC-AUC 0.786** (Table 1) at **FPR ≤ 5%**.
-Precision is high (**97.3%**) with moderate pooled recall (**46.0%**, F1 **62.4%**), yielding a conservative local alert stream suitable for uplink to the fleet layer.
-Figure 3 shows uneven per-attack F1 (strong on fuzzy/flooding, weaker on replay), motivating fleet-level correlation beyond window scores.
+        "H1 — Vehicle-Level IDS Effectiveness (Table 1; Figure 2)": """
+We introduce a **lightweight, self-supervised** Isolation Forest vehicle IDS that flags suspicious CAN windows without attack labels at training time.
+On the held-out test split it achieves **PR-AUC 0.927** (Figure 2) and **ROC-AUC 0.786** (Table 1) with **FPR ≤ 5%**, **97.3% precision**, and **46.0% recall** (F1 **62.4%**).
+This produces a compact local alert stream uplinked as anomaly descriptors to the fleet correlation layer.
 
-**Interpretation:** H1 is supported — the vehicle IDS detects suspicious CAN windows locally but cannot classify coordinated multi-vehicle campaigns.
+**Interpretation:** H1 is supported — self-supervised local detection is effective enough to feed the fleet pipeline but does not classify coordinated campaigns.
         """,
         "H2 — Descriptor Compactness and Security (Table 2; Figures 4–5)": """
-Descriptors compress raw CAN windows by **12.6×** (**92%** bandwidth reduction) with **94%** fleet bandwidth reduction at 100 vehicles.
-Raw payloads and exact frame order are not transmitted; only aggregated behavioural statistics and anomaly evidence are uplinked.
-Payload-statistic reconstruction from descriptors yields **R² ≈ 0.44** vs **R² = 1.0** for raw CAN exposure.
+H2 is evaluated on **two complementary axes** — less data sent, and safer content in what is sent:
 
-**Interpretation:** H2 is supported — descriptors reduce communication cost and payload disclosure while preserving anomaly evidence.
-**Limitation:** Residual vehicle fingerprinting remains high (~99.97%).
+1. **Compactness (Figure 4; Table 2)** — *How much* leaves the vehicle?
+   Per-window uplink drops from **~2,076 bytes** (raw CAN window) to **~165 bytes** (descriptor), i.e. **12.6×** compression and **92%** bandwidth reduction; at 100 vehicles, fleet uplink falls from **~7.6 GB** to **~425 MB** (**94%** reduction, Figure 4).
+
+2. **Security / privacy (Figure 5; Table 2)** — *What sensitive content* is in that uplink?
+   Figure 5 compares raw CAN vs descriptor uplink element-by-element: payload bytes and per-frame CAN IDs are **not transmitted**; message order is summarised; anomaly evidence is **preserved** for fleet IDS.
+
+Together, Figure 4 shows the **volume** reduction; Figure 5 shows the **content** reduction. Table 2 reports the numeric compactness metrics plus disclosure rows (e.g. raw payload bytes: Exposed → descriptor: Not transmitted).
+
+**Interpretation:** H2 is supported — descriptors are a smaller *and* safer fleet uplink than raw CAN, while keeping anomaly evidence for correlation.
+**Limitation:** Residual vehicle fingerprinting from behavioural patterns remains high (~99.97%); this is a linkability limit, not a claim of full anonymisation.
         """,
         "H3 — Cross-Vehicle Descriptor Generalisation (Table 3; Figure 6)": """
 Leave-one-vehicle-out transfer yields mean **ROC-AUC 0.745**, mean **F1 0.896**, and vehicle-agnostic score **0.821**.
@@ -539,10 +550,15 @@ Figure 7 colours nodes by final fleet decision. Per-attack-type evaluation metri
                 "## Figures",
                 "| Figure | File | Hypothesis |",
                 "|--------|------|------------|",
-                "| Figure 2 | `paper/figures/figure_02_vehicle_level_pr.pdf` | H1 — PR curve (local IDS) |",
-                "| Figure 3 | `paper/figures/figure_03_local_ids_f1_by_attack.pdf` | H1 — F1 by attack type |",
-                "| Figure 4 | `paper/figures/figure_04_bandwidth_scaling.pdf` | H2 |",
-                "| Figure 5 | `paper/figures/figure_05_payload_reconstruction_risk.pdf` | H2 |",
+                "| Figure 2 | `paper/figures/figure_02_vehicle_level_pr.pdf` | H1 — PR curve (self-supervised local IDS) |",
+                "| Figure 4 | `paper/figures/figure_04_bandwidth_scaling.pdf` | H2 — bandwidth scaling (color line chart) |",
+                "| Figure 5 | `paper/figures/figure_05_descriptor_information_disclosure.pdf` | H2 — information disclosure matrix (color) |",
+                "",
+                "## Figure captions (H2)",
+                "",
+                f"**Figure 4.** {PAPER_FIGURE_CAPTIONS['figure_04_bandwidth_scaling']}",
+                "",
+                f"**Figure 5.** {PAPER_FIGURE_CAPTIONS['figure_05_descriptor_information_disclosure']}",
                 "| Figure 6 | `paper/figures/figure_06_cross_vehicle_descriptor_embedding.pdf` | H3 |",
                 "| Figure 7 | `paper/figures/figure_07_gnn_fleet_campaign_graph.pdf` | H4 |",
                 "| Figure 8 | `paper/figures/figure_08_final_attack_decision_distribution.pdf` | H4 |",

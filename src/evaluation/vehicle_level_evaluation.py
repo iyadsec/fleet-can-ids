@@ -670,7 +670,7 @@ def run_vehicle_level_evaluation(
     ax.grid(True, alpha=0.3)
     _save_figure(fig, outputs.figures_dir / "local_ids_pr_curve")
 
-    # Figure 3 (paper): per-attack F1 at the selected operating point
+    # Supporting: per-attack F1 at the selected operating point (not in IEEE paper bundle)
     if not by_attack.empty:
         plot_df = by_attack[by_attack["Attack Type"].astype(str) != "attack_free"].copy()
         plot_df["F1-Score (%)"] = pd.to_numeric(plot_df["F1-Score (%)"], errors="coerce")
