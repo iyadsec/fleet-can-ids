@@ -16,8 +16,8 @@ Vehicle IDS → Anomaly Descriptors → Behaviour Graph → GraphSAGE (structure
 ## Figures
 | Figure | File | Hypothesis |
 |--------|------|------------|
-| Figure 2 | `paper/figures/figure_02_vehicle_level_roc.pdf` | H1 |
-| Figure 3 | `paper/figures/figure_03_anomaly_score_distribution.pdf` | H1 |
+| Figure 2 | `paper/figures/figure_02_vehicle_level_pr.pdf` | H1 — PR curve (local IDS) |
+| Figure 3 | `paper/figures/figure_03_local_ids_f1_by_attack.pdf` | H1 — F1 by attack type |
 | Figure 4 | `paper/figures/figure_04_bandwidth_scaling.pdf` | H2 |
 | Figure 5 | `paper/figures/figure_05_payload_reconstruction_risk.pdf` | H2 |
 | Figure 6 | `paper/figures/figure_06_cross_vehicle_descriptor_embedding.pdf` | H3 |

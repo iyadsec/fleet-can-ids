@@ -104,7 +104,7 @@ python3 run_ieee_paper_exports.py
 
 | Hypothesis | Table | Figures |
 |------------|-------|---------|
-| **H1** — Vehicle-Level IDS | Table 1 | Figure 2 (ROC), Figure 3 (score distribution) |
+| **H1** — Vehicle-Level IDS | Table 1 | Figure 2 (PR curve), Figure 3 (F1 by attack type) |
 | **H2** — Descriptor security | Table 2 | Figure 4 (bandwidth scaling), Figure 5 (payload reconstruction) |
 | **H3** — Cross-vehicle generalisation | Table 3 | Figure 6 (descriptor embedding) |
 | **H4** — GNN fleet IDS | Tables 4–5 | Figure 7 (GNN campaign graph), Figure 8 (decision distribution) |

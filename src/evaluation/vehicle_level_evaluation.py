@@ -14,6 +14,7 @@ from sklearn.metrics import (
     average_precision_score,
     confusion_matrix,
     f1_score,
+    precision_recall_curve,
     roc_auc_score,
     roc_curve,
 )
@@ -643,7 +644,7 @@ def run_vehicle_level_evaluation(
 
     display_threshold = float(np.median(list(per_vehicle_selected.values())))
 
-    # Figure 1: ROC (score-based; threshold-independent)
+    # Figure 1: ROC (score-based; threshold-independent; supporting artefact)
     fpr_curve, tpr_curve, _ = roc_curve(y_test, test_scores)
     fig, ax = plt.subplots(figsize=(3.5, 3.0))
     ax.plot(fpr_curve, tpr_curve, linewidth=1.8, label=f"IF (AUC={metrics['roc_auc']:.3f})")
@@ -655,7 +656,46 @@ def run_vehicle_level_evaluation(
     ax.grid(True, alpha=0.3)
     _save_figure(fig, outputs.figures_dir / "local_ids_roc_curve")
 
-    # Figure 2: score distribution
+    # Figure 2 (paper): precision–recall curve (imbalanced attack/benign setting)
+    prec_curve, rec_curve, _ = precision_recall_curve(y_test, test_scores)
+    pr_auc = float(average_precision_score(y_test, test_scores))
+    fig, ax = plt.subplots(figsize=(3.5, 3.0))
+    ax.plot(rec_curve, prec_curve, linewidth=1.8, label=f"IF (AP={pr_auc:.3f})")
+    ax.set_xlabel("Recall")
+    ax.set_ylabel("Precision")
+    ax.set_title("Precision–Recall — Local IDS (Test)")
+    ax.set_xlim(0.0, 1.0)
+    ax.set_ylim(0.0, 1.05)
+    ax.legend(loc="lower left")
+    ax.grid(True, alpha=0.3)
+    _save_figure(fig, outputs.figures_dir / "local_ids_pr_curve")
+
+    # Figure 3 (paper): per-attack F1 at the selected operating point
+    if not by_attack.empty:
+        plot_df = by_attack[by_attack["Attack Type"].astype(str) != "attack_free"].copy()
+        plot_df["F1-Score (%)"] = pd.to_numeric(plot_df["F1-Score (%)"], errors="coerce")
+        plot_df = plot_df.dropna(subset=["F1-Score (%)"])
+        if not plot_df.empty:
+            labels = [str(a).replace("_", " ").capitalize() for a in plot_df["Attack Type"]]
+            fig, ax = plt.subplots(figsize=(4.5, 3.0))
+            bars = ax.bar(labels, plot_df["F1-Score (%)"], color="#4472C4")
+            ax.set_ylabel("F1-score (%)")
+            ax.set_xlabel("Attack type")
+            ax.set_title("Local IDS F1-score by Attack Type (Test)")
+            ax.set_ylim(0, 105)
+            for bar, val in zip(bars, plot_df["F1-Score (%)"]):
+                ax.text(
+                    bar.get_x() + bar.get_width() / 2,
+                    bar.get_height() + 1.5,
+                    f"{val:.1f}",
+                    ha="center",
+                    va="bottom",
+                    fontsize=8,
+                )
+            plt.xticks(rotation=20, ha="right")
+            _save_figure(fig, outputs.figures_dir / "local_ids_f1_by_attack_type")
+
+    # Supporting: score distribution (not used in IEEE paper bundle)
     benign_scores = test_eval.loc[test_eval["label"] == 0, "anomaly_score"]
     attack_scores = test_eval.loc[test_eval["label"] == 1, "anomaly_score"]
     fig, ax = plt.subplots(figsize=(3.5, 3.0))
@@ -674,7 +714,7 @@ def run_vehicle_level_evaluation(
     ax.legend(loc="upper center", fontsize=7)
     _save_figure(fig, outputs.figures_dir / "local_ids_anomaly_score_distribution")
 
-    # Figure 3: latency by attack type
+    # Supporting: latency by attack type
     if not by_attack.empty:
         plot_df = by_attack.copy()
         plot_df["Detection Latency (ms)"] = pd.to_numeric(

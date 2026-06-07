@@ -26,6 +26,8 @@ IEEE_RC = {
 OBSOLETE_PAPER_STEMS = (
     "figure_01_vehicle_ids_roc",
     "figure_02_vehicle_ids_score_distribution",
+    "figure_02_vehicle_level_roc",
+    "figure_03_anomaly_score_distribution",
     "figure_03_descriptor_bandwidth_exposure",
     "figure_04_payload_reconstruction_risk",
     "figure_05_cross_vehicle_embedding",
@@ -250,7 +252,9 @@ def _ensure_prerequisite_experiments(repo_root: Path) -> None:
     fig = repo_root / "figures"
     config_path = repo_root / "configs" / "fleet_ids.yaml"
 
-    need_vehicle = not (src / "vehicle_level_metrics.csv").exists() or not (fig / "local_ids_roc_curve.pdf").exists()
+    need_vehicle = not (src / "vehicle_level_metrics.csv").exists() or not (
+        fig / "local_ids_pr_curve.pdf"
+    ).exists() or not (fig / "local_ids_f1_by_attack_type.pdf").exists()
     need_descriptor = not (src / "descriptor_security_comparison_table.csv").exists() or not (
         fig / "payload_reconstruction_error.pdf"
     ).exists() or not (fig / "bandwidth_scaling_fleet_sizes.pdf").exists()
@@ -405,8 +409,8 @@ def run_ieee_paper_exports(*, repo_root: Path) -> dict[str, Any]:
     if (src / "vehicle_level_by_attack_type.csv").exists():
         shutil.copy2(src / "vehicle_level_by_attack_type.csv", outputs.results_dir / "table_01_vehicle_level_by_attack.csv")
 
-    _copy_figure(src_fig / "local_ids_roc_curve", outputs.figures_dir / "figure_02_vehicle_level_roc")
-    _copy_figure(src_fig / "local_ids_anomaly_score_distribution", outputs.figures_dir / "figure_03_anomaly_score_distribution")
+    _copy_figure(src_fig / "local_ids_pr_curve", outputs.figures_dir / "figure_02_vehicle_level_pr")
+    _copy_figure(src_fig / "local_ids_f1_by_attack_type", outputs.figures_dir / "figure_03_local_ids_f1_by_attack")
 
     # --- H2: Descriptor Compactness and Security ---
     t2 = _build_table_02_descriptor_security(src)
@@ -475,8 +479,9 @@ def run_ieee_paper_exports(*, repo_root: Path) -> dict[str, Any]:
 
     interpretations = {
         "H1 — Vehicle-Level IDS Effectiveness (Table 1; Figures 2–3)": """
-The self-supervised Isolation Forest achieves **ROC-AUC 0.786** and **PR-AUC 0.927** at **FPR ≤ 5%**.
-Precision is high (**97.3%**) with moderate recall (**46.0%**, F1 **62.4%**), yielding a conservative local alert stream suitable for uplink to the fleet layer.
+The self-supervised Isolation Forest achieves **PR-AUC 0.927** (Figure 2) and **ROC-AUC 0.786** (Table 1) at **FPR ≤ 5%**.
+Precision is high (**97.3%**) with moderate pooled recall (**46.0%**, F1 **62.4%**), yielding a conservative local alert stream suitable for uplink to the fleet layer.
+Figure 3 shows uneven per-attack F1 (strong on fuzzy/flooding, weaker on replay), motivating fleet-level correlation beyond window scores.
 
 **Interpretation:** H1 is supported — the vehicle IDS detects suspicious CAN windows locally but cannot classify coordinated multi-vehicle campaigns.
         """,
@@ -534,8 +539,8 @@ Figure 7 colours nodes by final fleet decision. Per-attack-type evaluation metri
                 "## Figures",
                 "| Figure | File | Hypothesis |",
                 "|--------|------|------------|",
-                "| Figure 2 | `paper/figures/figure_02_vehicle_level_roc.pdf` | H1 |",
-                "| Figure 3 | `paper/figures/figure_03_anomaly_score_distribution.pdf` | H1 |",
+                "| Figure 2 | `paper/figures/figure_02_vehicle_level_pr.pdf` | H1 — PR curve (local IDS) |",
+                "| Figure 3 | `paper/figures/figure_03_local_ids_f1_by_attack.pdf` | H1 — F1 by attack type |",
                 "| Figure 4 | `paper/figures/figure_04_bandwidth_scaling.pdf` | H2 |",
                 "| Figure 5 | `paper/figures/figure_05_payload_reconstruction_risk.pdf` | H2 |",
                 "| Figure 6 | `paper/figures/figure_06_cross_vehicle_descriptor_embedding.pdf` | H3 |",

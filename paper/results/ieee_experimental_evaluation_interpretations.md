@@ -6,8 +6,9 @@ Vehicle IDS → Anomaly Descriptors → Behaviour Graph → GraphSAGE (structure
 
 ## H1 — Vehicle-Level IDS Effectiveness (Table 1; Figures 2–3)
 
-The self-supervised Isolation Forest achieves **ROC-AUC 0.786** and **PR-AUC 0.927** at **FPR ≤ 5%**.
-Precision is high (**97.3%**) with moderate recall (**46.0%**, F1 **62.4%**), yielding a conservative local alert stream suitable for uplink to the fleet layer.
+The self-supervised Isolation Forest achieves **PR-AUC 0.927** (Figure 2) and **ROC-AUC 0.786** (Table 1) at **FPR ≤ 5%**.
+Precision is high (**97.3%**) with moderate pooled recall (**46.0%**, F1 **62.4%**), yielding a conservative local alert stream suitable for uplink to the fleet layer.
+Figure 3 shows uneven per-attack F1 (strong on fuzzy/flooding, weaker on replay), motivating fleet-level correlation beyond window scores.
 
 **Interpretation:** H1 is supported — the vehicle IDS detects suspicious CAN windows locally but cannot classify coordinated multi-vehicle campaigns.
 
