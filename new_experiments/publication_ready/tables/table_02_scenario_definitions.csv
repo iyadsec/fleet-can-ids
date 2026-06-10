@@ -1,0 +1,6 @@
+Scenario,Fleet condition,Campaign sizes,Ground-truth decision,Primary metric,Research purpose
+S0,Benign fleet only,0,No campaign,False campaign alert rate,Safety control
+S1,Single-vehicle attack,1,Isolated incident,Isolated vs campaign distinction,Single-vehicle control
+S2,Distinct attack families,"2,5,10",Separate incidents,Incorrect campaign merging,Merge resistance
+S3,Coordinated strong attacks,"2,5,10",One campaign,Campaign F1 / detection rate,Strong campaign correlation
+S4,Coordinated weak attacks,"2,5,10",One campaign,Weak-event recovery,Primary contribution

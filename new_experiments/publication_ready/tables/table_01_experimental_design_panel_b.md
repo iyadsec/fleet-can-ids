@@ -1,0 +1,8 @@
+# Compared detection methods
+
+| Method | ID |
+| --- | --- |
+| M1 Local IDS | local_ids |
+| M2 Descriptor clustering | descriptor_clustering |
+| M3 Standard GNN | standard_gnn |
+| M4 Proposed FCGNN (GraphSAGEFleetCorrelator) | fcgnn |

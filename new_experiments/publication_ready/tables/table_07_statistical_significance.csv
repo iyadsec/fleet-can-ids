@@ -1,0 +1,31 @@
+Scenario,Metric,Comparison,Paired seeds,Test,Mean paired difference,95% CI,p-value,Holm p-value,Effect size
+S3,recall,FCGNN vs local_ids,7,wilcoxon,0.0,N/A,1.0,1.0,0.0
+S3,recall,FCGNN vs descriptor_clustering,6,wilcoxon,0.0,N/A,1.0,1.0,0.0
+S3,recall,FCGNN vs standard_gnn,6,wilcoxon,0.0,N/A,1.0,1.0,0.0
+S3,f1,FCGNN vs local_ids,7,wilcoxon,0.0,N/A,1.0,1.0,0.0
+S3,f1,FCGNN vs descriptor_clustering,6,wilcoxon,0.0,N/A,1.0,1.0,0.0
+S3,f1,FCGNN vs standard_gnn,6,wilcoxon,0.0,N/A,1.0,1.0,0.0
+S3,fpr,FCGNN vs local_ids,7,wilcoxon,0.0,N/A,1.0,1.0,0.0
+S3,fpr,FCGNN vs descriptor_clustering,6,wilcoxon,0.0,N/A,1.0,1.0,0.0
+S3,fpr,FCGNN vs standard_gnn,6,wilcoxon,0.0,N/A,1.0,1.0,0.0
+S3,campaign_f1,FCGNN vs local_ids,7,wilcoxon,0.333,"[-0.065, 0.731]",0.25,1.0,0.0
+S3,campaign_f1,FCGNN vs descriptor_clustering,6,wilcoxon,-0.278,"[-0.622, 0.066]",0.25,1.0,-0.167
+S3,campaign_f1,FCGNN vs standard_gnn,6,paired_t_test,-0.056,"[-0.770, 0.658]",0.8494,1.0,-0.082
+S3,campaign_detection_rate,FCGNN vs local_ids,7,wilcoxon,0.857,"[0.508, 1.207]",0.0312,0.4688,1.0
+S3,campaign_detection_rate,FCGNN vs descriptor_clustering,6,wilcoxon,0.0,N/A,1.0,1.0,0.0
+S3,campaign_detection_rate,FCGNN vs standard_gnn,6,wilcoxon,-0.167,"[-0.595, 0.262]",1.0,1.0,0.0
+S4,recall,FCGNN vs local_ids,7,wilcoxon,0.0,N/A,1.0,1.0,0.0
+S4,recall,FCGNN vs descriptor_clustering,6,wilcoxon,0.0,N/A,1.0,1.0,0.0
+S4,recall,FCGNN vs standard_gnn,6,wilcoxon,0.0,N/A,1.0,1.0,0.0
+S4,f1,FCGNN vs local_ids,7,wilcoxon,0.0,N/A,1.0,1.0,0.0
+S4,f1,FCGNN vs descriptor_clustering,6,wilcoxon,0.0,N/A,1.0,1.0,0.0
+S4,f1,FCGNN vs standard_gnn,6,wilcoxon,0.0,N/A,1.0,1.0,0.0
+S4,fpr,FCGNN vs local_ids,7,wilcoxon,0.0,N/A,1.0,1.0,0.0
+S4,fpr,FCGNN vs descriptor_clustering,6,wilcoxon,0.0,N/A,1.0,1.0,0.0
+S4,fpr,FCGNN vs standard_gnn,6,wilcoxon,0.0,N/A,1.0,1.0,0.0
+S4,campaign_f1,FCGNN vs local_ids,7,wilcoxon,0.143,"[-0.207, 0.492]",1.0,1.0,0.0
+S4,campaign_f1,FCGNN vs descriptor_clustering,6,wilcoxon,-0.444,"[-1.292, 0.403]",0.375,1.0,-0.833
+S4,campaign_f1,FCGNN vs standard_gnn,6,paired_t_test,0.0,"[-0.664, 0.664]",1.0,1.0,0.0
+S4,campaign_detection_rate,FCGNN vs local_ids,7,wilcoxon,0.286,"[-0.166, 0.737]",0.5,1.0,0.0
+S4,campaign_detection_rate,FCGNN vs descriptor_clustering,6,paired_t_test,-0.333,"[-1.190, 0.524]",0.3632,1.0,-0.408
+S4,campaign_detection_rate,FCGNN vs standard_gnn,6,paired_t_test,-0.167,"[-0.957, 0.623]",0.6109,1.0,-0.221
