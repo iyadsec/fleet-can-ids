@@ -1,0 +1,16 @@
+scenario_key,metric,reference_method,compare_method,n_pairs,mean_difference,test,p_value,effect_size,ci95_low,ci95_high,p_value_holm
+S1_isolated,recall,fcgnn,local_ids,2,-0.5,insufficient_data,,,-6.853102368087347,5.853102368087347,1.0
+S1_isolated,recall,fcgnn,descriptor_clustering,1,0.0,insufficient_data,,,,,1.0
+S1_isolated,recall,fcgnn,standard_gnn,1,0.0,insufficient_data,,,,,1.0
+S1_isolated,f1,fcgnn,local_ids,2,-0.4,insufficient_data,,,-5.4824818944698785,4.682481894469878,1.0
+S1_isolated,f1,fcgnn,descriptor_clustering,1,0.0,insufficient_data,,,,,1.0
+S1_isolated,f1,fcgnn,standard_gnn,1,0.0,insufficient_data,,,,,1.0
+S1_isolated,fpr,fcgnn,local_ids,2,0.0,insufficient_data,,,,,1.0
+S1_isolated,fpr,fcgnn,descriptor_clustering,1,0.0,insufficient_data,,,,,1.0
+S1_isolated,fpr,fcgnn,standard_gnn,1,0.0,insufficient_data,,,,,1.0
+S1_isolated,campaign_f1,fcgnn,local_ids,2,0.0,insufficient_data,,,,,1.0
+S1_isolated,campaign_f1,fcgnn,descriptor_clustering,1,0.0,insufficient_data,,,,,1.0
+S1_isolated,campaign_f1,fcgnn,standard_gnn,1,0.0,insufficient_data,,,,,1.0
+S1_isolated,campaign_detection_rate,fcgnn,local_ids,2,0.0,insufficient_data,,,,,1.0
+S1_isolated,campaign_detection_rate,fcgnn,descriptor_clustering,1,0.0,insufficient_data,,,,,1.0
+S1_isolated,campaign_detection_rate,fcgnn,standard_gnn,1,0.0,insufficient_data,,,,,1.0

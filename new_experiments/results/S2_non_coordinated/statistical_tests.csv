@@ -1,0 +1,16 @@
+scenario_key,metric,reference_method,compare_method,n_pairs,mean_difference,test,p_value,effect_size,ci95_low,ci95_high,p_value_holm
+S2_non_coordinated,recall,fcgnn,local_ids,7,0.0,wilcoxon,1.0,0.0,,,1.0
+S2_non_coordinated,recall,fcgnn,descriptor_clustering,6,0.0,wilcoxon,1.0,0.0,,,1.0
+S2_non_coordinated,recall,fcgnn,standard_gnn,6,0.0,wilcoxon,1.0,0.0,,,1.0
+S2_non_coordinated,f1,fcgnn,local_ids,7,0.0,wilcoxon,1.0,0.0,,,1.0
+S2_non_coordinated,f1,fcgnn,descriptor_clustering,6,0.0,wilcoxon,1.0,0.0,,,1.0
+S2_non_coordinated,f1,fcgnn,standard_gnn,6,0.0,wilcoxon,1.0,0.0,,,1.0
+S2_non_coordinated,fpr,fcgnn,local_ids,7,0.0,wilcoxon,1.0,0.0,,,1.0
+S2_non_coordinated,fpr,fcgnn,descriptor_clustering,6,0.0,wilcoxon,1.0,0.0,,,1.0
+S2_non_coordinated,fpr,fcgnn,standard_gnn,6,0.0,wilcoxon,1.0,0.0,,,1.0
+S2_non_coordinated,campaign_f1,fcgnn,local_ids,7,-0.5714285714285714,wilcoxon,0.125,-1.0,-1.0657794179743836,-0.07707772488275927,1.0
+S2_non_coordinated,campaign_f1,fcgnn,descriptor_clustering,6,0.3333333333333333,wilcoxon,0.5,0.0,-0.20859290083115628,0.875259567497823,1.0
+S2_non_coordinated,campaign_f1,fcgnn,standard_gnn,6,0.0,wilcoxon,1.0,0.0,,,1.0
+S2_non_coordinated,campaign_detection_rate,fcgnn,local_ids,7,-0.5714285714285714,wilcoxon,0.125,-1.0,-1.0657794179743836,-0.07707772488275927,1.0
+S2_non_coordinated,campaign_detection_rate,fcgnn,descriptor_clustering,6,0.3333333333333333,wilcoxon,0.5,0.0,-0.20859290083115628,0.875259567497823,1.0
+S2_non_coordinated,campaign_detection_rate,fcgnn,standard_gnn,6,0.0,wilcoxon,1.0,0.0,,,1.0

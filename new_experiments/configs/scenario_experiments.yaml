@@ -1,0 +1,168 @@
+# Controlled scenario experiments — fleet-aware CAN IDS ablation study
+#
+# All outputs MUST remain under new_experiments/ (never overwrite results/, figures/, tables/, paper/, models/).
+#
+# Run (dry-run first):
+#   python scripts/run_new_scenario_experiments.py \
+#     --config new_experiments/configs/scenario_experiments.yaml --dry-run
+#
+# Run single scenario:
+#   python scripts/run_new_scenario_experiments.py \
+#     --config new_experiments/configs/scenario_experiments.yaml \
+#     --scenario S4_weak_campaign \
+#     --methods local,clustering,standard_gnn,fcgnn
+
+general:
+  project_root: null  # auto-detect from configs/ parent
+  base_config: configs/fleet_ids.yaml  # existing pipeline defaults (read-only reference)
+  output_root: new_experiments
+  seeds: [11, 23, 37, 41, 53, 67, 71, 83, 97, 101]
+  # Optional extended repetition set (uncomment for 20 seeds):
+  # seeds_extended: [11, 23, 37, 41, 53, 67, 71, 83, 97, 101, 113, 127, 131, 137, 149, 157, 163, 167, 173, 179]
+  overwrite: false
+  reuse_existing_preprocessing: true  # read from data/processed/ without regenerating
+  minimum_runs: 10
+  quick_test:
+    seeds: [11, 23]
+    campaign_sizes: [2]
+    coordination_strengths: [0.0, 1.0]
+    methods: [local, fcgnn]
+
+paths:
+  # Processed artifacts (READ-ONLY inputs from existing pipeline)
+  clean_can_data: data/processed/clean_can_data.csv
+  window_features: data/processed/window_features.csv
+  window_metadata: data/processed/window_metadata.csv
+  vehicle_anomaly_predictions: data/processed/vehicle_anomaly_predictions.csv
+  anomaly_descriptors: data/processed/anomaly_descriptors.csv
+  vehicle_ids_model: outputs/models/vehicle_isolation_forest.joblib
+
+splits:
+  train: 0.70
+  validation: 0.15
+  test: 0.15
+  group_by: [source_file, vehicle_model]  # prevent overlapping windows leaking across splits
+
+local_ids:
+  model: isolation_forest
+  benign_only_training: true
+  # Current implementation values (configs/fleet_ids.yaml vehicle_ids):
+  weak_threshold: 0.55
+  strong_threshold: 0.80
+  # Local multi-vehicle alert baseline (NOT behavioural campaign detection):
+  local_alert_min_vehicles: 2
+
+campaign:
+  minimum_unique_vehicles: 2
+  campaign_sizes: [2, 5, 10]
+  coordination_strengths: [0.00, 0.25, 0.50, 0.75, 1.00]
+  # IEEE final decision gates (from final_gnn_fleet_decision):
+  min_cluster_size: 10
+  min_behavioral_cohesion: 0.85
+  dbscan_eps: 0.8
+  dbscan_min_samples: 10
+  dbscan_pca_components: 8
+
+graph:
+  similarity_metric: cosine
+  use_temporal_edges: false  # MUST remain false
+  cross_vehicle_edges_enabled: true
+  max_nodes_per_scenario: 1200  # subsample benign fillers for feasible GNN training
+  # Current IEEE implementation (fixed for main ablation):
+  top_k_same_vehicle: 10
+  top_k_cross_vehicle: 5
+  default_similarity_threshold: 0.95
+  # Proposed experimental sweep values (edge_sensitivity only):
+  similarity_thresholds: [0.75, 0.80, 0.85, 0.90, 0.95]
+  max_neighbors: [5, 10, 25, 50]
+  exclude_self_edges: true
+  report_unique_edges: true
+  report_pyg_stored_edges: true
+  similarity_feature_view: behavior_only_vehicle_normalized
+
+methods:
+  local_ids: true
+  descriptor_clustering: true
+  standard_gnn: true
+  fcgnn: true
+  # Method aliases for CLI
+  aliases:
+    local: local_ids
+    clustering: descriptor_clustering
+    standard_gnn: standard_gnn
+    fcgnn: fcgnn
+
+gnn:
+  # Comparable settings for M3 (standard) and M4 (proposed GraphSAGEFleetCorrelator)
+  hidden_channels: 64
+  embedding_dim: 32
+  epochs: 30
+  learning_rate: 0.01
+  weight_decay: 0.0005
+  train_ratio: 0.70
+  val_ratio: 0.15
+  standard_architecture: gcn  # gcn | graphsage | gat
+  proposed_architecture: graphsage  # GraphSAGEFleetCorrelator
+  supervision: structure  # structure | ids (structure required for deployment claims)
+
+scenarios:
+  S0_benign_control:
+    id: S0
+    name: Benign fleet control
+    attack_vehicles: 0
+    expect_campaign: false
+    primary: false
+  S1_isolated:
+    id: S1
+    name: Isolated single-vehicle attack
+    attack_vehicles: 1
+    expect_campaign: false
+    primary: false
+  S2_non_coordinated:
+    id: S2
+    name: Non-coordinated multi-vehicle incidents
+    attack_vehicles: variable  # campaign_sizes
+    expect_campaign: false
+    coordination_range: [0.0, 0.25]
+    primary: false
+  S3_strong_campaign:
+    id: S3
+    name: Strong coordinated multi-vehicle campaign
+    attack_vehicles: variable
+    expect_campaign: true
+    evidence: strong  # anomaly_score >= strong_threshold
+    coordination_range: [0.75, 1.0]
+    primary: false
+  S4_weak_campaign:
+    id: S4
+    name: Weak coordinated multi-vehicle campaign
+    attack_vehicles: variable
+    expect_campaign: true
+    evidence: weak  # weak_threshold <= score < strong_threshold
+    coordination_range: [0.75, 1.0]
+    primary: true  # main contribution scenario
+
+attack_families:
+  strong_default: flooding
+  weak_default: replay
+  s2_assignments:
+    - vehicle_index: 0
+      attack: flooding
+    - vehicle_index: 1
+      attack: replay
+    - vehicle_index: 2
+      attack: fuzzy
+    - vehicle_index: 3
+      attack: malfunction
+
+statistics:
+  confidence_level: 0.95
+  multiple_comparison_correction: holm
+  normality_test: shapiro
+  nonparametric_test: wilcoxon
+  parametric_test: paired_t_test
+
+runtime:
+  warmup_iterations: 2
+  timing_iterations: 5
+  measure_peak_memory: true
