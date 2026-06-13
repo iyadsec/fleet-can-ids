@@ -131,6 +131,7 @@ def resolve_fleet_similarity_matrix(
     similarity_feature_view: SimilarityFeatureView = "full_descriptor",
     feature_dominance_threshold: float = 5.0,
     allowed_high_dominance_features: frozenset[str] = frozenset(),
+    fleet_scaler_provenance: Any | None = None,
 ) -> tuple[np.ndarray, list[str]]:
     """Feature matrix for fleet graph similarity only (not IDS / stored descriptors)."""
     X, columns, _, _ = prepare_fleet_similarity_matrix(
@@ -138,6 +139,7 @@ def resolve_fleet_similarity_matrix(
         similarity_feature_view=similarity_feature_view,
         feature_dominance_threshold=feature_dominance_threshold,
         allowed_high_dominance_features=allowed_high_dominance_features,
+        fleet_scaler_provenance=fleet_scaler_provenance,
     )
     return X, columns
 
@@ -784,7 +786,10 @@ def build_pyg_data(
     ei = torch.tensor(edge_index, dtype=torch.long)
     ew = torch.tensor(edge_weights, dtype=torch.float32)
 
-    vehicle_codes = {v: i for i, v in enumerate(sorted(df["vehicle_model"].unique()))}
+    from src.experiments.vehicle_identity import resolve_graph_vehicle_column
+
+    veh_col = resolve_graph_vehicle_column(df)
+    vehicle_codes = {v: i for i, v in enumerate(sorted(df[veh_col].astype(str).unique()))}
     attack_codes = {a: i for i, a in enumerate(sorted(df["attack_type"].unique()))}
 
     data = Data(
@@ -799,7 +804,7 @@ def build_pyg_data(
         weak_signal=torch.tensor(df["weak_signal"].to_numpy(), dtype=torch.long),
         anomaly_score=torch.tensor(df["anomaly_score"].to_numpy(), dtype=torch.float32),
         vehicle_id=torch.tensor(
-            [vehicle_codes[v] for v in df["vehicle_model"]], dtype=torch.long
+            [vehicle_codes[str(v)] for v in df[veh_col].astype(str)], dtype=torch.long
         ),
         attack_id=torch.tensor(
             [attack_codes[a] for a in df["attack_type"]], dtype=torch.long
@@ -808,6 +813,7 @@ def build_pyg_data(
     data.num_nodes = x.size(0)
     data.event_ids = df["event_id"].tolist()
     data.vehicle_label_map = vehicle_codes
+    data.vehicle_id_column = veh_col
     data.attack_label_map = attack_codes
     return data
 

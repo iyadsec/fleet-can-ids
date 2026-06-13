@@ -1,0 +1,16 @@
+artifact_path,experiment,scenario,status,validation_report,run_count,seed_count,node_count_controlled,local_fleet_separated,eligible_for_final_publication,exclusion_reason
+new_experiments/final_validated_runs/results/S0_benign_control,S0,S0,final,validation/final_validation_report.md,44,10,variable,True,True,
+new_experiments/final_validated_runs/results/S1_isolated,S1,S1,final,validation/final_validation_report.md,44,10,variable,True,True,
+new_experiments/final_validated_runs/results/S2_non_coordinated,S2,S2,final,validation/final_validation_report.md,264,10,variable,True,True,
+new_experiments/final_validated_runs/results/S3_strong_campaign,S3,S3,final,validation/final_validation_report.md,264,10,variable,True,True,
+new_experiments/final_validated_runs/results/S4_weak_campaign,S4,S4,final,validation/final_validation_report.md,264,10,variable,True,True,
+new_experiments/final_validated_runs/results/campaign_size,campaign_size,,preliminary,validation/phase3_campaign_size_validation.md,240,10,variable,,False,variable node counts; superseded
+new_experiments/final_validated_runs/results/campaign_size_corrected,campaign_size,,corrected_final,validation/campaign_size_corrected/corrected_phase3_validation.md,240,10,200,True,True,
+new_experiments/final_validated_runs/hierarchical_alignment,hierarchical_S0_S4_campaign,,final,validation/hierarchical_alignment_validation.md,840,10,variable,True,True,
+new_experiments/final_validated_runs/framework_ablation,framework_ablation,,final,validation/framework_ablation_validation.md,0,0,variable,,False,supplementary; not primary scenario tables
+new_experiments/final_validated_runs/evaluation_correction,evaluation_correction,,corrected_metrics,validation/evaluation_correction_report.md,0,0,variable,,False,campaign-size only; layered correction
+new_experiments/final_validated_runs/model_diversity,model_diversity,,preliminary,,0,0,variable,,False,split leakage; excluded
+new_experiments/final_validated_runs/model_diversity_corrected,model_diversity,,diagnostic,,0,0,variable,,False,superseded by model_diversity_final
+new_experiments/final_validated_runs/model_diversity_final,model_diversity,,final,validation/final_phase4_validation.md,0,0,variable,,False,vehicle-model diversity; out of scope
+new_experiments/final_validated_runs/model_diversity_final_tuned,model_diversity,,diagnostic,,0,0,variable,,False,gate tuning provisional; out of scope
+new_experiments/final_validated_runs/quick_test,quick_test,,diagnostic,,0,0,variable,,False,smoke test seed 11 only

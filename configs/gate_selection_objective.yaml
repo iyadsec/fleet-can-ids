@@ -1,0 +1,19 @@
+primary_objective: maximize_validation_campaign_f1
+
+constraints:
+  V0_false_campaign_alert_rate_max: 0.05
+  V1_campaign_alert_rate_max: 0.0
+  V2_incorrect_merging_rate_max: 0.05
+  mean_benign_vehicles_included_max: 1.0
+  membership_precision_min: 0.80
+
+derive_from_validation: true
+
+derived_thresholds:
+  min_cluster_cohesion: [0.10, 0.15, 0.20]
+  min_membership_confidence: [0.45, 0.55, 0.65]
+
+infeasibility_policy:
+  select_pareto_optimal_lowest_false_campaign_rate: true
+  do_not_relax_constraints_silently: true
+  do_not_use_test_data: true

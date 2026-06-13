@@ -1,0 +1,4 @@
+scenario_id,false_local_alert_rate,false_campaign_alert_rate,correct_no_attack_decision_rate,local_attacked_vehicle_detection,isolated_incident_decision_rate,incorrect_campaign_declaration_rate,attacked_vehicle_detection,incorrect_merging_rate,false_single_campaign_declaration_rate,correct_separation_rate,campaign_detection_rate,campaign_precision,campaign_recall,campaign_f1,membership_purity,fragmentation
+S0,0.4116666666666666,0.0,1.0,,,,,,,,,,,,,
+S1,,,,1.0,1.0,0.0,,,,,,,,,,
+S2,,,,,,,1.0,0.3333333333333333,0.4772727272727273,0.6666666666666667,,,,,,

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -16,12 +16,14 @@ SimilarityFeatureView = Literal[
     "full_descriptor",
     "behavior_only",
     "behavior_only_vehicle_normalized",
+    "behavior_only_locally_normalized",
 ]
 
 SIMILARITY_VIEW_LABELS: dict[str, str] = {
     "full_descriptor": "Full Descriptor",
     "behavior_only": "Behaviour-Only",
-    "behavior_only_vehicle_normalized": "Behaviour-Only + Vehicle Normalization",
+    "behavior_only_vehicle_normalized": "Behaviour-Only + Local Benign Normalization",
+    "behavior_only_locally_normalized": "Behaviour-Only + Local Benign Normalization",
 }
 
 # Identity-heavy columns excluded from behaviour graph view by default.
@@ -107,15 +109,15 @@ def compute_feature_dominance(
     return pd.DataFrame(rows)
 
 
-def _vehicle_zscore(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
-    out = df.copy()
-    for col in columns:
-        if col not in out.columns:
-            continue
-        out[col] = out.groupby("vehicle_model")[col].transform(
-            lambda s: (s - s.mean()) / (s.std() + 1e-9)
-        )
-    return out
+def apply_locally_normalized_view(
+    view_df: pd.DataFrame,
+    columns: list[str],
+    provenance: Any,
+) -> pd.DataFrame:
+    """Apply benign-training scaler (no vehicle_model grouping)."""
+    from src.experiments.local_descriptor_normalisation import apply_fleet_scaler
+
+    return apply_fleet_scaler(view_df, provenance, feature_names=tuple(columns))
 
 
 def select_behavior_graph_columns(
@@ -165,6 +167,7 @@ def prepare_fleet_similarity_matrix(
     similarity_feature_view: SimilarityFeatureView = "full_descriptor",
     feature_dominance_threshold: float = 5.0,
     allowed_high_dominance_features: frozenset[str] = frozenset(),
+    fleet_scaler_provenance: Any | None = None,
 ) -> tuple[np.ndarray, list[str], pd.DataFrame, list[str]]:
     """
     Build the feature matrix used only for fleet graph cosine similarity.
@@ -178,16 +181,23 @@ def prepare_fleet_similarity_matrix(
         cols = list(BEHAVIOURAL_FEATURE_COLUMNS)
         dominance = compute_feature_dominance(view_df, cols)
         X = view_df[cols].to_numpy(dtype=np.float32)
-    elif similarity_feature_view in ("behavior_only", "behavior_only_vehicle_normalized"):
+    elif similarity_feature_view in (
+        "behavior_only",
+        "behavior_only_vehicle_normalized",
+        "behavior_only_locally_normalized",
+    ):
         cols, dominance, removed = select_behavior_graph_columns(
             view_df,
             feature_dominance_threshold=feature_dominance_threshold,
             allowed_high_dominance_features=allowed_high_dominance_features,
         )
         work = view_df.copy()
-        if similarity_feature_view == "behavior_only_vehicle_normalized":
-            norm_cols = [c for c in VEHICLE_NORMALIZE_COLUMNS if c in cols]
-            work = _vehicle_zscore(work, norm_cols)
+        if similarity_feature_view in ("behavior_only_vehicle_normalized", "behavior_only_locally_normalized"):
+            if fleet_scaler_provenance is None:
+                raise ValueError(
+                    "fleet_scaler_provenance required for locally normalized similarity view"
+                )
+            work = apply_locally_normalized_view(work, cols, fleet_scaler_provenance)
         X = work[cols].to_numpy(dtype=np.float32)
     else:
         raise ValueError(f"Unknown similarity_feature_view: {similarity_feature_view}")

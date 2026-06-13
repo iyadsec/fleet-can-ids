@@ -1,0 +1,5 @@
+family,experiment,comparison,metric,paired_seeds,mean_difference,p_value_raw,effect_size,test,p_value_holm,significant
+edge_sensitivity,S3,"(1118.0, 1311.0]_vs_(749.0, 1118.0]",campaign_f1,10,0.11666666666666665,0.3252621634649457,-0.32902734223881175,paired_t,1.0,False
+edge_sensitivity,S3,"(749.0, 1118.0]_vs_(369.999, 749.0]",campaign_f1,10,0.00555555555555558,0.9479087064381785,-0.021243551366119544,paired_t,0.9479087064381785,False
+edge_sensitivity,S4,"(1118.0, 1311.0]_vs_(749.0, 1118.0]",campaign_f1,10,0.015396825396825398,0.6429644008523945,-0.15165694474210087,paired_t,1.0,False
+edge_sensitivity,S4,"(749.0, 1118.0]_vs_(369.999, 749.0]",campaign_f1,10,0.005039682539682538,0.9057637030612986,-0.03850418007108138,paired_t,1.0,False

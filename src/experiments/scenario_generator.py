@@ -16,6 +16,12 @@ from src.experiments.coordination_strength import (
 )
 from src.experiments.data_splits import build_split_manifest, is_benign_attack_type
 from src.experiments.scenario_registry import ScenarioSpec
+from src.experiments.vehicle_identity import (
+    VehicleTokenAllocator,
+    assign_identity_to_chunk,
+    build_offline_identity_mapping,
+)
+from src.experiments.vehicle_instance_builder import segment_trace_windows
 from src.graph.fleet_graph_builder import event_id_to_window_id
 
 VEHICLE_MODELS = ("Hyundai", "Kia", "Chevrolet")
@@ -104,6 +110,116 @@ def _attack_pool(
     return desc.loc[m]
 
 
+def _attack_segment_instances(
+    descriptors: pd.DataFrame,
+    split: str,
+    manifest: pd.DataFrame,
+    *,
+    min_windows: int = 10,
+    min_attack_events: int = 3,
+) -> list[dict[str, Any]]:
+    """Distinct test-split attack instances from non-overlapping window segments."""
+    desc = _attach_split(descriptors, manifest)
+    mal = ~desc["attack_type"].map(is_benign_attack_type)
+    desc = desc.loc[(desc["split"] == split) & mal]
+    instances: list[dict[str, Any]] = []
+    group_cols = [c for c in ("vehicle_model", "source_file") if c in desc.columns]
+    if not group_cols:
+        return instances
+    for key, grp in desc.groupby(group_cols, sort=True):
+        vm = key[0] if isinstance(key, tuple) else key
+        sf = key[1] if isinstance(key, tuple) and len(key) > 1 else ""
+        wins = sorted(grp["window_id"].astype(int).tolist())
+        for seg_start, seg_end in segment_trace_windows(wins, min_windows=min_windows):
+            seg = grp[(grp["window_id"] >= seg_start) & (grp["window_id"] <= seg_end)]
+            if len(seg) < min_attack_events:
+                continue
+            instances.append(
+                {
+                    "vehicle_model": vm,
+                    "source_file": sf,
+                    "segment_start": seg_start,
+                    "segment_end": seg_end,
+                    "pool": seg,
+                }
+            )
+    return instances
+
+
+def _select_disjoint_instances(
+    candidates: list[dict[str, Any]],
+    n: int,
+    rng: np.random.Generator,
+) -> list[dict[str, Any]]:
+    """Pick n instances with non-overlapping window_id sets."""
+    shuffled = list(candidates)
+    rng.shuffle(shuffled)
+    chosen: list[dict[str, Any]] = []
+    used_windows: set[int] = set()
+    for inst in shuffled:
+        wids = set(inst["pool"]["window_id"].astype(int).tolist())
+        if used_windows & wids:
+            continue
+        chosen.append(inst)
+        used_windows |= wids
+        if len(chosen) >= n:
+            break
+    return chosen
+
+
+def _sample_attack_instance(
+    instance: dict[str, Any],
+    *,
+    attack_type: str,
+    split: str,
+    manifest: pd.DataFrame,
+    descriptors: pd.DataFrame,
+    config: dict[str, Any],
+    evidence: str = "strong",
+    max_events: int,
+    rng: np.random.Generator,
+) -> pd.DataFrame:
+    """Sample attack rows for one trace instance with evidence and attack-type fallbacks."""
+    base = instance["pool"]
+    attack_candidates: list[str | None] = []
+    if attack_type:
+        attack_candidates.append(attack_type)
+    for atk in sorted(base["attack_type"].astype(str).unique()):
+        if atk not in attack_candidates:
+            attack_candidates.append(atk)
+
+    for atk in attack_candidates:
+        pool = base if not atk else base[base["attack_type"] == atk]
+        if pool.empty:
+            continue
+        if evidence == "strong":
+            filtered = pool[pool["evidence_level"] == "strong_local_anomaly"]
+            if not filtered.empty:
+                pool = filtered
+        elif evidence == "weak":
+            filtered = pool[pool["evidence_level"] == "weak_suspicious_signal"]
+            if not filtered.empty:
+                pool = filtered
+        if not pool.empty:
+            return _sample_rows(pool, max_events, rng)
+
+        pool = _resolve_coordinated_pool(
+            descriptors,
+            split,
+            manifest,
+            vehicle=str(instance["vehicle_model"]),
+            attack_type=str(atk or attack_type),
+            evidence=evidence if evidence != "none" else "strong",
+            config=config,
+        )
+        if "source_file" in pool.columns and instance.get("source_file"):
+            pool = pool[pool["source_file"].astype(str) == str(instance["source_file"])]
+        if not pool.empty:
+            return _sample_rows(pool, max_events, rng)
+
+    return base.head(0)
+
+
 def _resolve_coordinated_pool(
     descriptors: pd.DataFrame,
     split: str,
@@ -161,26 +277,54 @@ def generate_scenario_records(
     """
     rng = np.random.default_rng(seed)
     split = "test"
-    local_cfg = config.get("local_ids", {})
     attack_cfg = config.get("attack_families", {})
     rows: list[pd.DataFrame] = []
     membership: list[dict[str, Any]] = []
+    allocator = VehicleTokenAllocator()
+    instance_counter = 0
 
-    def _add_chunk(chunk: pd.DataFrame, role: str, campaign_id: str | None) -> None:
+    def _add_chunk(
+        chunk: pd.DataFrame,
+        role: str,
+        campaign_id: str | None,
+        *,
+        vehicle_model: str | None = None,
+        instance_key: str | None = None,
+    ) -> None:
+        nonlocal instance_counter
         if chunk.empty:
             return
-        chunk = chunk.copy()
+        instance_counter += 1
+        vm = vehicle_model or str(chunk["vehicle_model"].iloc[0])
+        sf = str(chunk["source_file"].iloc[0]) if "source_file" in chunk.columns else ""
+        key = instance_key or f"{spec.key}-{seed}-{instance_counter}"
+        wmin = int(chunk["window_id"].min()) if "window_id" in chunk.columns else None
+        wmax = int(chunk["window_id"].max()) if "window_id" in chunk.columns else None
+        chunk = assign_identity_to_chunk(
+            chunk,
+            allocator=allocator,
+            instance_key=key,
+            vehicle_model=vm,
+            source_file=sf,
+            segment_start=wmin,
+            segment_end=wmax,
+        )
         chunk["scenario_role"] = role
-        chunk["ground_truth_campaign_id"] = campaign_id
+        chunk["ground_truth_campaign_id"] = campaign_id or ""
+        chunk["ground_truth_campaign_member"] = int(role in {"attacked", "coordinated"})
         chunk["scenario_gt_malicious"] = int(role in {"attacked", "coordinated"})
+        chunk["ground_truth_malicious"] = int(role in {"attacked", "coordinated"})
         rows.append(chunk)
         for _, r in chunk.iterrows():
             membership.append(
                 {
                     "event_id": r["event_id"],
                     "window_id": int(r["window_id"]),
+                    "vehicle_token": r["vehicle_token"],
+                    "scenario_vehicle_id": r["scenario_vehicle_id"],
                     "vehicle_model": r["vehicle_model"],
                     "source_file": r.get("source_file", ""),
+                    "source_trace": r.get("source_trace", ""),
                     "attack_type": r["attack_type"],
                     "split": split,
                     "scenario": spec.key,
@@ -190,6 +334,7 @@ def generate_scenario_records(
                     "coordination_strength": coordination_strength,
                     "scenario_role": role,
                     "ground_truth_campaign_id": campaign_id or "",
+                    "ground_truth_campaign_member": int(role in {"attacked", "coordinated"}),
                     "ground_truth_malicious": int(role in {"attacked", "coordinated"}),
                 }
             )
@@ -220,26 +365,54 @@ def generate_scenario_records(
                     attacked_vehicle = v
                     atk_chunk = _sample_rows(atk_pool, max_events_per_vehicle, rng)
                     break
-        _add_chunk(atk_chunk, "attacked", None)
+        _add_chunk(atk_chunk, "attacked", None, vehicle_model=attacked_vehicle)
         for v in vehicles:
             if v == attacked_vehicle:
                 continue
             ben = _benign_pool(descriptors, split, manifest)
             ben = ben[ben["vehicle_model"] == v]
-            _add_chunk(_sample_rows(ben, max_events_per_vehicle // 2, rng), "benign", None)
+            _add_chunk(
+                _sample_rows(ben, max_events_per_vehicle // 2, rng),
+                "benign",
+                None,
+                vehicle_model=v,
+            )
 
     elif spec.scenario_id == "S2":
         n = max(2, campaign_size)
-        vehicles = list(VEHICLE_MODELS)
-        while len(vehicles) < n:
-            vehicles.extend(VEHICLE_MODELS)
-        vehicles = vehicles[:n]
-        for i, vehicle in enumerate(vehicles):
+        candidates = _attack_segment_instances(descriptors, split, manifest)
+        selected = _select_disjoint_instances(candidates, n, rng)
+        if len(selected) < n:
+            raise RuntimeError(
+                f"S2 campaign_size={n} requires {n} disjoint attack instances; "
+                f"only {len(selected)} non-overlapping segments available in test split"
+            )
+        for i, inst in enumerate(selected):
             attack = S2_ATTACK_ROTATION[i % len(S2_ATTACK_ROTATION)]
-            pool = _attack_pool(descriptors, split, manifest, attack_type=attack, evidence="strong")
-            pool = pool[pool["vehicle_model"] == vehicle]
-            cid = f"INCIDENT-{attack}-{vehicle}"
-            _add_chunk(_sample_rows(pool, max_events_per_vehicle, rng), "attacked", cid)
+            chunk = _sample_attack_instance(
+                inst,
+                attack_type=attack,
+                split=split,
+                manifest=manifest,
+                descriptors=descriptors,
+                config=config,
+                evidence="strong",
+                max_events=max_events_per_vehicle,
+                rng=rng,
+            )
+            if chunk.empty:
+                raise RuntimeError(
+                    f"S2 cannot sample attack_type={attack} for instance "
+                    f"{inst['vehicle_model']}/{inst.get('source_file', '')}"
+                )
+            cid = f"INCIDENT-{attack}-{i}"
+            _add_chunk(
+                chunk,
+                "attacked",
+                cid,
+                vehicle_model=str(inst["vehicle_model"]),
+                instance_key=f"{spec.key}-{seed}-s2-{i}-{inst.get('source_file', '')}",
+            )
         ben = _benign_pool(descriptors, split, manifest)
         _add_chunk(_sample_rows(ben, max_benign_events, rng), "benign", None)
 
@@ -251,23 +424,43 @@ def generate_scenario_records(
             "flooding",
         )
         campaign_id = spec.ground_truth_campaign_label or f"CAMP-{spec.scenario_id}"
-        vehicles = list(VEHICLE_MODELS)
-        while len(vehicles) < n:
-            vehicles.extend(VEHICLE_MODELS)
-        vehicles = vehicles[:n]
-        malicious_parts: list[pd.DataFrame] = []
-        for vehicle in vehicles:
-            pool = _resolve_coordinated_pool(
-                descriptors,
-                split,
-                manifest,
-                vehicle=vehicle,
-                attack_type=attack,
-                evidence=evidence,
-                config=config,
+        candidates = _attack_segment_instances(descriptors, split, manifest)
+        pool_size = min(len(candidates), max(n * 5, n))
+        selected = _select_disjoint_instances(candidates, pool_size, rng)
+        if len(selected) < n:
+            raise RuntimeError(
+                f"{spec.scenario_id} campaign_size={n} requires {n} disjoint attack instances; "
+                f"only {len(selected)} non-overlapping segments available"
             )
-            malicious_parts.append(_sample_rows(pool, max_events_per_vehicle, rng))
-        malicious = pd.concat(malicious_parts, ignore_index=True) if malicious_parts else pd.DataFrame()
+        malicious_parts: list[tuple[pd.DataFrame, str, int, dict[str, Any]]] = []
+        for i, inst in enumerate(selected):
+            part = _sample_attack_instance(
+                inst,
+                attack_type=attack,
+                split=split,
+                manifest=manifest,
+                descriptors=descriptors,
+                config=config,
+                evidence=evidence,
+                max_events=max_events_per_vehicle,
+                rng=rng,
+            )
+            if not part.empty:
+                malicious_parts.append((part.copy(), str(inst["vehicle_model"]), i, inst))
+            if len(malicious_parts) >= n:
+                break
+        malicious_parts = malicious_parts[:n]
+        if len(malicious_parts) < n:
+            raise RuntimeError(
+                f"{spec.scenario_id} could assemble only {len(malicious_parts)}/{n} coordinated instances "
+                f"for attack={attack} evidence={evidence}"
+            )
+        coordinated_frames: list[pd.DataFrame] = []
+        for part, _vehicle, _i, _inst in malicious_parts:
+            coordinated_frames.append(part)
+        malicious = (
+            pd.concat(coordinated_frames, ignore_index=True) if coordinated_frames else pd.DataFrame()
+        )
 
         if not malicious.empty and coordination_strength > 0:
             proto = compute_campaign_prototype(
@@ -282,7 +475,17 @@ def generate_scenario_records(
                 target_mask=mask,
                 seed=seed,
             )
-        _add_chunk(malicious, "coordinated", campaign_id)
+
+        for part, vehicle, i, inst in malicious_parts:
+            part_ids = set(part["event_id"])
+            sub = malicious[malicious["event_id"].isin(part_ids)]
+            _add_chunk(
+                sub,
+                "coordinated",
+                campaign_id,
+                vehicle_model=vehicle,
+                instance_key=f"{spec.key}-{seed}-coord-{i}-{inst.get('source_file', '')}",
+            )
         ben = _benign_pool(descriptors, split, manifest)
         _add_chunk(_sample_rows(ben, max_benign_events, rng), "benign", None)
 
@@ -308,6 +511,8 @@ def generate_scenario_records(
         scenario_df = pd.concat([attacked, benign], ignore_index=True)
 
     membership_df = pd.DataFrame(membership)
+    identity_map = build_offline_identity_mapping(scenario_df)
+    scenario_df.attrs["offline_identity_mapping"] = identity_map
     if spec.scenario_id in ("S3", "S4") and not scenario_df.empty:
         mal_mask = scenario_df["scenario_role"] == "coordinated"
         sim = measure_mean_pairwise_similarity(scenario_df, mal_mask)

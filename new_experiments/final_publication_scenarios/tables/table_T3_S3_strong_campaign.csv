@@ -1,0 +1,4 @@
+campaign_size,campaign_detection_rate,campaign_precision,campaign_recall,campaign_f1,membership_purity
+2,0.6875,0.625,0.6875,0.6354166666666666,0.625
+5,0.84375,0.734375,0.84375,0.75,0.734375
+10,0.90625,0.65625,0.90625,0.6979166666666666,0.65625

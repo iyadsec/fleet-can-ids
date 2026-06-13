@@ -7,7 +7,7 @@ from typing import Any
 import pandas as pd
 
 from src.evaluation.final_gnn_fleet_decision_experiment import DECISION_ISOLATED
-from src.experiments.experiment_pipeline import MethodOutputs
+from src.experiments.experiment_pipeline import MethodOutputs, resolve_vehicle_id_column
 from src.experiments.result_writer import ExperimentRunContext
 
 
@@ -26,7 +26,16 @@ def run_local_ids_method(
     local_cfg = config.get("local_ids", {})
     min_vehicles = int(local_cfg.get("local_alert_min_vehicles", 2))
 
-    df = scenario_records.copy()
+    id_cols = [c for c in ("vehicle_token", "scenario_vehicle_id") if c in membership.columns]
+    if id_cols:
+        df = scenario_records.merge(
+            membership[["event_id", *id_cols]].drop_duplicates(subset=["event_id"]),
+            on="event_id",
+            how="left",
+            suffixes=("", "_mem"),
+        )
+    else:
+        df = scenario_records.copy()
     df["predicted_malicious"] = (
         (df["local_alert"] == 1) | (df.get("weak_signal", 0) == 1)
     ).astype(int)
@@ -34,7 +43,8 @@ def run_local_ids_method(
     df["cluster_id"] = -1
     df["method"] = "local_ids"
 
-    alerted_vehicles = df.loc[df["local_alert"] == 1, "vehicle_model"].nunique()
+    veh_col = resolve_vehicle_id_column(df)
+    alerted_vehicles = df.loc[df["local_alert"] == 1, veh_col].nunique()
     multi_vehicle_alert = int(alerted_vehicles >= min_vehicles)
 
     event_pred = df.merge(
@@ -61,15 +71,20 @@ def run_local_ids_method(
         event_pred["weak_signal"] = 0
     event_pred["multi_vehicle_local_alert"] = multi_vehicle_alert
 
+    veh_col = resolve_vehicle_id_column(event_pred)
     vehicle_pred = (
-        event_pred.groupby("vehicle_model", as_index=False)
+        event_pred.groupby(veh_col, as_index=False)
         .agg(
             predicted_attacked=("predicted_malicious", "max"),
             ground_truth_attacked=("ground_truth_malicious", "max"),
             n_events=("event_id", "count"),
             n_local_alerts=("local_alert", "sum"),
         )
+        .rename(columns={veh_col: "vehicle_id"})
     )
+    if "vehicle_model" in event_pred.columns:
+        model_map = event_pred.groupby(veh_col)["vehicle_model"].first()
+        vehicle_pred["vehicle_model"] = vehicle_pred["vehicle_id"].map(model_map)
 
     campaign_pred = pd.DataFrame(
         [

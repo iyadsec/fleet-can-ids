@@ -33,6 +33,8 @@ SCENARIO_SUBDIRS: tuple[str, ...] = (
     "method_ablation",
     "coordination_sensitivity",
     "edge_sensitivity",
+    "campaign_size",
+    "model_diversity",
 )
 
 
@@ -97,6 +99,8 @@ class ProtectedOutputGuard:
             "embeddings",
             "manifests",
             "validation",
+            "provenance",
+            "quick_test",
         ):
             (self.output_root / sub).mkdir(parents=True, exist_ok=True)
         for category in ("results", "figures", "tables"):
@@ -120,6 +124,7 @@ class ExperimentRunContext:
     output_root: Path
     run_dir: Path
     overwrite: bool = False
+    guard: ProtectedOutputGuard | None = None
     extra: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
@@ -161,25 +166,39 @@ class ExperimentRunContext:
             output_root=guard.output_root,
             run_dir=run_dir,
             overwrite=overwrite,
+            guard=guard,
         )
+
+    def _guard(self) -> ProtectedOutputGuard:
+        if self.guard is not None:
+            return self.guard
+        rel = self.output_root.relative_to(resolve_project_root())
+        return ProtectedOutputGuard(resolve_project_root(), str(rel))
 
     def write_config_snapshot(self, config: dict[str, Any]) -> Path:
         path = self.run_dir / "config_snapshot.yaml"
-        ProtectedOutputGuard(self.output_root.parent, "new_experiments").validate_write_path(path)
+        self._guard().validate_write_path(path)
+        snap: dict[str, Any] = {}
+        for key, value in config.items():
+            if str(key).startswith("_"):
+                continue
+            snap[key] = value
+        prov = config.get("_fleet_scaler_provenance")
+        if prov is not None and hasattr(prov, "to_dict"):
+            snap["fleet_scaler_provenance"] = prov.to_dict()
         with path.open("w", encoding="utf-8") as fh:
-            yaml.safe_dump(config, fh, sort_keys=False)
+            yaml.safe_dump(snap, fh, sort_keys=False)
         return path
 
     def write_json(self, name: str, payload: dict[str, Any] | list[Any]) -> Path:
         path = self.run_dir / name
-        guard = ProtectedOutputGuard(self.output_root.parent, "new_experiments")
-        guard.validate_write_path(path)
+        self._guard().validate_write_path(path)
         path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
         return path
 
     def scenario_results_dir(self) -> Path:
         path = self.output_root / "results" / self.scenario_key
-        ProtectedOutputGuard(self.output_root.parent, "new_experiments").validate_write_path(path)
+        self._guard().validate_write_path(path)
         path.mkdir(parents=True, exist_ok=True)
         return path
 

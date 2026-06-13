@@ -88,12 +88,22 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
-def _resolve_list(args, config, quick_key, full_key, arg_val, cast):
+def _resolve_list(
+    args,
+    config,
+    quick_key,
+    full_key,
+    arg_val,
+    cast,
+    *,
+    config_section: str = "campaign",
+):
     if arg_val:
         return [cast(x) for x in arg_val.split(",")]
     if args.quick_test:
         return [cast(x) for x in config.get("general", {}).get("quick_test", {}).get(quick_key, [])]
-    return [cast(x) for x in config.get("campaign", {}).get(full_key, [])]
+    section = config.get(config_section, {})
+    return [cast(x) for x in section.get(full_key, [])]
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -135,7 +145,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.quick_test and not args.methods:
         methods = [resolve_method(m) for m in config.get("general", {}).get("quick_test", {}).get("methods", methods)]
 
-    seeds = _resolve_list(args, config, "seeds", "seeds", args.seeds, int) or [11]
+    seeds = _resolve_list(
+        args, config, "seeds", "seeds", args.seeds, int, config_section="general"
+    ) or [11]
     campaign_sizes = _resolve_list(args, config, "campaign_sizes", "campaign_sizes", args.campaign_sizes, int) or [2]
     coordination_strengths = _resolve_list(
         args, config, "coordination_strengths", "coordination_strengths", args.coordination_strengths, float

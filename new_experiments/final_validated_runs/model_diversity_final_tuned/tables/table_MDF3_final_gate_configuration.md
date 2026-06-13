@@ -1,0 +1,5 @@
+# Final gate configuration
+
+|   min_distinct_vehicles |   min_anomalous_ratio |   max_weak_only_ratio |   min_cluster_cohesion |   min_cross_vehicle_support |   min_cross_model_edges |   max_benign_support_ratio |   min_connected_platforms | require_cross_model_path   |   min_membership_confidence |   min_cross_vehicle_neighbors |
+|------------------------:|----------------------:|----------------------:|-----------------------:|----------------------------:|------------------------:|---------------------------:|--------------------------:|:---------------------------|----------------------------:|------------------------------:|
+|                       2 |                   0.4 |                   0.5 |                   0.47 |                           1 |                       0 |                        0.1 |                         1 | True                       |                        0.32 |                             1 |

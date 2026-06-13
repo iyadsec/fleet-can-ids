@@ -1,0 +1,183 @@
+# Final validated experimental pipeline — all outputs under new_experiments/final_validated_runs/
+#
+# Phase 1 quick test:
+#   python scripts/run_final_validated_runs.py --phase quick-test
+#
+# Full pipeline:
+#   python scripts/run_final_validated_runs.py --phase all
+
+general:
+  project_root: null
+  base_config: configs/fleet_ids.yaml
+  output_root: new_experiments/final_validated_runs
+  seeds: [11, 23, 37, 41, 53, 67, 71, 83, 97, 101]
+  overwrite: false
+  reuse_existing_preprocessing: true
+  minimum_runs: 10
+  quick_test_output_root: new_experiments/final_validated_runs/quick_test
+  quick_test:
+    seeds: [11]
+    campaign_sizes: [2]
+    coordination_strengths: [0.0, 1.0]
+    methods: [local, clustering, standard_gnn, fcgnn]
+
+fleet_normalisation:
+  scaler_cache: new_experiments/metadata_correction/manifests/fleet_benign_scaler.json
+  training_split: train
+  benign_only: true
+  global_fallback: true
+
+paths:
+  clean_can_data: data/processed/clean_can_data.csv
+  window_features: data/processed/window_features.csv
+  window_metadata: data/processed/window_metadata.csv
+  vehicle_anomaly_predictions: data/processed/vehicle_anomaly_predictions.csv
+  anomaly_descriptors: data/processed/anomaly_descriptors.csv
+  vehicle_ids_model: outputs/models/vehicle_isolation_forest.joblib
+
+splits:
+  train: 0.70
+  validation: 0.15
+  test: 0.15
+  group_by: [source_file, vehicle_model]
+
+local_ids:
+  model: isolation_forest
+  benign_only_training: true
+  weak_threshold: 0.55
+  strong_threshold: 0.80
+  local_alert_min_vehicles: 2
+
+campaign:
+  minimum_unique_vehicles: 2
+  campaign_sizes: [2, 5, 10]
+  coordination_strengths: [0.00, 0.25, 0.75, 1.00]
+  min_cluster_size: 10
+  min_behavioral_cohesion: 0.85
+  dbscan_eps: 0.8
+  dbscan_min_samples: 10
+  dbscan_pca_components: 8
+
+graph:
+  similarity_metric: cosine
+  use_temporal_edges: false
+  cross_vehicle_edges_enabled: true
+  max_nodes_per_scenario: 1200
+  top_k_same_vehicle: 10
+  top_k_cross_vehicle: 5
+  default_similarity_threshold: 0.95
+  similarity_thresholds: [0.75, 0.80, 0.85, 0.90, 0.95]
+  max_neighbors: [5, 10, 25, 50]
+  exclude_self_edges: true
+  report_unique_edges: true
+  report_pyg_stored_edges: true
+  similarity_feature_view: behavior_only_vehicle_normalized
+
+methods:
+  local_ids: true
+  descriptor_clustering: true
+  standard_gnn: true
+  fcgnn: true
+  aliases:
+    local: local_ids
+    clustering: descriptor_clustering
+    standard_gnn: standard_gnn
+    fcgnn: fcgnn
+
+gnn:
+  hidden_channels: 64
+  embedding_dim: 32
+  epochs: 30
+  learning_rate: 0.01
+  weight_decay: 0.0005
+  train_ratio: 0.70
+  val_ratio: 0.15
+  standard_architecture: gcn
+  proposed_architecture: graphsage
+  supervision: structure
+
+scenarios:
+  S0_benign_control:
+    id: S0
+    name: Benign fleet control
+    attack_vehicles: 0
+    expect_campaign: false
+    primary: false
+  S1_isolated:
+    id: S1
+    name: Isolated single-vehicle attack
+    attack_vehicles: 1
+    expect_campaign: false
+    primary: false
+  S2_non_coordinated:
+    id: S2
+    name: Non-coordinated multi-vehicle incidents
+    attack_vehicles: variable
+    expect_campaign: false
+    coordination_range: [0.0, 0.25]
+    primary: false
+  S3_strong_campaign:
+    id: S3
+    name: Strong coordinated multi-vehicle campaign
+    attack_vehicles: variable
+    expect_campaign: true
+    evidence: strong
+    coordination_range: [0.75, 1.0]
+    primary: false
+  S4_weak_campaign:
+    id: S4
+    name: Weak coordinated multi-vehicle campaign
+    attack_vehicles: variable
+    expect_campaign: true
+    evidence: weak
+    coordination_range: [0.75, 1.0]
+    primary: true
+
+attack_families:
+  strong_default: flooding
+  weak_default: replay
+
+statistics:
+  confidence_level: 0.95
+  multiple_comparison_correction: holm
+  normality_test: shapiro
+  nonparametric_test: wilcoxon
+  parametric_test: paired_t_test
+
+runtime:
+  warmup_iterations: 2
+  timing_iterations: 5
+  measure_peak_memory: true
+
+campaign_analysis:
+  output_under_results: true
+  seeds: [11, 23, 37, 41, 53, 67, 71, 83, 97, 101]
+  experiment_a:
+    campaign_sizes: [2, 5, 10]
+    attack_strengths: [strong, weak]
+    coordination_strength: 1.0
+    total_fleet_size: 20
+  experiment_b:
+    fixed_campaign_size: 5
+    model_diversity_levels: [1, 2, 3]
+    attack_strengths: [strong, weak]
+    coordination_strength: 1.0
+    compositions:
+      diversity_1: {Hyundai: 5, Kia: 0, Chevrolet: 0}
+      diversity_2: {Hyundai: 3, Kia: 2, Chevrolet: 0}
+      diversity_3: {Hyundai: 2, Kia: 2, Chevrolet: 1}
+
+edge_sensitivity:
+  scenarios: [S3_strong_campaign, S4_weak_campaign]
+  campaign_size: 5
+  coordination_strength: 1.0
+  methods: [standard_gnn, fcgnn]
+
+definitions:
+  campaign_size: distinct attacked opaque vehicle instances in coordinated campaign
+  fleet_size: total attacked + benign vehicle instances in scenario
+  vehicle_model_diversity: distinct OEM platforms among attacked members (evaluation only)
+  vehicle_instance: pseudonymous vehicle from disjoint held-out trace segment
+  graph_node: one anomaly-event descriptor per CAN window
+  graph_edge: behavioural similarity between descriptors
+  coordination: shared behavioural attack characteristics (not timestamp alignment)

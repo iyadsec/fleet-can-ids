@@ -32,10 +32,12 @@ from src.graph.fleet_graph_builder import (
     event_id_to_window_id,
     load_anomaly_descriptors,
 )
-from src.graph.fleet_similarity_features import (
-    VEHICLE_NORMALIZE_COLUMNS,
-    build_behavior_view_descriptors,
+from src.experiments.local_descriptor_normalisation import (
+    FleetScalerProvenance,
+    apply_fleet_scaler,
 )
+from src.experiments.vehicle_identity import resolve_graph_vehicle_column
+from src.graph.fleet_similarity_features import build_behavior_view_descriptors
 from src.models.gnn_models import train_graphsage_fleet_correlation
 from src.utils.logging import get_logger
 
@@ -158,8 +160,12 @@ def compute_payload_entropy(descriptors: pd.DataFrame) -> np.ndarray:
     return -np.sum(probs * np.log(probs + 1e-12), axis=1)
 
 
-def prepare_gnn_fleet_node_matrix(descriptors: pd.DataFrame) -> tuple[np.ndarray, pd.DataFrame, list[str]]:
-    """Behaviour-only, vehicle-normalized GNN node features (no vehicle identity)."""
+def prepare_gnn_fleet_node_matrix(
+    descriptors: pd.DataFrame,
+    *,
+    fleet_scaler_provenance: FleetScalerProvenance | None = None,
+) -> tuple[np.ndarray, pd.DataFrame, list[str]]:
+    """Behaviour-only GNN node features with benign-training local normalisation."""
     df = build_behavior_view_descriptors(descriptors.copy())
     df["payload_entropy"] = compute_payload_entropy(df)
     cols = [c for c in GNN_FEATURE_COLUMNS if c in df.columns]
@@ -167,9 +173,9 @@ def prepare_gnn_fleet_node_matrix(descriptors: pd.DataFrame) -> tuple[np.ndarray
     if missing:
         raise ValueError(f"Missing GNN feature columns: {missing}")
 
-    norm_cols = [c for c in cols if c in VEHICLE_NORMALIZE_COLUMNS or c == "payload_entropy"]
-    for col in norm_cols:
-        df[col] = df.groupby("vehicle_model")[col].transform(lambda s: (s - s.mean()) / (s.std() + 1e-9))
+    if fleet_scaler_provenance is None:
+        raise ValueError("fleet_scaler_provenance required for GNN node matrix construction")
+    df = apply_fleet_scaler(df, fleet_scaler_provenance, feature_names=tuple(cols))
 
     X = np.nan_to_num(df[cols].to_numpy(dtype=np.float32), nan=0.0)
     return X, df, cols
@@ -178,10 +184,17 @@ def prepare_gnn_fleet_node_matrix(descriptors: pd.DataFrame) -> tuple[np.ndarray
 def build_final_gnn_fleet_graph(
     descriptors: pd.DataFrame,
     cfg: FinalGnnFleetConfig,
+    *,
+    fleet_scaler_provenance: FleetScalerProvenance | None = None,
 ) -> tuple[nx.Graph, Any, pd.DataFrame, np.ndarray, list[str]]:
-    """Build behaviour-normalized cross-vehicle graph and PyG data from GNN node features."""
-    X, feat_df, cols = prepare_gnn_fleet_node_matrix(descriptors)
-    vehicles = feat_df["vehicle_model"].to_numpy()
+    """Build locally normalised cross-vehicle graph and PyG data from GNN node features."""
+    if fleet_scaler_provenance is None:
+        raise ValueError("fleet_scaler_provenance required")
+    X, feat_df, cols = prepare_gnn_fleet_node_matrix(
+        descriptors, fleet_scaler_provenance=fleet_scaler_provenance
+    )
+    veh_col = resolve_graph_vehicle_column(feat_df)
+    vehicles = feat_df[veh_col].to_numpy()
 
     _, _, edge_index, edge_weights, sub_idx = build_cross_vehicle_constrained_knn_edges(
         X,

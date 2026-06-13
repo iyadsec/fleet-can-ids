@@ -1,0 +1,4 @@
+campaign_size,framework_config,campaign_f1_mean,campaign_f1_std,campaign_precision_mean,campaign_precision_std,campaign_recall_mean,campaign_recall_std,false_campaign_alert_rate_mean,false_campaign_alert_rate_std,campaign_detection_rate_mean,campaign_detection_rate_std,n_seeds
+2,C3,0.6,0.5163977794943222,0.6,0.5163977794943222,0.9,0.3162277660168379,0.9,0.3162277660168379,0.9,0.3162277660168379,10
+5,C3,0.5,0.5270462766947299,0.5,0.5270462766947299,1.0,0.0,1.0,0.0,1.0,0.0,10
+10,C3,0.3,0.4830458915396479,0.3,0.4830458915396479,1.0,0.0,1.0,0.0,1.0,0.0,10

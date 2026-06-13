@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 import pandas as pd
 
@@ -85,16 +87,31 @@ def measure_mean_pairwise_similarity(
     mask: pd.Series,
     *,
     feature_view: SimilarityFeatureView = "behavior_only_vehicle_normalized",
+    fleet_scaler_provenance: Any | None = None,
 ) -> float:
     """Mean cosine similarity among masked rows (validation of coordination dial)."""
     sub = descriptors.loc[mask].reset_index(drop=True)
     if len(sub) < 2:
         return 1.0
+    scaler = fleet_scaler_provenance
+    if scaler is None and feature_view in (
+        "behavior_only_vehicle_normalized",
+        "behavior_only_locally_normalized",
+    ):
+        from pathlib import Path
+
+        from src.experiments.local_descriptor_normalisation import load_scaler_provenance
+        from src.utils.paths import resolve_project_root
+
+        cache = resolve_project_root() / "new_experiments/metadata_correction/manifests/fleet_benign_scaler.json"
+        if cache.exists():
+            scaler = load_scaler_provenance(cache)
     X, _, _, _ = prepare_fleet_similarity_matrix(
         sub,
         similarity_feature_view=feature_view,
         feature_dominance_threshold=5.0,
         allowed_high_dominance_features=frozenset(),
+        fleet_scaler_provenance=scaler,
     )
     norms = np.linalg.norm(X, axis=1, keepdims=True)
     norms = np.maximum(norms, 1e-9)

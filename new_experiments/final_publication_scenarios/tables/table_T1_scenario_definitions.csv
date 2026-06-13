@@ -1,0 +1,6 @@
+Scenario,Attacked vehicles,Coordination,Local evidence,Expected local result,Expected fleet result
+S0,0,none,none,no alert,no campaign
+S1,1,none,strong,local alert,isolated incident
+S2,≥2,behaviourally unrelated,strong,local alerts,separate incidents
+S3,variable,behavioural campaign,strong,local alerts,coordinated campaign
+S4,variable,behavioural campaign,weak,weak/inconclusive,fleet-correlated campaign

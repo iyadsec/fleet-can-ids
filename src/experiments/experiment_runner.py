@@ -15,6 +15,7 @@ from src.experiments.method_fcgnn import run_fcgnn_method
 from src.experiments.method_local_ids import run_local_ids_method
 from src.experiments.method_standard_gnn import run_standard_gnn_method
 from src.experiments.result_writer import ExperimentRunContext
+from src.experiments.fleet_scaler_loader import ensure_fleet_scaler_in_config
 from src.experiments.scenario_generator import generate_scenario_records
 from src.experiments.scenario_registry import ScenarioSpec, get_scenario
 
@@ -30,6 +31,7 @@ def run_single_experiment(
     similarity_threshold: float | None = None,
     max_neighbors: int | None = None,
 ) -> dict[str, Any]:
+    ensure_fleet_scaler_in_config(config, descriptors, manifest)
     t0 = time.perf_counter()
     scenario_df, membership = generate_scenario_records(
         spec,

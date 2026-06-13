@@ -1,0 +1,4 @@
+framework_config,metric,mean,ci95_low,ci95_high
+C3,campaign_f1,0.9333333333333332,0.8643273661012173,1.0023393005654493
+C3,false_campaign_alert_rate,0.02,-0.020191504742584774,0.06019150474258478
+C3,benign_vehicles_included,0.0,0.0,0.0

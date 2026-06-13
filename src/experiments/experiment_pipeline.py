@@ -37,6 +37,10 @@ from src.models.gnn_models import GraphSAGEFleetCorrelator, train_graphsage_flee
 MethodId = Literal["descriptor_clustering", "standard_gnn", "fcgnn"]
 
 
+from src.experiments.fleet_scaler_loader import resolve_fleet_scaler_from_config
+from src.experiments.vehicle_identity import resolve_vehicle_id_column
+
+
 @dataclass
 class GraphBuildResult:
     graph: nx.Graph
@@ -105,8 +109,12 @@ def build_scenario_graph(
         k_cross = min(k_cross, max(1, max_neighbors // 2))
 
     t0 = time.perf_counter()
-    X_gnn, feat_df, _ = prepare_gnn_fleet_node_matrix(descriptors)
-    vehicles = feat_df["vehicle_model"].to_numpy()
+    scaler = resolve_fleet_scaler_from_config(config)
+    X_gnn, feat_df, _ = prepare_gnn_fleet_node_matrix(
+        descriptors, fleet_scaler_provenance=scaler
+    )
+    veh_col = resolve_vehicle_id_column(feat_df)
+    vehicles = feat_df[veh_col].to_numpy()
     from src.graph.fleet_graph_builder import build_cross_vehicle_constrained_knn_edges
 
     _, _, edge_index, edge_weights, sub_idx = build_cross_vehicle_constrained_knn_edges(
@@ -130,6 +138,7 @@ def build_scenario_graph(
         ),
         feature_dominance_threshold=5.0,
         allowed_high_dominance_features=frozenset(),
+        fleet_scaler_provenance=scaler,
     )
     nodes_df, edges_df = graph_to_tables(graph)
     stats = _extended_graph_stats(graph, edges_df, tau, k_same, k_cross, time.perf_counter() - t0)
@@ -200,7 +209,8 @@ def _qualify_clusters_ieee(
             continue
         mask = labels == cid
         size = int(mask.sum())
-        n_veh = int(meta.loc[mask, "vehicle_model"].nunique())
+        veh_col = resolve_vehicle_id_column(meta)
+        n_veh = int(meta.loc[mask, veh_col].nunique())
         cohesion = compute_cluster_behavioral_cohesion(behavior_features, mask, seed=cfg.seed + cid)
         mean_score = float(scores[mask].mean()) if scores is not None else float(meta.loc[mask, "anomaly_score"].mean())
         dom = str(meta.loc[mask, "attack_type"].mode().iloc[0]) if size else "unknown"
@@ -245,11 +255,16 @@ def _decisions_to_predictions(
     membership: pd.DataFrame,
     method: str,
 ) -> pd.DataFrame:
-    out = decisions.merge(
-        membership[["event_id", "ground_truth_malicious", "ground_truth_campaign_id", "scenario_role"]],
-        on="event_id",
-        how="left",
-    )
+    mem_cols = [
+        "event_id",
+        "ground_truth_malicious",
+        "ground_truth_campaign_id",
+        "scenario_role",
+    ]
+    for col in ("vehicle_token", "scenario_vehicle_id", "vehicle_model"):
+        if col in membership.columns:
+            mem_cols.append(col)
+    out = decisions.merge(membership[mem_cols].drop_duplicates(subset=["event_id"]), on="event_id", how="left")
     out["method"] = method
     out["predicted_malicious"] = (
         (out["local_alert"] == 1)
@@ -325,6 +340,7 @@ def run_graph_method(
     meta = gbuild.meta
     runtime: dict[str, float] = {"graph_construction_sec": gbuild.graph_build_sec}
 
+    scaler = resolve_fleet_scaler_from_config(config)
     if method == "descriptor_clustering":
         X, _ = resolve_fleet_similarity_matrix(
             meta,
@@ -333,6 +349,7 @@ def run_graph_method(
             ),
             feature_dominance_threshold=5.0,
             allowed_high_dominance_features=frozenset(),
+            fleet_scaler_provenance=scaler,
         )
         t0 = time.perf_counter()
         labels = _cluster_features(X, meta, cfg)
@@ -369,15 +386,20 @@ def run_graph_method(
             event_pred["ground_truth_malicious"]
         ).astype(int)
 
+    veh_col = resolve_vehicle_id_column(event_pred)
     vehicle_pred = (
-        event_pred.groupby("vehicle_model", as_index=False)
+        event_pred.groupby(veh_col, as_index=False)
         .agg(
             predicted_attacked=("predicted_malicious", "max"),
             ground_truth_attacked=("ground_truth_malicious", "max"),
             n_events=("event_id", "count"),
             n_coordinated=("final_decision", lambda s: int((s == DECISION_COORDINATED).sum())),
         )
+        .rename(columns={veh_col: "vehicle_id"})
     )
+    if "vehicle_model" in event_pred.columns:
+        model_map = event_pred.groupby(veh_col)["vehicle_model"].first()
+        vehicle_pred["vehicle_model"] = vehicle_pred["vehicle_id"].map(model_map)
     qualifying = cluster_df[cluster_df["is_qualifying_campaign_cluster"]] if not cluster_df.empty else cluster_df
     campaign_pred = pd.DataFrame(
         [

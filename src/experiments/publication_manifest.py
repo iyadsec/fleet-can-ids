@@ -11,6 +11,7 @@ from typing import Any
 import pandas as pd
 
 from src.experiments.scenario_registry import SCENARIO_REGISTRY, get_scenario
+from src.experiments.vehicle_identity import count_attacked_vehicle_instances
 
 REQUIRED_RUN_FILES = (
     "config_snapshot.yaml",
@@ -84,7 +85,7 @@ def _validate_scenario_semantics(
     gt_campaigns = membership.loc[
         membership["ground_truth_campaign_id"].astype(str).str.len() > 0, "ground_truth_campaign_id"
     ].nunique()
-    attacked_vehicles = membership.loc[membership["ground_truth_malicious"] == 1, "vehicle_model"].nunique()
+    attacked_vehicles = count_attacked_vehicle_instances(membership)
     mal_events = int(membership["ground_truth_malicious"].sum())
 
     if spec.scenario_id == "S0":
