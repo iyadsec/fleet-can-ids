@@ -1,0 +1,96 @@
+experiment:
+  name: final_end_to_end_publication_run_balanced
+  output_root: new_experiments/final_end_to_end_publication_run_balanced
+  authoritative_for: Section VII (balanced split)
+  split_method: balanced_platform_aware_with_segments
+  guard_frames: 100
+dataset:
+  source: OCSLab Car-Hacking labelled traces
+  vehicle_models:
+  - Hyundai
+  - Kia
+  - Chevrolet
+  external_dataset_dir: /Users/iyadatieh/Library/CloudStorage/OneDrive-Personal/University
+    of Reading/CodeRepo/Dataset
+  labelled_only: true
+  train_ratio: 0.7
+  validation_ratio: 0.15
+  test_ratio: 0.15
+  source_level_separation: true
+  benign_only_training: true
+  balanced_split_manifest: manifests/balanced_split_manifest.csv
+windowing:
+  window_size: 100
+  overlap: 50
+  stride: 50
+  minimum_valid_frames: 10
+local_ids:
+  model: IsolationForest
+  n_estimators: 200
+  contamination: auto
+  weak_threshold: 0.55
+  strong_threshold: 0.8
+  threshold_selection: validation_f1_grid
+  random_seeds:
+  - 11
+  - 23
+  - 37
+  - 41
+  - 53
+  - 67
+  - 71
+  - 83
+  - 97
+  - 101
+descriptor:
+  feature_schema: BEHAVIOURAL_FEATURE_COLUMNS
+  format: csv
+  privacy_excluded:
+  - can_id
+  - payload_bytes
+  - raw_timestamp
+scenario:
+  fleet_size: 20
+  source_windows_per_vehicle: 10
+  total_source_windows: 200
+  campaign_sizes:
+  - 2
+  - 5
+  - 10
+  behavioural_coordination_only: true
+fleet_graph:
+  similarity_metric: cosine
+  temporal_edges: false
+graphsage:
+  architecture: GraphSAGE
+  hidden_dim: 64
+  epochs: 30
+  learning_rate: 0.01
+clustering:
+  method: DBSCAN
+  fragment_consolidation: true
+statistics:
+  seeds:
+  - 11
+  - 23
+  - 37
+  - 41
+  - 53
+  - 67
+  - 71
+  - 83
+  - 97
+  - 101
+  confidence_level: 0.95
+  holm_correction: true
+  zero_variance_handling: report_p1_effect0
+descriptor_analysis:
+  fleet_sizes:
+  - 10
+  - 50
+  - 100
+  - 500
+  - 1000
+paths:
+  external_dataset_dir: /Users/iyadatieh/Library/CloudStorage/OneDrive-Personal/University
+    of Reading/CodeRepo/Dataset

@@ -1,0 +1,4 @@
+vehicle_model,weak_threshold,strong_threshold
+Chevrolet,0.45,0.85
+Hyundai,0.45,0.7
+Kia,0.45,0.7

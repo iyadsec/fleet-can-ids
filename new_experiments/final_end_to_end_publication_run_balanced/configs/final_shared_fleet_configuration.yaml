@@ -1,0 +1,36 @@
+similarity_threshold: 0.95
+max_same_vehicle_neighbors: 2
+max_cross_vehicle_neighbors: 5
+dbscan_eps: 0.5
+dbscan_min_samples: 2
+fragment_consolidation_enabled: true
+fragment_centroid_threshold: 0.85
+minimum_distinct_vehicles: 2
+minimum_cross_vehicle_support: 1
+minimum_campaign_cohesion: 0.5
+selection:
+  constraints_met: true
+  best_diag:
+    similarity_threshold: 0.95
+    max_same_vehicle_neighbors: 2
+    max_cross_vehicle_neighbors: 5
+    dbscan_eps: 0.5
+    dbscan_min_samples: 2
+    fragment_consolidation_enabled: true
+    fragment_centroid_threshold: 0.85
+    minimum_distinct_vehicles: 2
+    minimum_cross_vehicle_support: 1
+    minimum_campaign_cohesion: 0.5
+    objective_score: 0.5244058229352347
+    selection_score: 0.5244058229352347
+    v0_false_campaign_rate: 0.0
+    v1_coordinated_rate: 0.0
+    v2_incorrect_merging: 0.0
+    mean_benign_included: 0.2631578947368421
+    mean_v3_campaign_f1: 0.6491228070175438
+    mean_v4_campaign_f1: 0.42105263157894735
+    constraints_met: 1.0
+    valid: 1.0
+    search_stage: dbscan
+  candidates_tested: 14
+master_config_hash: 72dbfc1760126e799a8a1670f1aa81391bd69a65edeab7beecb61846aa946d9e

@@ -1,0 +1,6 @@
+fleet_size,raw_can_mb_per_window_batch,descriptor_mb_per_window_batch
+10,0.16,0.0741
+50,0.8,0.3705
+100,1.6,0.741
+500,8.0,3.705
+1000,16.0,7.41

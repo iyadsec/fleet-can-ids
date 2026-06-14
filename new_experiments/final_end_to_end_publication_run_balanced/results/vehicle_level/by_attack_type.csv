@@ -1,0 +1,5 @@
+attack_type,recall,precision,count
+attack_free,0.0,0.0,3114.0
+flooding,1.0,1.0,252.0
+fuzzy,0.8569236324246254,1.0,11078.0
+malfunction,0.9933333333333333,1.0,150.0

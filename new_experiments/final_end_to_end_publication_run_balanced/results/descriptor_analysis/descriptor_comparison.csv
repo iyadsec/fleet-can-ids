@@ -1,0 +1,3 @@
+channel,bytes_per_window,privacy_sensitive_fields
+raw_can,1600,"payload,can_id,timestamp"
+descriptor,741,none_transmitted

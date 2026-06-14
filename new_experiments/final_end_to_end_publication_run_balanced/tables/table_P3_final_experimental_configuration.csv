@@ -1,0 +1,12 @@
+parameter,value
+similarity_threshold,0.95
+max_same_vehicle_neighbors,2
+max_cross_vehicle_neighbors,5
+dbscan_eps,0.5
+dbscan_min_samples,2
+fragment_consolidation_enabled,True
+fragment_centroid_threshold,0.85
+minimum_distinct_vehicles,2
+minimum_cross_vehicle_support,1
+minimum_campaign_cohesion,0.5
+master_config_hash,72dbfc1760126e799a8a1670f1aa81391bd69a65edeab7beecb61846aa946d9e
