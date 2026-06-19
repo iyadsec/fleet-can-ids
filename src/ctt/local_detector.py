@@ -155,19 +155,39 @@ def compute_detection_metrics(y_true: np.ndarray, y_pred: np.ndarray, scores: np
     }
 
 
+def load_all_features(output_root: Path) -> pd.DataFrame:
+    """Load features from combined parquet or shard index."""
+    features_path = output_root / "windows" / "all_window_features.parquet"
+    index_path = output_root / "windows" / "feature_shard_index.csv"
+    if features_path.exists() and features_path.stat().st_size > 1000:
+        return pd.read_parquet(features_path)
+    if index_path.exists():
+        shards = pd.read_csv(index_path)["shard_path"].tolist()
+        parts = []
+        for i, sp in enumerate(shards):
+            parts.append(pd.read_parquet(sp))
+            if (i + 1) % 20 == 0:
+                parts = [pd.concat(parts, ignore_index=True)]
+        return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
+    return pd.DataFrame()
+
+
 def run_local_onboarding(
     window_manifest: pd.DataFrame,
     output_root: Path = OUTPUT_ROOT,
     features: pd.DataFrame | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
     """Train per-set per-vehicle benign-only models and evaluate on test subsets."""
-    if features is not None:
+    if features is not None and not features.empty:
         features_all = features
     else:
-        from src.ctt.features import extract_features_from_manifest
-        features_all = extract_features_from_manifest(window_manifest, output_root)
+        features_all = load_all_features(output_root)
+        if features_all.empty:
+            from src.ctt.features import extract_features_from_manifest
+            features_all = extract_features_from_manifest(window_manifest, output_root)
         features_path = output_root / "windows" / "all_window_features.parquet"
-        features_all.to_parquet(features_path, index=False)
+        if len(features_all) < 500_000:
+            features_all.to_parquet(features_path, index=False)
 
     train_manifest = []
     thresh_manifest = []

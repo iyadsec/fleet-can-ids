@@ -249,17 +249,21 @@ def run_streaming_pipeline(
     window_df = pd.read_csv(window_manifest_path) if window_manifest_path.exists() else pd.DataFrame()
 
     features_path = output_root / "windows" / "all_window_features.parquet"
-    if shard_paths:
-        # Concatenate shards in batches to limit memory
+    features_index_path = output_root / "windows" / "feature_shard_index.csv"
+    pd.DataFrame({"shard_path": [str(p) for p in shard_paths]}).to_csv(features_index_path, index=False)
+
+    # Build combined parquet only if small enough; otherwise use shards
+    if shard_paths and len(shard_paths) <= 50:
         batches = []
         for i in range(0, len(shard_paths), 20):
             batch = pd.concat([pd.read_parquet(p) for p in shard_paths[i:i+20]], ignore_index=True)
             batches.append(batch)
         features_df = pd.concat(batches, ignore_index=True) if batches else pd.DataFrame()
         features_df.to_parquet(features_path, index=False)
-        del batches
     else:
         features_df = pd.DataFrame()
+        if shard_paths:
+            features_df = pd.read_parquet(shard_paths[0]).head(0)
 
     sections = {
         "Summary": (

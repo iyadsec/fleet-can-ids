@@ -137,6 +137,9 @@ def main() -> int:
 
     print("=== Step 6: Descriptor Generation ===")
     import pandas as pd
+    if features.empty:
+        from src.ctt.local_detector import load_all_features
+        features = load_all_features(output_root)
     desc_df = generate_descriptors(pred_df, features, output_root)
     desc_summary = pd.read_csv(output_root / "results" / "descriptor_transfer" / "communication_summary.csv")
 
