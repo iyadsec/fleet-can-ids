@@ -154,6 +154,9 @@ def shard_path_for_file(features_dir: Path, dataset_set: str, subset_name: str, 
     """Unique shard path per set/subset/file (avoids cross-set filename collisions)."""
     safe_subset = subset_name.replace("/", "_")
     return features_dir / f"features_{dataset_set}_{safe_subset}_{stem}.parquet"
+
+
+def _process_file_args(args: tuple) -> tuple[list[dict], list[dict], dict]:
     source_path, dataset_set, subset_name, output_root_str, window_size, stride = args
     win_meta, feats = process_source_file_streaming(
         Path(source_path), dataset_set, subset_name, Path(output_root_str), window_size, stride
