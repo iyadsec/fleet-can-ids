@@ -86,14 +86,22 @@ def _windows_from_normalized(
     meta_cols = ["attack_type", "vehicle_id", "manufacturer", "dataset_set", "subset_name", "source_file"]
     meta_static = {c: norm_df[c].iloc[0] for c in meta_cols}
 
+    timestamps = norm_df["timestamp"].to_numpy(dtype=float)
+    can_ids = norm_df["can_id"].astype(str).to_numpy()
+    dlc = norm_df["dlc"].to_numpy(dtype=float)
+    labels = norm_df["label"].to_numpy(dtype=float)
+    bytes_mat = norm_df[[f"byte_{i}" for i in range(8)]].to_numpy(dtype=float)
+
+    from src.ctt.features import extract_window_features_numpy
+
     for wi, start in enumerate(range(0, n - window_size + 1, stride)):
         end = start + window_size
-        chunk = norm_df.iloc[start:end]
-        if chunk["can_id"].notna().sum() < MIN_VALID_FRAMES:
+        w_can = can_ids[start:end]
+        if np.sum(w_can != "nan") < MIN_VALID_FRAMES and np.sum(pd.notna(w_can)) < MIN_VALID_FRAMES:
             continue
-        labels = chunk["label"].values
-        label = float(pd.Series(labels).value_counts().idxmax())
-        purity = float((labels == label).mean())
+        wlabels = labels[start:end]
+        label = float(pd.Series(wlabels).value_counts().idxmax())
+        purity = float((wlabels == label).mean())
         wid = window_id_base * 1000 + wi
         meta = {
             "window_id": wid,
@@ -102,14 +110,16 @@ def _windows_from_normalized(
             "end_frame_idx": end,
             "window_size": window_size,
             "n_frames": window_size,
-            "valid_frames": int(chunk["can_id"].notna().sum()),
+            "valid_frames": int(np.sum((w_can != "") & (w_can != "nan"))),
             "label": label,
             "label_purity": purity,
             "is_attack": int(label),
             **meta_static,
         }
         window_meta.append(meta)
-        feat = extract_window_features(chunk)
+        feat = extract_window_features_numpy(
+            timestamps[start:end], can_ids[start:end], dlc[start:end], bytes_mat[start:end]
+        )
         feature_rows.append({**meta, **feat})
 
     return window_meta, feature_rows

@@ -66,6 +66,73 @@ def compute_benign_profile(benign_features: pd.DataFrame) -> dict[str, float]:
     return {c: float(benign_features[c].mean()) for c in cols if c in benign_features.columns}
 
 
+def extract_window_features_numpy(
+    timestamps: np.ndarray,
+    can_ids: np.ndarray,
+    dlc: np.ndarray,
+    bytes_mat: np.ndarray,
+    benign_profile: dict[str, float] | None = None,
+) -> dict[str, float]:
+    """Fast numpy-based feature extraction for a window slice."""
+    n = len(timestamps)
+    feat: dict[str, float] = {"frame_count": float(n)}
+    feat["unique_can_id_count"] = float(len(np.unique(can_ids)))
+    feat["can_id_entropy"] = _entropy(can_ids)
+    _, counts = np.unique(can_ids, return_counts=True)
+    feat["most_common_can_id_ratio"] = float(counts.max() / n) if n else np.nan
+
+    if n > 1:
+        transitions = int(np.sum(can_ids[1:] != can_ids[:-1]))
+        feat["id_transition_rate"] = float(transitions / (n - 1))
+        feat["id_repetition_rate"] = float(max(n - 1 - transitions, 0) / (n - 1))
+        inter = np.diff(timestamps.astype(float))
+        inter = inter[np.isfinite(inter) & (inter >= 0)]
+        if inter.size:
+            feat["mean_inter_arrival_time"] = float(np.mean(inter))
+            feat["std_inter_arrival_time"] = float(np.std(inter))
+            feat["min_inter_arrival_time"] = float(np.min(inter))
+            feat["max_inter_arrival_time"] = float(np.max(inter))
+            span = float(timestamps[-1] - timestamps[0]) if timestamps[-1] > timestamps[0] else float(inter.sum())
+            feat["message_rate"] = float(n / span) if span > 0 else float(n)
+        else:
+            for k in ("mean_inter_arrival_time", "std_inter_arrival_time", "min_inter_arrival_time",
+                      "max_inter_arrival_time", "message_rate"):
+                feat[k] = np.nan
+    else:
+        feat["id_transition_rate"] = 0.0
+        feat["id_repetition_rate"] = 0.0
+        for k in ("mean_inter_arrival_time", "std_inter_arrival_time", "min_inter_arrival_time",
+                  "max_inter_arrival_time", "message_rate"):
+            feat[k] = np.nan
+
+    feat["mean_dlc"] = float(np.nanmean(dlc))
+    feat["std_dlc"] = float(np.nanstd(dlc))
+    dlc_mode = pd.Series(dlc).mode()
+    feat["dlc_mode_ratio"] = float((dlc == dlc_mode.iloc[0]).mean()) if len(dlc_mode) else np.nan
+
+    byte_means = []
+    for i in range(8):
+        vals = bytes_mat[:, i]
+        feat[f"byte_mean_{i}"] = float(np.nanmean(vals))
+        feat[f"byte_std_{i}"] = float(np.nanstd(vals))
+        byte_means.append(feat[f"byte_mean_{i}"])
+
+    if n > 1:
+        changes = int(np.sum(bytes_mat[1:] != bytes_mat[:-1]))
+        total_pairs = (n - 1) * 8
+        feat["payload_change_rate"] = float(changes / total_pairs)
+        feat["payload_static_ratio"] = float(1.0 - changes / total_pairs)
+    else:
+        feat["payload_change_rate"] = 0.0
+        feat["payload_static_ratio"] = 0.0
+
+    feat["deviation_can_id_entropy"] = 0.0
+    feat["deviation_message_rate"] = 0.0
+    feat["deviation_mean_dlc"] = 0.0
+    feat["deviation_byte_mean_norm"] = 0.0
+    return feat
+
+
 def extract_window_features(
     window_df: pd.DataFrame,
     benign_profile: dict[str, float] | None = None,
