@@ -147,6 +147,10 @@ def process_source_file_streaming(
         norm_df = _normalize_pl(source_path, attack_type, vehicle_id, manufacturer, dataset_set, subset_name)
         norm_df.to_csv(out_path, index=False)
 
+    # Attack-only train files are not used for benign onboarding or threshold calibration
+    if subset_name == "train_01" and attack_type != "benign":
+        return [], []
+
     return _windows_from_normalized(norm_df, out_path, window_size, stride, source_path)
 
 
@@ -198,7 +202,13 @@ def run_streaming_pipeline(
             resumed_windows += 1
             norm_manifest.append({"source_file": str(path), "normalized_path": str(out_path),
                                    "dataset_set": rec["dataset_set"], "subset_name": rec["subset_name"],
-                                   "window_count": -1, "resumed": True})
+                                   "window_count": 0, "resumed": True})
+            continue
+        # Skip attack-only train files (normalized but not windowed per benign-only protocol)
+        if rec["subset_name"] == "train_01" and rec["attack_type"] != "benign":
+            norm_manifest.append({"source_file": str(path), "normalized_path": str(out_path),
+                                   "dataset_set": rec["dataset_set"], "subset_name": rec["subset_name"],
+                                   "window_count": 0, "skipped_attack_train": True})
             continue
         tasks.append((rec["source_file"], rec["dataset_set"], rec["subset_name"], str(output_root), WINDOW_SIZE, WINDOW_STRIDE))
 
