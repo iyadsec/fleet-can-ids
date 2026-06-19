@@ -75,7 +75,7 @@ def _windows_from_normalized(
     stride: int,
     source_path: Path,
 ) -> tuple[list[dict], list[dict]]:
-    """Generate windows and features from normalized dataframe."""
+    """Generate windows and features from normalized dataframe (numpy-sliced)."""
     window_meta: list[dict] = []
     feature_rows: list[dict] = []
     n = len(norm_df)
@@ -84,14 +84,16 @@ def _windows_from_normalized(
 
     window_id_base = abs(hash(str(source_path))) % 10_000_000
     meta_cols = ["attack_type", "vehicle_id", "manufacturer", "dataset_set", "subset_name", "source_file"]
+    meta_static = {c: norm_df[c].iloc[0] for c in meta_cols}
 
     for wi, start in enumerate(range(0, n - window_size + 1, stride)):
         end = start + window_size
         chunk = norm_df.iloc[start:end]
-        valid = int(chunk["can_id"].notna().sum())
-        if valid < MIN_VALID_FRAMES:
+        if chunk["can_id"].notna().sum() < MIN_VALID_FRAMES:
             continue
-        label, purity = window_label(chunk["label"])
+        labels = chunk["label"].values
+        label = float(pd.Series(labels).value_counts().idxmax())
+        purity = float((labels == label).mean())
         wid = window_id_base * 1000 + wi
         meta = {
             "window_id": wid,
@@ -100,11 +102,11 @@ def _windows_from_normalized(
             "end_frame_idx": end,
             "window_size": window_size,
             "n_frames": window_size,
-            "valid_frames": valid,
+            "valid_frames": int(chunk["can_id"].notna().sum()),
             "label": label,
             "label_purity": purity,
-            "is_attack": int(label) if not np.isnan(label) else 0,
-            **{c: chunk[c].iloc[0] for c in meta_cols},
+            "is_attack": int(label),
+            **meta_static,
         }
         window_meta.append(meta)
         feat = extract_window_features(chunk)
@@ -161,21 +163,38 @@ def run_streaming_pipeline(
     records = discover_ctt_files(dataset_root)
     norm_manifest: list[dict] = []
     all_window_meta: list[dict] = []
-    all_features: list[dict] = []
 
-    tasks = [
-        (rec["source_file"], rec["dataset_set"], rec["subset_name"], str(output_root), WINDOW_SIZE, WINDOW_STRIDE)
-        for rec in records
-    ]
+    features_dir = ensure_dir(output_root / "windows" / "feature_shards")
+    shard_paths: list[Path] = []
+    tasks = []
 
-    completed = 0
-    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+    for rec in records:
+        path = Path(rec["source_file"])
+        shard_path = features_dir / f"features_{path.stem}.parquet"
+        out_path = output_root / "normalized" / rec["dataset_set"] / rec["subset_name"] / f"{path.stem}.csv"
+        if shard_path.exists():
+            shard_paths.append(shard_path)
+            feat_df = pd.read_parquet(shard_path)
+            all_window_meta.extend(feat_df[["window_id", "normalized_path", "start_frame_idx", "end_frame_idx",
+                "window_size", "n_frames", "valid_frames", "label", "label_purity", "is_attack",
+                "attack_type", "vehicle_id", "manufacturer", "dataset_set", "subset_name", "source_file"]].to_dict("records"))
+            norm_manifest.append({"source_file": str(path), "normalized_path": str(out_path),
+                                   "dataset_set": rec["dataset_set"], "subset_name": rec["subset_name"],
+                                   "window_count": len(feat_df), "resumed": True})
+            continue
+        tasks.append((rec["source_file"], rec["dataset_set"], rec["subset_name"], str(output_root), WINDOW_SIZE, WINDOW_STRIDE))
+
+    completed = len(shard_paths)
+    with ProcessPoolExecutor(max_workers=2) as executor:
         futures = {executor.submit(_process_file_args, t): t for t in tasks}
         for future in as_completed(futures):
             win_meta, feats, info = future.result()
             all_window_meta.extend(win_meta)
-            all_features.extend(feats)
             path = Path(info["source_file"])
+            if feats:
+                shard_path = features_dir / f"features_{path.stem}.parquet"
+                pd.DataFrame(feats).to_parquet(shard_path, index=False)
+                shard_paths.append(shard_path)
             norm_manifest.append(
                 {
                     "source_file": str(path),
@@ -188,7 +207,8 @@ def run_streaming_pipeline(
                 }
             )
             completed += 1
-            if completed % 10 == 0:
+            del feats
+            if completed % 5 == 0:
                 print(f"  Streamed {completed}/{len(records)} files ({len(all_window_meta):,} windows)...", flush=True)
 
     norm_df = pd.DataFrame(norm_manifest)
@@ -198,9 +218,11 @@ def run_streaming_pipeline(
     window_df.to_csv(manifest_dir / "window_manifest.csv", index=False)
 
     features_path = output_root / "windows" / "all_window_features.parquet"
-    features_path.parent.mkdir(parents=True, exist_ok=True)
-    features_df = pd.DataFrame(all_features)
-    features_df.to_parquet(features_path, index=False)
+    if shard_paths:
+        features_df = pd.concat([pd.read_parquet(p) for p in shard_paths], ignore_index=True)
+        features_df.to_parquet(features_path, index=False)
+    else:
+        features_df = pd.DataFrame()
 
     sections = {
         "Summary": (
