@@ -141,13 +141,19 @@ def process_source_file_streaming(
     norm_dir.mkdir(parents=True, exist_ok=True)
     out_path = norm_dir / f"{source_path.stem}.csv"
 
-    norm_df = _normalize_pl(source_path, attack_type, vehicle_id, manufacturer, dataset_set, subset_name)
-    norm_df.to_csv(out_path, index=False)
+    if out_path.exists() and out_path.stat().st_size > 0:
+        norm_df = pd.read_csv(out_path)
+    else:
+        norm_df = _normalize_pl(source_path, attack_type, vehicle_id, manufacturer, dataset_set, subset_name)
+        norm_df.to_csv(out_path, index=False)
 
     return _windows_from_normalized(norm_df, out_path, window_size, stride, source_path)
 
 
-def _process_file_args(args: tuple) -> tuple[list[dict], list[dict], dict]:
+def shard_path_for_file(features_dir: Path, dataset_set: str, subset_name: str, stem: str) -> Path:
+    """Unique shard path per set/subset/file (avoids cross-set filename collisions)."""
+    safe_subset = subset_name.replace("/", "_")
+    return features_dir / f"features_{dataset_set}_{safe_subset}_{stem}.parquet"
     source_path, dataset_set, subset_name, output_root_str, window_size, stride = args
     win_meta, feats = process_source_file_streaming(
         Path(source_path), dataset_set, subset_name, Path(output_root_str), window_size, stride
@@ -182,7 +188,7 @@ def run_streaming_pipeline(
 
     for rec in records:
         path = Path(rec["source_file"])
-        shard_path = features_dir / f"features_{path.stem}.parquet"
+        shard_path = shard_path_for_file(features_dir, rec["dataset_set"], rec["subset_name"], path.stem)
         out_path = output_root / "normalized" / rec["dataset_set"] / rec["subset_name"] / f"{path.stem}.csv"
         if shard_path.exists():
             shard_paths.append(shard_path)
@@ -213,7 +219,7 @@ def run_streaming_pipeline(
             total_windows += len(win_meta)
             path = Path(info["source_file"])
             if feats:
-                shard_path = features_dir / f"features_{path.stem}.parquet"
+                shard_path = shard_path_for_file(features_dir, info["dataset_set"], info["subset_name"], path.stem)
                 pd.DataFrame(feats).to_parquet(shard_path, index=False)
                 shard_paths.append(shard_path)
                 del feats
