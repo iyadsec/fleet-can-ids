@@ -172,11 +172,13 @@ def run_streaming_pipeline(
 
     records = discover_ctt_files(dataset_root)
     norm_manifest: list[dict] = []
-    all_window_meta: list[dict] = []
+    window_manifest_path = manifest_dir / "window_manifest.csv"
+    window_header_written = window_manifest_path.exists() and window_manifest_path.stat().st_size > 0
 
     features_dir = ensure_dir(output_root / "windows" / "feature_shards")
     shard_paths: list[Path] = []
     tasks = []
+    resumed_windows = 0
 
     for rec in records:
         path = Path(rec["source_file"])
@@ -184,27 +186,37 @@ def run_streaming_pipeline(
         out_path = output_root / "normalized" / rec["dataset_set"] / rec["subset_name"] / f"{path.stem}.csv"
         if shard_path.exists():
             shard_paths.append(shard_path)
-            feat_df = pd.read_parquet(shard_path)
-            all_window_meta.extend(feat_df[["window_id", "normalized_path", "start_frame_idx", "end_frame_idx",
-                "window_size", "n_frames", "valid_frames", "label", "label_purity", "is_attack",
-                "attack_type", "vehicle_id", "manufacturer", "dataset_set", "subset_name", "source_file"]].to_dict("records"))
+            resumed_windows += 1
             norm_manifest.append({"source_file": str(path), "normalized_path": str(out_path),
                                    "dataset_set": rec["dataset_set"], "subset_name": rec["subset_name"],
-                                   "window_count": len(feat_df), "resumed": True})
+                                   "window_count": -1, "resumed": True})
             continue
         tasks.append((rec["source_file"], rec["dataset_set"], rec["subset_name"], str(output_root), WINDOW_SIZE, WINDOW_STRIDE))
 
     completed = len(shard_paths)
-    with ProcessPoolExecutor(max_workers=2) as executor:
+
+    def _append_window_meta(rows: list[dict]) -> None:
+        nonlocal window_header_written
+        if not rows:
+            return
+        df = pd.DataFrame(rows)
+        df.to_csv(window_manifest_path, mode="a", header=not window_header_written, index=False)
+        window_header_written = True
+
+    total_windows = 0
+
+    with ProcessPoolExecutor(max_workers=1) as executor:
         futures = {executor.submit(_process_file_args, t): t for t in tasks}
         for future in as_completed(futures):
             win_meta, feats, info = future.result()
-            all_window_meta.extend(win_meta)
+            _append_window_meta(win_meta)
+            total_windows += len(win_meta)
             path = Path(info["source_file"])
             if feats:
                 shard_path = features_dir / f"features_{path.stem}.parquet"
                 pd.DataFrame(feats).to_parquet(shard_path, index=False)
                 shard_paths.append(shard_path)
+                del feats
             norm_manifest.append(
                 {
                     "source_file": str(path),
@@ -217,20 +229,35 @@ def run_streaming_pipeline(
                 }
             )
             completed += 1
-            del feats
             if completed % 5 == 0:
-                print(f"  Streamed {completed}/{len(records)} files ({len(all_window_meta):,} windows)...", flush=True)
+                print(f"  Streamed {completed}/{len(records)} files ({total_windows:,} new windows)...", flush=True)
 
     norm_df = pd.DataFrame(norm_manifest)
     norm_df.to_csv(manifest_dir / "normalization_manifest.csv", index=False)
 
-    window_df = pd.DataFrame(all_window_meta)
-    window_df.to_csv(manifest_dir / "window_manifest.csv", index=False)
+    # Build window manifest from shards if not complete
+    if not window_manifest_path.exists() or window_manifest_path.stat().st_size == 0:
+        meta_cols = ["window_id", "normalized_path", "start_frame_idx", "end_frame_idx", "window_size",
+                       "n_frames", "valid_frames", "label", "label_purity", "is_attack", "attack_type",
+                       "vehicle_id", "manufacturer", "dataset_set", "subset_name", "source_file"]
+        for sp in shard_paths:
+            feat_df = pd.read_parquet(sp)
+            cols = [c for c in meta_cols if c in feat_df.columns]
+            feat_df[cols].to_csv(window_manifest_path, mode="a", header=not window_header_written, index=False)
+            window_header_written = True
+
+    window_df = pd.read_csv(window_manifest_path) if window_manifest_path.exists() else pd.DataFrame()
 
     features_path = output_root / "windows" / "all_window_features.parquet"
     if shard_paths:
-        features_df = pd.concat([pd.read_parquet(p) for p in shard_paths], ignore_index=True)
+        # Concatenate shards in batches to limit memory
+        batches = []
+        for i in range(0, len(shard_paths), 20):
+            batch = pd.concat([pd.read_parquet(p) for p in shard_paths[i:i+20]], ignore_index=True)
+            batches.append(batch)
+        features_df = pd.concat(batches, ignore_index=True) if batches else pd.DataFrame()
         features_df.to_parquet(features_path, index=False)
+        del batches
     else:
         features_df = pd.DataFrame()
 
