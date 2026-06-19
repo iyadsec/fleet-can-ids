@@ -26,12 +26,11 @@ from src.ctt.features import write_feature_schema
 from src.ctt.fleet_campaign import write_fleet_transfer_policy
 from src.ctt.fleet_graph import build_behavioural_graph, save_graph_artifacts
 from src.ctt.local_detector import run_local_onboarding
-from src.ctt.normalize import run_normalization
 from src.ctt.scenarios import run_scenario_evaluation
 from src.ctt.splits import run_split_validation
 from src.ctt.statistics import run_statistical_analysis
+from src.ctt.streaming_pipeline import run_streaming_pipeline
 from src.ctt.utils import ensure_dir, write_markdown
-from src.ctt.windowing import run_windowing
 
 
 def write_paper_wording(output_root: Path) -> None:
@@ -124,26 +123,20 @@ def main() -> int:
     print("=== Step 2: Split Validation ===")
     run_split_validation(dataset_root, output_root)
 
-    print("=== Step 3: Normalization ===")
-    if not args.skip_normalize:
-        run_normalization(dataset_root, output_root)
-    else:
-        print("  Skipped (--skip-normalize)")
-
-    print("=== Step 4: Windowing ===")
+    print("=== Step 3-4: Streaming Normalize + Window + Features ===")
     write_feature_schema(output_root)
-    if not args.skip_windowing:
-        window_manifest = run_windowing(output_root)
+    if not args.skip_normalize:
+        _, window_manifest, features = run_streaming_pipeline(dataset_root, output_root)
     else:
         import pandas as pd
         window_manifest = pd.read_csv(output_root / "manifests" / "window_manifest.csv")
+        features = pd.read_parquet(output_root / "windows" / "all_window_features.parquet")
 
     print("=== Step 5: Local Onboarding & Detection ===")
-    metrics_df, pred_df, _ = run_local_onboarding(window_manifest, output_root)
+    metrics_df, pred_df, _ = run_local_onboarding(window_manifest, output_root, features=features)
 
     print("=== Step 6: Descriptor Generation ===")
     import pandas as pd
-    features = pd.read_parquet(output_root / "windows" / "all_window_features.parquet")
     desc_df = generate_descriptors(pred_df, features, output_root)
     desc_summary = pd.read_csv(output_root / "results" / "descriptor_transfer" / "communication_summary.csv")
 

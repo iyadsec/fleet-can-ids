@@ -1,0 +1,45 @@
+dataset: can-train-and-test
+policy_version: '1.0'
+sets:
+- set_01
+- set_02
+- set_03
+- set_04
+subsets:
+  train_01:
+    role: training_calibration
+    vehicle_condition: known
+    attack_condition: mixed
+    use_for_model_training: true
+    use_for_threshold_calibration: true
+    benign_only_for_training: true
+    benign_only_for_thresholding: true
+  test_01_known_vehicle_known_attack:
+    role: evaluation
+    vehicle_condition: known
+    attack_condition: known
+    use_for_model_training: false
+    use_for_threshold_calibration: false
+  test_02_unknown_vehicle_known_attack:
+    role: evaluation
+    vehicle_condition: unknown
+    attack_condition: known
+    use_for_model_training: false
+    use_for_threshold_calibration: false
+  test_03_known_vehicle_unknown_attack:
+    role: evaluation
+    vehicle_condition: known
+    attack_condition: unknown
+    use_for_model_training: false
+    use_for_threshold_calibration: false
+  test_04_unknown_vehicle_unknown_attack:
+    role: evaluation
+    vehicle_condition: unknown
+    attack_condition: unknown
+    use_for_model_training: false
+    use_for_threshold_calibration: false
+rules:
+- Do not mix test data into training
+- Do not use attack data for local benign model training
+- Do not use attack data for threshold calibration
+- Do not use test labels in model fitting

@@ -158,13 +158,16 @@ def compute_detection_metrics(y_true: np.ndarray, y_pred: np.ndarray, scores: np
 def run_local_onboarding(
     window_manifest: pd.DataFrame,
     output_root: Path = OUTPUT_ROOT,
+    features: pd.DataFrame | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
     """Train per-set per-vehicle benign-only models and evaluate on test subsets."""
-    from src.ctt.features import extract_features_from_manifest
-
-    features_all = extract_features_from_manifest(window_manifest, output_root)
-    features_path = output_root / "windows" / "all_window_features.parquet"
-    features_all.to_parquet(features_path, index=False)
+    if features is not None:
+        features_all = features
+    else:
+        from src.ctt.features import extract_features_from_manifest
+        features_all = extract_features_from_manifest(window_manifest, output_root)
+        features_path = output_root / "windows" / "all_window_features.parquet"
+        features_all.to_parquet(features_path, index=False)
 
     train_manifest = []
     thresh_manifest = []
@@ -184,6 +187,9 @@ def run_local_onboarding(
             v_benign = benign_train[benign_train["vehicle_id"] == vehicle_id]
             if len(v_benign) < 20:
                 continue
+            # Cap training size for tractability on full dataset
+            if len(v_benign) > 50_000:
+                v_benign = v_benign.sample(n=50_000, random_state=42)
             # Split benign for validation thresholding
             n_val = max(int(len(v_benign) * 0.2), 10)
             v_val = v_benign.sample(n=n_val, random_state=42)

@@ -1,0 +1,21 @@
+vehicle_id,manufacturer,dataset_set,subset_name,n_files,total_rows,benign_files,attack_files,vehicle_display
+chevrolet_impala,Chevrolet,set_01,test_01_known_vehicle_known_attack,8,5702670,0,8,Chevrolet Impala
+chevrolet_impala,Chevrolet,set_01,test_03_known_vehicle_unknown_attack,12,8635275,0,12,Chevrolet Impala
+chevrolet_impala,Chevrolet,set_01,train_01,12,10653140,2,10,Chevrolet Impala
+chevrolet_silverado,Chevrolet,set_01,test_02_unknown_vehicle_known_attack,8,6447917,0,8,Chevrolet Silverado
+chevrolet_silverado,Chevrolet,set_01,test_04_unknown_vehicle_unknown_attack,12,13220555,0,12,Chevrolet Silverado
+chevrolet_silverado,Chevrolet,set_03,test_01_known_vehicle_known_attack,10,8575791,0,10,Chevrolet Silverado
+chevrolet_silverado,Chevrolet,set_03,test_03_known_vehicle_unknown_attack,14,9447951,0,14,Chevrolet Silverado
+chevrolet_silverado,Chevrolet,set_03,train_01,14,12025767,2,12,Chevrolet Silverado
+chevrolet_traverse,Chevrolet,set_02,test_01_known_vehicle_known_attack,12,13220555,0,12,Chevrolet Traverse
+chevrolet_traverse,Chevrolet,set_02,test_03_known_vehicle_unknown_attack,8,12150056,0,8,Chevrolet Traverse
+chevrolet_traverse,Chevrolet,set_02,train_01,16,17340810,2,14,Chevrolet Traverse
+chevrolet_traverse,Chevrolet,set_04,test_02_unknown_vehicle_known_attack,14,17408094,0,14,Chevrolet Traverse
+chevrolet_traverse,Chevrolet,set_04,test_04_unknown_vehicle_unknown_attack,10,8183626,0,10,Chevrolet Traverse
+subaru_forester,Subaru,set_02,test_02_unknown_vehicle_known_attack,12,8445427,0,12,Subaru Forester
+subaru_forester,Subaru,set_02,test_04_unknown_vehicle_unknown_attack,8,4789904,0,8,Subaru Forester
+subaru_forester,Subaru,set_03,test_02_unknown_vehicle_known_attack,10,6854234,0,10,Subaru Forester
+subaru_forester,Subaru,set_03,test_04_unknown_vehicle_unknown_attack,14,6896019,0,14,Subaru Forester
+subaru_forester,Subaru,set_04,test_01_known_vehicle_known_attack,14,6896019,0,14,Subaru Forester
+subaru_forester,Subaru,set_04,test_03_known_vehicle_unknown_attack,10,6854234,0,10,Subaru Forester
+subaru_forester,Subaru,set_04,train_01,18,9492801,2,16,Subaru Forester
