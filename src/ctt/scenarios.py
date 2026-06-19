@@ -138,9 +138,7 @@ def run_scenario_evaluation(
         train_graphsage,
     )
     from src.ctt.fleet_graph import build_behavioural_graph
-    from src.ctt.descriptors import load_descriptor_vectors
     import json
-    from src.ctt.features import DESCRIPTOR_FEATURE_COLS if False else None  # noqa
     from src.ctt.features import LOCAL_FEATURE_COLUMNS
 
     DESCRIPTOR_FEATURE_COLS = [c for c in LOCAL_FEATURE_COLUMNS if not c.startswith("deviation")]
