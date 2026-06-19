@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 import numpy as np
@@ -14,7 +15,7 @@ from src.ctt.constants import (
     WINDOW_SIZE,
     WINDOW_STRIDE,
 )
-from src.ctt.features import LOCAL_FEATURE_COLUMNS, extract_window_features
+from src.ctt.features import extract_window_features
 from src.ctt.utils import (
     ensure_dir,
     parse_attack_from_filename,
@@ -23,6 +24,18 @@ from src.ctt.utils import (
     write_markdown,
 )
 from src.ctt.windowing import window_label
+
+
+def _process_file_args(args: tuple) -> tuple[list[dict], list[dict], dict]:
+    """Worker entry point for parallel processing."""
+    source_path, dataset_set, subset_name, output_root_str, window_size, stride = args
+    return (*process_source_file_streaming(
+        Path(source_path), dataset_set, subset_name, Path(output_root_str), window_size, stride
+    ), {
+        "source_file": str(source_path),
+        "dataset_set": dataset_set,
+        "subset_name": subset_name,
+    })
 
 
 def process_source_file_streaming(
@@ -130,6 +143,7 @@ def process_source_file_streaming(
 def run_streaming_pipeline(
     dataset_root: Path,
     output_root: Path = OUTPUT_ROOT,
+    max_workers: int = 4,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Run combined normalization, windowing, and feature extraction."""
     from src.ctt.utils import discover_ctt_files
@@ -142,29 +156,34 @@ def run_streaming_pipeline(
     all_window_meta: list[dict] = []
     all_features: list[dict] = []
 
-    for i, rec in enumerate(records):
-        path = Path(rec["source_file"])
-        win_meta, feats = process_source_file_streaming(
-            path, rec["dataset_set"], rec["subset_name"], output_root
-        )
-        all_window_meta.extend(win_meta)
-        all_features.extend(feats)
-        norm_manifest.append(
-            {
-                "source_file": str(path),
-                "normalized_path": str(
-                    output_root / "normalized" / rec["dataset_set"] / rec["subset_name"] / f"{path.stem}.csv"
-                ),
-                "dataset_set": rec["dataset_set"],
-                "subset_name": rec["subset_name"],
-                "vehicle_id": rec["vehicle_id"],
-                "attack_type": rec["attack_type"],
-                "row_count": rec.get("row_count", 0),
-                "window_count": len(win_meta),
-            }
-        )
-        if (i + 1) % 10 == 0:
-            print(f"  Streamed {i + 1}/{len(records)} files ({len(all_window_meta):,} windows)...")
+    tasks = [
+        (rec["source_file"], rec["dataset_set"], rec["subset_name"], str(output_root), WINDOW_SIZE, WINDOW_STRIDE)
+        for rec in records
+    ]
+
+    completed = 0
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(_process_file_args, t): t for t in tasks}
+        for future in as_completed(futures):
+            win_meta, feats, info = future.result()
+            all_window_meta.extend(win_meta)
+            all_features.extend(feats)
+            path = Path(info["source_file"])
+            norm_manifest.append(
+                {
+                    "source_file": str(path),
+                    "normalized_path": str(
+                        output_root / "normalized" / info["dataset_set"] / info["subset_name"] / f"{path.stem}.csv"
+                    ),
+                    "dataset_set": info["dataset_set"],
+                    "subset_name": info["subset_name"],
+                    "row_count": 0,
+                    "window_count": len(win_meta),
+                }
+            )
+            completed += 1
+            if completed % 10 == 0:
+                print(f"  Streamed {completed}/{len(records)} files ({len(all_window_meta):,} windows)...")
 
     norm_df = pd.DataFrame(norm_manifest)
     norm_df.to_csv(manifest_dir / "normalization_manifest.csv", index=False)
