@@ -1,0 +1,11 @@
+source_file,dataset_set,subset_name,window_count,skipped
+/workspace/Dataset/can-train-and-test/set_01/train_01/attack-free-1.csv,set_01,train_01,0,True
+/workspace/Dataset/can-train-and-test/set_01/train_01/attack-free-2.csv,set_01,train_01,0,True
+/workspace/Dataset/can-train-and-test/set_01/test_01_known_vehicle_known_attack/DoS-3.csv,set_01,test_01_known_vehicle_known_attack,0,True
+/workspace/Dataset/can-train-and-test/set_01/test_01_known_vehicle_known_attack/DoS-4.csv,set_01,test_01_known_vehicle_known_attack,0,True
+/workspace/Dataset/can-train-and-test/set_01/test_01_known_vehicle_known_attack/force-neutral-3.csv,set_01,test_01_known_vehicle_known_attack,0,True
+/workspace/Dataset/can-train-and-test/set_01/test_01_known_vehicle_known_attack/force-neutral-4.csv,set_01,test_01_known_vehicle_known_attack,0,True
+/workspace/Dataset/can-train-and-test/set_01/test_01_known_vehicle_known_attack/rpm-3.csv,set_01,test_01_known_vehicle_known_attack,0,True
+/workspace/Dataset/can-train-and-test/set_01/test_01_known_vehicle_known_attack/rpm-4.csv,set_01,test_01_known_vehicle_known_attack,0,True
+/workspace/Dataset/can-train-and-test/set_01/test_01_known_vehicle_known_attack/standstill-3.csv,set_01,test_01_known_vehicle_known_attack,0,True
+/workspace/Dataset/can-train-and-test/set_01/test_01_known_vehicle_known_attack/standstill-4.csv,set_01,test_01_known_vehicle_known_attack,0,True

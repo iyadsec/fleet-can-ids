@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import numpy as np
@@ -58,7 +59,9 @@ def select_scenario_windows(
 ) -> pd.DataFrame:
     """Select windows for a fleet scenario."""
     rng = np.random.default_rng(seed)
-    merged = features.merge(predictions, on=["window_id", "vehicle_id", "dataset_set", "subset_name"], how="inner")
+    merge_keys = ["window_id", "vehicle_id", "dataset_set", "subset_name"]
+    pred_cols = [c for c in predictions.columns if c not in features.columns or c in merge_keys]
+    merged = features.merge(predictions[pred_cols], on=merge_keys, how="inner")
     config = SCENARIO_CONFIGS[scenario]
 
     # Use test data from each set for cross-vehicle fleet scenarios
@@ -128,6 +131,9 @@ def run_scenario_evaluation(
     predictions: pd.DataFrame,
     desc_df: pd.DataFrame,
     output_root: Path = OUTPUT_ROOT,
+    scenarios: list[str] | None = None,
+    seeds: list[int] | None = None,
+    progress: ProgressLogger | None = None,
 ) -> pd.DataFrame:
     """Run all fleet scenarios across seeds."""
     from src.ctt.fleet_campaign import (
@@ -138,19 +144,24 @@ def run_scenario_evaluation(
         train_graphsage,
     )
     from src.ctt.fleet_graph import build_behavioural_graph
-    import json
     from src.ctt.features import LOCAL_FEATURE_COLUMNS
+    from src.ctt.progress_logger import ProgressLogger
 
     DESCRIPTOR_FEATURE_COLS = [c for c in LOCAL_FEATURE_COLUMNS if not c.startswith("deviation")]
+
+    scenario_list = scenarios or list(SCENARIO_CONFIGS.keys())
+    seed_list = seeds if seeds is not None else SCENARIO_SEEDS
 
     results_dir = ensure_dir(output_root / "results" / "scenario_evaluation")
     all_results = []
 
-    for scenario in SCENARIO_CONFIGS:
+    for scenario in scenario_list:
+        if scenario not in SCENARIO_CONFIGS:
+            continue
         scenario_dir = ensure_dir(output_root / "scenarios" / scenario)
         run_rows = []
 
-        for seed in SCENARIO_SEEDS:
+        for seed in seed_list:
             windows = select_scenario_windows(features, predictions, scenario, seed)
             if windows.empty:
                 continue
@@ -193,6 +204,8 @@ def run_scenario_evaluation(
             metrics["scenario"] = scenario
             metrics["seed"] = seed
             run_rows.append(metrics)
+            if progress:
+                progress.scenario_completed(scenario, seed)
 
         if run_rows:
             scen_df = pd.DataFrame(run_rows)

@@ -1,0 +1,23 @@
+{
+  "stage": "audit",
+  "status": "complete",
+  "total_files": 236,
+  "total_rows": 193240845,
+  "vehicles": [
+    "chevrolet_impala",
+    "chevrolet_silverado",
+    "chevrolet_traverse",
+    "subaru_forester"
+  ],
+  "attacks": [
+    "combined_spoofing",
+    "dos",
+    "fuzzing",
+    "gear_spoofing",
+    "interval",
+    "rpm_spoofing",
+    "speed_spoofing",
+    "standstill",
+    "systematic"
+  ]
+}

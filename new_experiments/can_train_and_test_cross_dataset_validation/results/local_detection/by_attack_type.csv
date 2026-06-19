@@ -1,0 +1,9 @@
+dataset_set,subset_name,vehicle_id,attack_type,mode,attachment,precision,recall,f1,roc_auc,pr_auc,fpr,specificity,tn,fp,fn,tp,candidate_rate
+set_01,test_01_known_vehicle_known_attack,chevrolet_impala,dos,weak,local_model,0.05366726296958855,1.0,0.10186757215619695,0.9383073458073458,0.29951782070775684,0.6873700623700624,0.3126299376299376,1203,2645,0,150,0.6990995497748874
+set_01,test_01_known_vehicle_known_attack,chevrolet_impala,dos,strong,local_model,0.10760401721664276,1.0,0.19430051813471502,0.9383073458073458,0.29951782070775684,0.3232848232848233,0.6767151767151767,2604,1244,0,150,0.3486743371685843
+set_01,test_01_known_vehicle_known_attack,chevrolet_impala,gear_spoofing,weak,local_model,0.0,0.0,0.0,,0.0,0.548024012006003,0.451975987993997,1807,2191,0,0,0.548024012006003
+set_01,test_01_known_vehicle_known_attack,chevrolet_impala,gear_spoofing,strong,local_model,0.0,0.0,0.0,,0.0,0.1585792896448224,0.8414207103551776,3364,634,0,0,0.1585792896448224
+set_01,test_01_known_vehicle_known_attack,chevrolet_impala,rpm_spoofing,weak,local_model,0.0,0.0,0.0,,0.0,0.4374687343671836,0.5625312656328164,2249,1749,0,0,0.4374687343671836
+set_01,test_01_known_vehicle_known_attack,chevrolet_impala,rpm_spoofing,strong,local_model,0.0,0.0,0.0,,0.0,0.12681340670335167,0.8731865932966483,3491,507,0,0,0.12681340670335167
+set_01,test_01_known_vehicle_known_attack,chevrolet_impala,standstill,weak,local_model,0.0,0.0,0.0,,0.0,0.49374687343671836,0.5062531265632816,2024,1974,0,0,0.49374687343671836
+set_01,test_01_known_vehicle_known_attack,chevrolet_impala,standstill,strong,local_model,0.0,0.0,0.0,,0.0,0.17483741870935468,0.8251625812906453,3299,699,0,0,0.17483741870935468

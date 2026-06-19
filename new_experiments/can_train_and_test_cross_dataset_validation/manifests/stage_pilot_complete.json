@@ -1,0 +1,11 @@
+{
+  "stage": "pilot",
+  "status": "complete",
+  "windows": 19990,
+  "descriptors": 5000,
+  "scenarios": [
+    "benign_fleet_control",
+    "isolated_attack",
+    "strong_campaign"
+  ]
+}

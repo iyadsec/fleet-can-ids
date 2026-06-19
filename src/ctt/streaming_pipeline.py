@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 import numpy as np
@@ -16,7 +15,8 @@ from src.ctt.constants import (
     WINDOW_SIZE,
     WINDOW_STRIDE,
 )
-from src.ctt.features import extract_window_features
+from src.ctt.progress_logger import ProgressLogger
+from src.ctt.run_config import RunConfig
 from src.ctt.utils import (
     ensure_dir,
     parse_attack_from_filename,
@@ -24,11 +24,9 @@ from src.ctt.utils import (
     vehicle_for_subset,
     write_markdown,
 )
-from src.ctt.windowing import window_label
 
 
 def _parse_bytes_vectorized(data_fields: list[str]) -> tuple[list[int], list[list[float]]]:
-    """Vectorized hex payload parsing."""
     dlcs = []
     all_bytes: list[list[float]] = []
     for df in data_fields:
@@ -38,10 +36,21 @@ def _parse_bytes_vectorized(data_fields: list[str]) -> tuple[list[int], list[lis
     return dlcs, all_bytes
 
 
-def _normalize_pl(source_path: Path, attack_type: str, vehicle_id: str, manufacturer: str,
-                  dataset_set: str, subset_name: str) -> pd.DataFrame:
-    """Fast normalization with polars."""
-    df = pl.read_csv(source_path)
+def _normalize_pl(
+    source_path: Path,
+    attack_type: str,
+    vehicle_id: str,
+    manufacturer: str,
+    dataset_set: str,
+    subset_name: str,
+    max_rows: int | None = None,
+) -> pd.DataFrame:
+    """Fast normalization with polars; optional row cap."""
+    if max_rows is not None:
+        df = pl.read_csv(source_path, n_rows=max_rows)
+    else:
+        df = pl.read_csv(source_path)
+
     data_fields = df["data_field"].to_list()
     dlcs, byte_lists = _parse_bytes_vectorized(data_fields)
     can_ids = df["arbitration_id"].cast(pl.Utf8).str.to_uppercase().str.replace("0X", "").to_list()
@@ -74,8 +83,9 @@ def _windows_from_normalized(
     window_size: int,
     stride: int,
     source_path: Path,
+    max_windows: int | None = None,
 ) -> tuple[list[dict], list[dict]]:
-    """Generate windows and features from normalized dataframe (numpy-sliced)."""
+    """Generate windows and features; stop at *max_windows* if set."""
     window_meta: list[dict] = []
     feature_rows: list[dict] = []
     n = len(norm_df)
@@ -95,6 +105,8 @@ def _windows_from_normalized(
     from src.ctt.features import extract_window_features_numpy
 
     for wi, start in enumerate(range(0, n - window_size + 1, stride)):
+        if max_windows is not None and len(window_meta) >= max_windows:
+            break
         end = start + window_size
         w_can = can_ids[start:end]
         if np.sum(w_can != "nan") < MIN_VALID_FRAMES and np.sum(pd.notna(w_can)) < MIN_VALID_FRAMES:
@@ -125,15 +137,24 @@ def _windows_from_normalized(
     return window_meta, feature_rows
 
 
-def process_source_file_streaming(
+def shard_path_for_file(features_dir: Path, dataset_set: str, subset_name: str, stem: str) -> Path:
+    safe_subset = subset_name.replace("/", "_")
+    return features_dir / f"features_{dataset_set}_{safe_subset}_{stem}.parquet"
+
+
+def process_source_file(
     source_path: Path,
     dataset_set: str,
     subset_name: str,
     output_root: Path,
+    *,
+    max_rows_per_file: int | None = None,
+    max_windows_for_file: int | None = None,
+    skip_existing: bool = False,
     window_size: int = WINDOW_SIZE,
     stride: int = WINDOW_STRIDE,
-) -> tuple[list[dict], list[dict]]:
-    """Normalize with polars, window, and extract features."""
+) -> tuple[list[dict], list[dict], int]:
+    """Normalize, window, extract features for one file. Returns (meta, feats, row_count)."""
     _, attack_type, _ = parse_attack_from_filename(source_path.name)
     vehicle_id, manufacturer = vehicle_for_subset(dataset_set, subset_name)
 
@@ -141,158 +162,151 @@ def process_source_file_streaming(
     norm_dir.mkdir(parents=True, exist_ok=True)
     out_path = norm_dir / f"{source_path.stem}.csv"
 
-    if out_path.exists() and out_path.stat().st_size > 0:
+    if skip_existing and out_path.exists() and out_path.stat().st_size > 0:
         norm_df = pd.read_csv(out_path)
     else:
-        norm_df = _normalize_pl(source_path, attack_type, vehicle_id, manufacturer, dataset_set, subset_name)
+        norm_df = _normalize_pl(
+            source_path, attack_type, vehicle_id, manufacturer,
+            dataset_set, subset_name, max_rows=max_rows_per_file,
+        )
         norm_df.to_csv(out_path, index=False)
 
-    # Attack-only train files are not used for benign onboarding or threshold calibration
+    row_count = len(norm_df)
+
     if subset_name == "train_01" and attack_type != "benign":
-        return [], []
+        return [], [], row_count
 
-    return _windows_from_normalized(norm_df, out_path, window_size, stride, source_path)
-
-
-def shard_path_for_file(features_dir: Path, dataset_set: str, subset_name: str, stem: str) -> Path:
-    """Unique shard path per set/subset/file (avoids cross-set filename collisions)."""
-    safe_subset = subset_name.replace("/", "_")
-    return features_dir / f"features_{dataset_set}_{safe_subset}_{stem}.parquet"
-
-
-def _process_file_args(args: tuple) -> tuple[list[dict], list[dict], dict]:
-    source_path, dataset_set, subset_name, output_root_str, window_size, stride = args
-    win_meta, feats = process_source_file_streaming(
-        Path(source_path), dataset_set, subset_name, Path(output_root_str), window_size, stride
+    win_meta, feats = _windows_from_normalized(
+        norm_df, out_path, window_size, stride, source_path,
+        max_windows=max_windows_for_file,
     )
-    return win_meta, feats, {
-        "source_file": str(source_path),
-        "dataset_set": dataset_set,
-        "subset_name": subset_name,
-    }
+    return win_meta, feats, row_count
 
 
 def run_streaming_pipeline(
     dataset_root: Path,
     output_root: Path = OUTPUT_ROOT,
-    max_workers: int = 4,
+    config: RunConfig | None = None,
+    progress: ProgressLogger | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Run combined normalization, windowing, and feature extraction."""
+    """Run normalization, windowing, and feature extraction with optional caps."""
     from src.ctt.utils import discover_ctt_files
 
+    cfg = config or RunConfig(stage="full", dataset_root=dataset_root, output_root=output_root)
     manifest_dir = ensure_dir(output_root / "manifests")
     audit_dir = ensure_dir(output_root / "audit")
+    features_dir = ensure_dir(output_root / "windows" / "feature_shards")
+
+    stage_suffix = f"_{cfg.stage}" if cfg.stage != "full" else ""
+    window_manifest_path = manifest_dir / f"window_manifest{stage_suffix}.csv"
+    window_header_written = (
+        cfg.resume and window_manifest_path.exists() and window_manifest_path.stat().st_size > 0
+    )
 
     records = discover_ctt_files(dataset_root)
-    norm_manifest: list[dict] = []
-    window_manifest_path = manifest_dir / "window_manifest.csv"
-    window_header_written = window_manifest_path.exists() and window_manifest_path.stat().st_size > 0
-
-    features_dir = ensure_dir(output_root / "windows" / "feature_shards")
-    shard_paths: list[Path] = []
-    tasks = []
-    resumed_windows = 0
-
+    selected: list[dict] = []
     for rec in records:
+        if not cfg.should_process_record(rec):
+            continue
+        selected.append(rec)
+        if cfg.max_files is not None and len(selected) >= cfg.max_files:
+            break
+
+    norm_manifest: list[dict] = []
+    shard_paths: list[Path] = []
+    all_feature_rows: list[dict] = []
+    total_windows = 0
+    global_window_cap = cfg.max_windows
+
+    if progress:
+        progress.info(
+            f"Processing {len(selected)} files (stage={cfg.stage}, "
+            f"max_rows={cfg.max_rows_per_file}, max_windows={global_window_cap})"
+        )
+
+    for rec in selected:
+        if global_window_cap is not None and total_windows >= global_window_cap:
+            if progress:
+                progress.info(f"Global window cap reached ({global_window_cap:,}); stopping.")
+            break
+
         path = Path(rec["source_file"])
         shard_path = shard_path_for_file(features_dir, rec["dataset_set"], rec["subset_name"], path.stem)
-        out_path = output_root / "normalized" / rec["dataset_set"] / rec["subset_name"] / f"{path.stem}.csv"
-        if shard_path.exists():
+
+        if cfg.skip_existing and shard_path.exists():
             shard_paths.append(shard_path)
-            resumed_windows += 1
-            norm_manifest.append({"source_file": str(path), "normalized_path": str(out_path),
-                                   "dataset_set": rec["dataset_set"], "subset_name": rec["subset_name"],
-                                   "window_count": 0, "resumed": True})
+            norm_manifest.append({
+                "source_file": str(path), "dataset_set": rec["dataset_set"],
+                "subset_name": rec["subset_name"], "window_count": 0, "skipped": True,
+            })
+            if progress:
+                progress.file_processed(str(path), rows=0, windows=0)
             continue
-        # Skip attack-only train files (normalized but not windowed per benign-only protocol)
-        if rec["subset_name"] == "train_01" and rec["attack_type"] != "benign":
-            norm_manifest.append({"source_file": str(path), "normalized_path": str(out_path),
-                                   "dataset_set": rec["dataset_set"], "subset_name": rec["subset_name"],
-                                   "window_count": 0, "skipped_attack_train": True})
-            continue
-        tasks.append((rec["source_file"], rec["dataset_set"], rec["subset_name"], str(output_root), WINDOW_SIZE, WINDOW_STRIDE))
 
-    completed = len(shard_paths)
+        remaining = None
+        if global_window_cap is not None:
+            remaining = global_window_cap - total_windows
 
-    def _append_window_meta(rows: list[dict]) -> None:
-        nonlocal window_header_written
-        if not rows:
-            return
-        df = pd.DataFrame(rows)
-        df.to_csv(window_manifest_path, mode="a", header=not window_header_written, index=False)
-        window_header_written = True
+        win_meta, feats, row_count = process_source_file(
+            path, rec["dataset_set"], rec["subset_name"], output_root,
+            max_rows_per_file=cfg.max_rows_per_file,
+            max_windows_for_file=remaining,
+            skip_existing=cfg.skip_existing,
+        )
 
-    total_windows = 0
+        if progress:
+            progress.file_processed(str(path), rows=row_count, windows=len(win_meta))
 
-    with ProcessPoolExecutor(max_workers=1) as executor:
-        futures = {executor.submit(_process_file_args, t): t for t in tasks}
-        for future in as_completed(futures):
-            win_meta, feats, info = future.result()
-            _append_window_meta(win_meta)
-            total_windows += len(win_meta)
-            path = Path(info["source_file"])
-            if feats:
-                shard_path = shard_path_for_file(features_dir, info["dataset_set"], info["subset_name"], path.stem)
-                pd.DataFrame(feats).to_parquet(shard_path, index=False)
-                shard_paths.append(shard_path)
-                del feats
-            norm_manifest.append(
-                {
-                    "source_file": str(path),
-                    "normalized_path": str(
-                        output_root / "normalized" / info["dataset_set"] / info["subset_name"] / f"{path.stem}.csv"
-                    ),
-                    "dataset_set": info["dataset_set"],
-                    "subset_name": info["subset_name"],
-                    "window_count": len(win_meta),
-                }
-            )
-            completed += 1
-            if completed % 5 == 0:
-                print(f"  Streamed {completed}/{len(records)} files ({total_windows:,} new windows)...", flush=True)
-
-    norm_df = pd.DataFrame(norm_manifest)
-    norm_df.to_csv(manifest_dir / "normalization_manifest.csv", index=False)
-
-    # Build window manifest from shards if not complete
-    if not window_manifest_path.exists() or window_manifest_path.stat().st_size == 0:
-        meta_cols = ["window_id", "normalized_path", "start_frame_idx", "end_frame_idx", "window_size",
-                       "n_frames", "valid_frames", "label", "label_purity", "is_attack", "attack_type",
-                       "vehicle_id", "manufacturer", "dataset_set", "subset_name", "source_file"]
-        for sp in shard_paths:
-            feat_df = pd.read_parquet(sp)
-            cols = [c for c in meta_cols if c in feat_df.columns]
-            feat_df[cols].to_csv(window_manifest_path, mode="a", header=not window_header_written, index=False)
+        if win_meta:
+            meta_df = pd.DataFrame(win_meta)
+            meta_df.to_csv(window_manifest_path, mode="a", header=not window_header_written, index=False)
             window_header_written = True
 
+        if feats:
+            pd.DataFrame(feats).to_parquet(shard_path, index=False)
+            shard_paths.append(shard_path)
+            all_feature_rows.extend(feats)
+
+        total_windows += len(win_meta)
+        norm_manifest.append({
+            "source_file": str(path),
+            "normalized_path": str(
+                output_root / "normalized" / rec["dataset_set"] / rec["subset_name"] / f"{path.stem}.csv"
+            ),
+            "dataset_set": rec["dataset_set"],
+            "subset_name": rec["subset_name"],
+            "row_count": row_count,
+            "window_count": len(win_meta),
+        })
+
+    pd.DataFrame(norm_manifest).to_csv(manifest_dir / f"normalization_manifest{stage_suffix}.csv", index=False)
+
     window_df = pd.read_csv(window_manifest_path) if window_manifest_path.exists() else pd.DataFrame()
+    features_path = output_root / "windows" / f"all_window_features{stage_suffix}.parquet"
+    pd.DataFrame({"shard_path": [str(p) for p in shard_paths]}).to_csv(
+        output_root / "windows" / f"feature_shard_index{stage_suffix}.csv", index=False
+    )
 
-    features_path = output_root / "windows" / "all_window_features.parquet"
-    features_index_path = output_root / "windows" / "feature_shard_index.csv"
-    pd.DataFrame({"shard_path": [str(p) for p in shard_paths]}).to_csv(features_index_path, index=False)
-
-    # Build combined parquet only if small enough; otherwise use shards
-    if shard_paths and len(shard_paths) <= 50:
-        batches = []
-        for i in range(0, len(shard_paths), 20):
-            batch = pd.concat([pd.read_parquet(p) for p in shard_paths[i:i+20]], ignore_index=True)
-            batches.append(batch)
-        features_df = pd.concat(batches, ignore_index=True) if batches else pd.DataFrame()
+    if all_feature_rows:
+        features_df = pd.DataFrame(all_feature_rows)
+        features_df.to_parquet(features_path, index=False)
+    elif shard_paths:
+        features_df = pd.concat([pd.read_parquet(p) for p in shard_paths], ignore_index=True)
         features_df.to_parquet(features_path, index=False)
     else:
         features_df = pd.DataFrame()
-        if shard_paths:
-            features_df = pd.read_parquet(shard_paths[0]).head(0)
 
     sections = {
         "Summary": (
-            f"- Files processed: {len(records)}\n"
+            f"- Stage: {cfg.stage}\n"
+            f"- Files processed: {len(norm_manifest)}\n"
             f"- Windows: {len(window_df):,}\n"
             f"- Feature rows: {len(features_df):,}\n"
-            f"- Polars-accelerated single-pass streaming"
+            f"- max_rows_per_file: {cfg.max_rows_per_file}\n"
+            f"- max_windows: {cfg.max_windows}"
         ),
     }
-    write_markdown(audit_dir / "normalization_report.md", "Normalization Report", sections)
-    write_markdown(audit_dir / "windowing_report.md", "Windowing Report", sections)
+    write_markdown(audit_dir / f"normalization_report{stage_suffix}.md", "Normalization Report", sections)
+    write_markdown(audit_dir / f"windowing_report{stage_suffix}.md", "Windowing Report", sections)
 
-    return norm_df, window_df, features_df
+    return pd.DataFrame(norm_manifest), window_df, features_df

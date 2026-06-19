@@ -1,0 +1,2 @@
+dataset_set,subset_name,vehicle_id,attack_type,mode,attachment,precision,recall,f1,roc_auc,pr_auc,fpr,specificity,tn,fp,fn,tp,candidate_rate
+set_01,test_01_known_vehicle_known_attack,chevrolet_impala,all,weak,local_model,0.01722356183258698,1.0,0.033863867253640365,0.9850149391911797,0.29951782070775684,0.5402726928418129,0.4597273071581871,7283,8559,0,150,0.5445847923961981

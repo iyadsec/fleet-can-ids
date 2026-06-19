@@ -19,6 +19,7 @@ def generate_descriptors(
     predictions: pd.DataFrame,
     features: pd.DataFrame,
     output_root: Path = OUTPUT_ROOT,
+    max_descriptors: int | None = None,
 ) -> pd.DataFrame:
     """Generate compact anomaly descriptors for weak candidates."""
     merged = predictions.merge(
@@ -28,6 +29,8 @@ def generate_descriptors(
         suffixes=("", "_feat"),
     )
     candidates = merged[merged["weak_prediction"] == 1].copy()
+    if max_descriptors is not None and len(candidates) > max_descriptors:
+        candidates = candidates.nlargest(max_descriptors, "anomaly_score")
 
     desc_rows = []
     meta_rows = []
@@ -63,9 +66,11 @@ def generate_descriptors(
     desc_df = pd.DataFrame(desc_rows)
     meta_df = pd.DataFrame(meta_rows)
     if not desc_df.empty:
-        desc_df = desc_df.merge(meta_df[["event_id"] + [c for c in meta_df.columns if c != "event_id"]], on="event_id")
+        meta_extra = [c for c in meta_df.columns if c not in desc_df.columns]
+        desc_df = desc_df.merge(meta_df[["event_id", *meta_extra]], on="event_id", how="left")
 
     desc_dir = ensure_dir(output_root / "descriptors")
+    transfer_dir = ensure_dir(output_root / "results" / "descriptor_transfer")
     desc_df.to_csv(desc_dir / "fleet_candidate_descriptors.csv", index=False)
     meta_df.to_csv(desc_dir / "descriptor_metadata.csv", index=False)
 
@@ -95,7 +100,7 @@ def generate_descriptors(
             }
         ]
     )
-    summary.to_csv(output_root / "results" / "descriptor_transfer" / "communication_summary.csv", index=False)
+    summary.to_csv(transfer_dir / "communication_summary.csv", index=False)
 
     write_markdown(
         output_root / "audit" / "descriptor_privacy_and_compatibility_report.md",

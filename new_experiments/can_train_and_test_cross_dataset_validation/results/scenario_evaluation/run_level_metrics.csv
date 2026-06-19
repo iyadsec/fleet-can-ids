@@ -1,0 +1,4 @@
+scenario_type,campaign_detected,false_campaign,campaign_precision,campaign_recall,campaign_f1,best_cluster,n_clusters,fragmentation,scenario,seed
+benign_fleet_control,0,0,0.0,0.0,0.0,-1,1,27,benign_fleet_control,11
+isolated_attack,0,0,0.0,0.0,0.0,-1,1,29,isolated_attack,11
+strong_campaign,0,0,0.0,0.0,0.0,-1,1,24,strong_campaign,11
