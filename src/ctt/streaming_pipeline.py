@@ -7,6 +7,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import polars as pl
 
 from src.ctt.constants import (
     MIN_VALID_FRAMES,
@@ -26,16 +27,90 @@ from src.ctt.utils import (
 from src.ctt.windowing import window_label
 
 
-def _process_file_args(args: tuple) -> tuple[list[dict], list[dict], dict]:
-    """Worker entry point for parallel processing."""
-    source_path, dataset_set, subset_name, output_root_str, window_size, stride = args
-    return (*process_source_file_streaming(
-        Path(source_path), dataset_set, subset_name, Path(output_root_str), window_size, stride
-    ), {
-        "source_file": str(source_path),
-        "dataset_set": dataset_set,
-        "subset_name": subset_name,
-    })
+def _parse_bytes_vectorized(data_fields: list[str]) -> tuple[list[int], list[list[float]]]:
+    """Vectorized hex payload parsing."""
+    dlcs = []
+    all_bytes: list[list[float]] = []
+    for df in data_fields:
+        dlc, bv = parse_data_field(df)
+        dlcs.append(dlc)
+        all_bytes.append(bv)
+    return dlcs, all_bytes
+
+
+def _normalize_pl(source_path: Path, attack_type: str, vehicle_id: str, manufacturer: str,
+                  dataset_set: str, subset_name: str) -> pd.DataFrame:
+    """Fast normalization with polars."""
+    df = pl.read_csv(source_path)
+    data_fields = df["data_field"].to_list()
+    dlcs, byte_lists = _parse_bytes_vectorized(data_fields)
+    can_ids = df["arbitration_id"].cast(pl.Utf8).str.to_uppercase().str.replace("0X", "").to_list()
+    attacks = df["attack"].to_numpy()
+    timestamps = df["timestamp"].to_numpy()
+
+    rows = {
+        "timestamp": timestamps,
+        "can_id": can_ids,
+        "dlc": dlcs,
+        "label": attacks,
+        "is_attack": attacks,
+        "attack_type": [attack_type] * len(df),
+        "vehicle_id": [vehicle_id] * len(df),
+        "manufacturer": [manufacturer] * len(df),
+        "dataset_set": [dataset_set] * len(df),
+        "subset_name": [subset_name] * len(df),
+        "source_file": [str(source_path)] * len(df),
+        "source_row_index": list(range(len(df))),
+    }
+    for i in range(8):
+        rows[f"byte_{i}"] = [bv[i] for bv in byte_lists]
+
+    return pd.DataFrame(rows, columns=NORMALIZED_COLUMNS)
+
+
+def _windows_from_normalized(
+    norm_df: pd.DataFrame,
+    out_path: Path,
+    window_size: int,
+    stride: int,
+    source_path: Path,
+) -> tuple[list[dict], list[dict]]:
+    """Generate windows and features from normalized dataframe."""
+    window_meta: list[dict] = []
+    feature_rows: list[dict] = []
+    n = len(norm_df)
+    if n < window_size:
+        return window_meta, feature_rows
+
+    window_id_base = abs(hash(str(source_path))) % 10_000_000
+    meta_cols = ["attack_type", "vehicle_id", "manufacturer", "dataset_set", "subset_name", "source_file"]
+
+    for wi, start in enumerate(range(0, n - window_size + 1, stride)):
+        end = start + window_size
+        chunk = norm_df.iloc[start:end]
+        valid = int(chunk["can_id"].notna().sum())
+        if valid < MIN_VALID_FRAMES:
+            continue
+        label, purity = window_label(chunk["label"])
+        wid = window_id_base * 1000 + wi
+        meta = {
+            "window_id": wid,
+            "normalized_path": str(out_path),
+            "start_frame_idx": start,
+            "end_frame_idx": end,
+            "window_size": window_size,
+            "n_frames": window_size,
+            "valid_frames": valid,
+            "label": label,
+            "label_purity": purity,
+            "is_attack": int(label) if not np.isnan(label) else 0,
+            **{c: chunk[c].iloc[0] for c in meta_cols},
+        }
+        window_meta.append(meta)
+        feat = extract_window_features(chunk)
+        feature_rows.append({**meta, **feat})
+
+    return window_meta, feature_rows
 
 
 def process_source_file_streaming(
@@ -46,7 +121,7 @@ def process_source_file_streaming(
     window_size: int = WINDOW_SIZE,
     stride: int = WINDOW_STRIDE,
 ) -> tuple[list[dict], list[dict]]:
-    """Normalize, window, and extract features in one streaming pass."""
+    """Normalize with polars, window, and extract features."""
     _, attack_type, _ = parse_attack_from_filename(source_path.name)
     vehicle_id, manufacturer = vehicle_for_subset(dataset_set, subset_name)
 
@@ -54,90 +129,22 @@ def process_source_file_streaming(
     norm_dir.mkdir(parents=True, exist_ok=True)
     out_path = norm_dir / f"{source_path.stem}.csv"
 
-    window_meta: list[dict] = []
-    feature_rows: list[dict] = []
-    frame_buffer: list[dict] = []
-    source_row_index = 0
-    global_frame_offset = 0  # frames already emitted from buffer
-    window_id_base = abs(hash(str(source_path))) % 10_000_000
-    window_counter = 0
-    first_write = True
-    benign_frames_for_profile: list[dict] = []
+    norm_df = _normalize_pl(source_path, attack_type, vehicle_id, manufacturer, dataset_set, subset_name)
+    norm_df.to_csv(out_path, index=False)
 
-    chunksize = 500_000
-    for chunk in pd.read_csv(source_path, chunksize=chunksize):
-        out_rows: list[dict] = []
-        for _, row in chunk.iterrows():
-            dlc, byte_vals = parse_data_field(row.get("data_field", ""))
-            can_id = str(row.get("arbitration_id", "")).strip().upper().replace("0X", "")
-            attack_val = int(row.get("attack", 0))
-            frame = {
-                "timestamp": float(row.get("timestamp", np.nan)),
-                "can_id": can_id,
-                "dlc": dlc,
-                "byte_0": byte_vals[0],
-                "byte_1": byte_vals[1],
-                "byte_2": byte_vals[2],
-                "byte_3": byte_vals[3],
-                "byte_4": byte_vals[4],
-                "byte_5": byte_vals[5],
-                "byte_6": byte_vals[6],
-                "byte_7": byte_vals[7],
-                "label": attack_val,
-                "is_attack": attack_val,
-                "attack_type": attack_type,
-                "vehicle_id": vehicle_id,
-                "manufacturer": manufacturer,
-                "dataset_set": dataset_set,
-                "subset_name": subset_name,
-                "source_file": str(source_path),
-                "source_row_index": source_row_index,
-            }
-            out_rows.append(frame)
-            frame_buffer.append(frame)
-            if attack_val == 0 and len(benign_frames_for_profile) < 5000:
-                benign_frames_for_profile.append(frame)
-            source_row_index += 1
+    return _windows_from_normalized(norm_df, out_path, window_size, stride, source_path)
 
-            # Emit windows when buffer is large enough
-            while len(frame_buffer) >= window_size:
-                win_frames = frame_buffer[:window_size]
-                start_idx = global_frame_offset
-                label, purity = window_label(pd.Series([f["label"] for f in win_frames]))
-                valid = sum(1 for f in win_frames if f["can_id"])
-                if valid >= MIN_VALID_FRAMES:
-                    wid = window_id_base * 1000 + window_counter
-                    window_counter += 1
-                    meta = {
-                        "window_id": wid,
-                        "normalized_path": str(out_path),
-                        "start_frame_idx": start_idx,
-                        "end_frame_idx": start_idx + window_size,
-                        "window_size": window_size,
-                        "n_frames": window_size,
-                        "valid_frames": valid,
-                        "label": label,
-                        "label_purity": purity,
-                        "is_attack": int(label) if not np.isnan(label) else 0,
-                        "attack_type": attack_type,
-                        "vehicle_id": vehicle_id,
-                        "manufacturer": manufacturer,
-                        "dataset_set": dataset_set,
-                        "subset_name": subset_name,
-                        "source_file": str(source_path),
-                    }
-                    window_meta.append(meta)
-                    win_df = pd.DataFrame(win_frames)
-                    feat = extract_window_features(win_df)
-                    feature_rows.append({**meta, **feat})
-                frame_buffer = frame_buffer[stride:]
-                global_frame_offset += stride
 
-        part_df = pd.DataFrame(out_rows, columns=NORMALIZED_COLUMNS)
-        part_df.to_csv(out_path, mode="w" if first_write else "a", header=first_write, index=False)
-        first_write = False
-
-    return window_meta, feature_rows
+def _process_file_args(args: tuple) -> tuple[list[dict], list[dict], dict]:
+    source_path, dataset_set, subset_name, output_root_str, window_size, stride = args
+    win_meta, feats = process_source_file_streaming(
+        Path(source_path), dataset_set, subset_name, Path(output_root_str), window_size, stride
+    )
+    return win_meta, feats, {
+        "source_file": str(source_path),
+        "dataset_set": dataset_set,
+        "subset_name": subset_name,
+    }
 
 
 def run_streaming_pipeline(
@@ -177,13 +184,12 @@ def run_streaming_pipeline(
                     ),
                     "dataset_set": info["dataset_set"],
                     "subset_name": info["subset_name"],
-                    "row_count": 0,
                     "window_count": len(win_meta),
                 }
             )
             completed += 1
             if completed % 10 == 0:
-                print(f"  Streamed {completed}/{len(records)} files ({len(all_window_meta):,} windows)...")
+                print(f"  Streamed {completed}/{len(records)} files ({len(all_window_meta):,} windows)...", flush=True)
 
     norm_df = pd.DataFrame(norm_manifest)
     norm_df.to_csv(manifest_dir / "normalization_manifest.csv", index=False)
@@ -191,9 +197,9 @@ def run_streaming_pipeline(
     window_df = pd.DataFrame(all_window_meta)
     window_df.to_csv(manifest_dir / "window_manifest.csv", index=False)
 
-    features_df = pd.DataFrame(all_features)
     features_path = output_root / "windows" / "all_window_features.parquet"
     features_path.parent.mkdir(parents=True, exist_ok=True)
+    features_df = pd.DataFrame(all_features)
     features_df.to_parquet(features_path, index=False)
 
     sections = {
@@ -201,7 +207,7 @@ def run_streaming_pipeline(
             f"- Files processed: {len(records)}\n"
             f"- Windows: {len(window_df):,}\n"
             f"- Feature rows: {len(features_df):,}\n"
-            f"- Single-pass streaming (normalize + window + features)"
+            f"- Polars-accelerated single-pass streaming"
         ),
     }
     write_markdown(audit_dir / "normalization_report.md", "Normalization Report", sections)
