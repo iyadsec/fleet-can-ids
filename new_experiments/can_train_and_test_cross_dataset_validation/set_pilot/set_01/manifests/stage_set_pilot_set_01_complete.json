@@ -12,5 +12,6 @@
   },
   "runtime_sec": 2128.5427911669976,
   "peak_memory_mb": 2861.0120544433594,
-  "cross_vehicle_edge_pct": 0.2771257218575872
+  "cross_vehicle_edge_pct": 0.2771257218575872,
+  "scenario_metrics_version": "v3_local_fleet_split"
 }

@@ -1,0 +1,92 @@
+{
+  "label": "v3_metrics",
+  "set_id": "set_01",
+  "marker": {
+    "stage": "set_pilot",
+    "set_id": "set_01",
+    "status": "complete",
+    "files_processed": 42,
+    "windows": 530098,
+    "descriptors": 100000,
+    "caps": {
+      "max_rows_per_file": 475000,
+      "max_windows": 800000,
+      "max_descriptors": 100000
+    },
+    "runtime_sec": 2128.5427911669976,
+    "peak_memory_mb": 2861.0120544433594,
+    "cross_vehicle_edge_pct": 0.2771257218575872,
+    "scenario_metrics_version": "v3_local_fleet_split"
+  },
+  "files_processed": 42,
+  "rows_processed": 26911803,
+  "subsets_in_manifest": [
+    "test_01_known_vehicle_known_attack",
+    "test_02_unknown_vehicle_known_attack",
+    "test_03_known_vehicle_unknown_attack",
+    "test_04_unknown_vehicle_unknown_attack",
+    "train_01"
+  ],
+  "windows": 530098,
+  "subsets_in_windows": [
+    "test_01_known_vehicle_known_attack",
+    "test_02_unknown_vehicle_known_attack",
+    "test_03_known_vehicle_unknown_attack",
+    "test_04_unknown_vehicle_unknown_attack",
+    "train_01"
+  ],
+  "vehicles_in_windows": [
+    "chevrolet_impala",
+    "chevrolet_silverado"
+  ],
+  "descriptors": 100000,
+  "descriptor_vehicles": [
+    "chevrolet_impala",
+    "chevrolet_silverado"
+  ],
+  "descriptor_vehicle_counts": {
+    "chevrolet_impala": 45175,
+    "chevrolet_silverado": 54825
+  },
+  "graph_nodes": 100000,
+  "graph_edges": 710147,
+  "cross_vehicle_edge_pct": 0.2771257218575872,
+  "scenario_means": {
+    "local_or_incident_detected": {
+      "benign_fleet_control": 0.0,
+      "isolated_attack": 1.0,
+      "strong_campaign": 1.0,
+      "unrelated_incidents": 1.0,
+      "weak_campaign": 1.0
+    },
+    "fleet_campaign_detected": {
+      "benign_fleet_control": 0.0,
+      "isolated_attack": 0.0,
+      "strong_campaign": 1.0,
+      "unrelated_incidents": 0.0,
+      "weak_campaign": 1.0
+    },
+    "false_campaign": {
+      "benign_fleet_control": 0.0,
+      "isolated_attack": 0.0,
+      "strong_campaign": 0.0,
+      "unrelated_incidents": 0.0,
+      "weak_campaign": 0.0
+    },
+    "incorrect_merge_rate": {
+      "benign_fleet_control": 0.0,
+      "isolated_attack": 0.0,
+      "strong_campaign": 0.0,
+      "unrelated_incidents": 1.0,
+      "weak_campaign": 0.0
+    },
+    "campaign_f1": {
+      "benign_fleet_control": 0.0,
+      "isolated_attack": 0.0,
+      "strong_campaign": 1.0,
+      "unrelated_incidents": 0.0,
+      "weak_campaign": 1.0
+    }
+  },
+  "descriptor_rate": 0.2040399918384003
+}

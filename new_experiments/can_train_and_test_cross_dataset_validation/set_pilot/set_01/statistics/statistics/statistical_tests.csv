@@ -1,2 +1,2 @@
 test,comparison,statistic,p_value,effect_size_cohens_d,p_value_holm
-welch_t,strong_campaign vs benign_fleet_control,,nan,,0.05
+welch_t,strong_campaign vs benign_fleet_control,inf,< 1e-300,inf,0.05

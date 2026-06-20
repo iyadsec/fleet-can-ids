@@ -19,8 +19,16 @@
 - [PASS] **no temporal edges**
 - [PASS] **behavioural similarity edges only**
 - [PASS] **cross-vehicle edges not near zero**: cross_vehicle_edge_pct=0.2771%
+- [PASS] **scenario metric columns present**: missing=[]
 - [PASS] **benign fleet false campaign rate zero**: mean=0.0
-- [PASS] **strong campaign detected**: mean=1.0
+- [PASS] **isolated attack fleet campaign not declared**: fleet_campaign_detected=0.0
+- [PASS] **isolated attack false campaign zero**: false_campaign=0.0
+- [PASS] **unrelated incidents fleet campaign not declared**: fleet_campaign_detected=0.0
+- [PASS] **unrelated incidents incorrect merge rate reported**
+- [PASS] **strong campaign detected**: fleet_campaign_detected=1.0
+- [PASS] **strong campaign F1 positive**: campaign_f1=1.0
+- [PASS] **weak campaign detected**: fleet_campaign_detected=1.0
+- [PASS] **weak campaign F1 positive**: campaign_f1=1.0
 - [PASS] **scenario output benign_fleet_control**
 - [PASS] **scenario output isolated_attack**
 - [PASS] **scenario output unrelated_incidents**
