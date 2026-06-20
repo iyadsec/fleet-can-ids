@@ -183,6 +183,41 @@ def process_source_file(
     return win_meta, feats, row_count
 
 
+def _select_records(cfg: RunConfig, records: list[dict]) -> list[dict]:
+    """Select files for processing; round-robin by subset for set_pilot."""
+    from collections import defaultdict
+
+    from src.ctt.constants import SUBSETS
+
+    filtered = [r for r in records if cfg.should_process_record(r)]
+    if cfg.stage != "set_pilot":
+        selected: list[dict] = []
+        for rec in filtered:
+            selected.append(rec)
+            if cfg.max_files is not None and len(selected) >= cfg.max_files:
+                break
+        return selected
+
+    buckets: dict[str, list[dict]] = defaultdict(list)
+    for rec in filtered:
+        buckets[rec["subset_name"]].append(rec)
+    subset_order = [s for s in SUBSETS if buckets.get(s)]
+    selected = []
+    while subset_order:
+        if cfg.max_files is not None and len(selected) >= cfg.max_files:
+            break
+        progressed = False
+        for subset in subset_order:
+            if buckets[subset]:
+                selected.append(buckets[subset].pop(0))
+                progressed = True
+                if cfg.max_files is not None and len(selected) >= cfg.max_files:
+                    break
+        if not progressed:
+            break
+    return selected
+
+
 def run_streaming_pipeline(
     dataset_root: Path,
     output_root: Path = OUTPUT_ROOT,
@@ -197,20 +232,14 @@ def run_streaming_pipeline(
     audit_dir = ensure_dir(output_root / "audit")
     features_dir = ensure_dir(output_root / "windows" / "feature_shards")
 
-    stage_suffix = f"_{cfg.stage}" if cfg.stage != "full" else ""
+    stage_suffix = "" if cfg.stage in ("full", "set_pilot") else f"_{cfg.stage}"
     window_manifest_path = manifest_dir / f"window_manifest{stage_suffix}.csv"
     window_header_written = (
         cfg.resume and window_manifest_path.exists() and window_manifest_path.stat().st_size > 0
     )
 
     records = discover_ctt_files(dataset_root)
-    selected: list[dict] = []
-    for rec in records:
-        if not cfg.should_process_record(rec):
-            continue
-        selected.append(rec)
-        if cfg.max_files is not None and len(selected) >= cfg.max_files:
-            break
+    selected = _select_records(cfg, records)
 
     norm_manifest: list[dict] = []
     shard_paths: list[Path] = []

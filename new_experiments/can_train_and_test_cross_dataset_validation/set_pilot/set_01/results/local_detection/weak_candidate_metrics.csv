@@ -1,0 +1,4 @@
+dataset_set,subset_name,vehicle_id,attack_type,mode,attachment,precision,recall,f1,roc_auc,pr_auc,fpr,specificity,tn,fp,fn,tp,candidate_rate
+set_01,test_01_known_vehicle_known_attack,chevrolet_impala,all,weak,local_model,0.013276964466650361,1.0,0.026205992896796662,0.9944134918951758,0.27575702653579504,0.24846474635322272,0.7515352536467773,85421,28241,0,380,0.25096894126725244
+set_01,test_02_unknown_vehicle_known_attack,chevrolet_silverado,all,weak,descriptor_only_unknown_vehicle,0.0,0.0,0.0,,0.0,1.0,0.0,0,114003,0,0,1.0
+set_01,test_03_known_vehicle_unknown_attack,chevrolet_impala,all,weak,local_model,0.0,0.0,0.0,,0.0,0.21410762596906568,0.7858923740309344,103704,28253,0,0,0.21410762596906568

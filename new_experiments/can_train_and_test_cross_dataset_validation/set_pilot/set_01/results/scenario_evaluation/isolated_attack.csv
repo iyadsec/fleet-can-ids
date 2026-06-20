@@ -1,0 +1,11 @@
+scenario_type,campaign_detected,false_campaign,campaign_precision,campaign_recall,campaign_f1,best_cluster,n_clusters,fragmentation,scenario,seed
+isolated_attack,1,1,0.0,0.0,0.0,0,1,59,isolated_attack,11
+isolated_attack,1,1,0.0,0.0,0.0,0,1,59,isolated_attack,23
+isolated_attack,1,1,0.0,0.0,0.0,0,1,59,isolated_attack,37
+isolated_attack,1,1,0.0,0.0,0.0,0,1,59,isolated_attack,41
+isolated_attack,1,1,0.0,0.0,0.0,0,1,59,isolated_attack,53
+isolated_attack,1,1,0.0,0.0,0.0,0,1,59,isolated_attack,67
+isolated_attack,1,1,0.0,0.0,0.0,0,1,59,isolated_attack,71
+isolated_attack,1,1,0.0,0.0,0.0,0,1,59,isolated_attack,83
+isolated_attack,1,1,0.0,0.0,0.0,0,1,59,isolated_attack,97
+isolated_attack,1,1,0.0,0.0,0.0,0,1,59,isolated_attack,101
