@@ -13,7 +13,11 @@ CAPS=(
   --confirm-large-run
 )
 
-for SET in set_01 set_02 set_03 set_04; do
+for SET in set_02 set_03 set_04; do
+  if [ -f "new_experiments/can_train_and_test_cross_dataset_validation/full/${SET}/manifests/stage_full_${SET}_complete.json" ]; then
+    echo "Skipping ${SET} (already complete)"
+    continue
+  fi
   echo "========== FULL STAGE: ${SET} =========="
   python3 scripts/run_can_train_and_test_cross_dataset.py \
     --stage full --set-id "${SET}" "${CAPS[@]}"

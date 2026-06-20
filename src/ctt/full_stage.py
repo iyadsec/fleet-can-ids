@@ -219,7 +219,7 @@ def generate_pooled_outputs(base_output: Path, set_ids: list[str]) -> Path:
     )
 
     summary_path = generate_full_cross_dataset_summary(base_output, completed)
-    (base_output / "full" / "manifests" / "stage_full_complete.json").write_text(
+    (ensure_dir(base_output / "full" / "manifests") / "stage_full_complete.json").write_text(
         json.dumps({"stage": "full", "status": "complete", "sets": set_ids}, indent=2),
         encoding="utf-8",
     )
@@ -253,5 +253,7 @@ def run_stage_full(cfg: RunConfig, progress: ProgressLogger) -> dict:
         results[set_id] = run_stage_full_set(set_cfg, progress)
 
     completed = [s for s in set_ids if (full_work_root(cfg.output_root, s) / "manifests" / f"stage_full_{s}_complete.json").exists()]
-    summary_path = generate_pooled_outputs(cfg.output_root, completed)
+    summary_path = None
+    if not cfg.set_id:
+        summary_path = generate_pooled_outputs(cfg.output_root, completed)
     return {"sets": completed, "results": results, "summary_path": summary_path}
