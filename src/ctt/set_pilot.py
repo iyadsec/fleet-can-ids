@@ -687,10 +687,15 @@ def run_stage_set_pilot(
     meta_df = pd.read_csv(meta_path) if meta_path.exists() else pd.DataFrame()
     save_set_descriptors(desc_df, meta_df, set_id, work_root)
 
+    if not desc_df.empty:
+        balance = desc_df.groupby(["vehicle_id", "subset_name", "attack_type"]).size().reset_index(name="count")
+        balance.to_csv(work_root / "audit" / f"{set_id}_descriptor_balance.csv", index=False)
+        (work_root / "audit" / f"{set_id}_descriptor_balance.json").write_text(
+            balance.to_json(orient="records", indent=2), encoding="utf-8"
+        )
+
     write_fleet_transfer_policy(work_root)
     graph_desc = desc_df
-    if cfg.max_graph_nodes and len(graph_desc) > cfg.max_graph_nodes:
-        graph_desc = graph_desc.head(cfg.max_graph_nodes)
     progress.info("Fleet behavioural-similarity graph")
     node_df, edge_df, graph_stats = build_behavioural_graph(graph_desc)
     save_set_graph(node_df, edge_df, graph_stats, set_id, work_root)

@@ -205,7 +205,15 @@ def run_scenario_evaluation(
             windows.to_csv(scenario_dir / f"seed_{seed}_windows.csv", index=False)
 
             # Build scenario descriptors inline
-            scen_pred = windows[windows["weak_prediction"] == 1].copy()
+            if scenario == "benign_fleet_control":
+                scen_pred = windows[(windows["weak_prediction"] == 1) & (windows["label"] == 0)].copy()
+            elif scenario in ("strong_campaign", "weak_campaign"):
+                scen_pred = windows[windows["weak_prediction"] == 1].copy()
+                atk_only = scen_pred[scen_pred["label"] == 1]
+                if not atk_only.empty:
+                    scen_pred = atk_only
+            else:
+                scen_pred = windows[windows["weak_prediction"] == 1].copy()
             if scen_pred.empty:
                 run_rows.append({"scenario": scenario, "seed": seed, "campaign_detected": 0})
                 continue

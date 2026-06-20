@@ -1,0 +1,5 @@
+field,in_model_features,evaluation_only
+event_id,False,vehicle_id
+descriptor_vector,True,attack_type
+anomaly_score,True,label
+descriptor_dim,False,source_file

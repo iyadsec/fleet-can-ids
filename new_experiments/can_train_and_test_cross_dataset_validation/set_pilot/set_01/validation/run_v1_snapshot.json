@@ -1,0 +1,79 @@
+{
+  "label": "v1",
+  "set_id": "set_01",
+  "marker": {
+    "stage": "set_pilot",
+    "set_id": "set_01",
+    "status": "complete",
+    "files_processed": 28,
+    "windows": 400000,
+    "descriptors": 50000,
+    "caps": {
+      "max_rows_per_file": 1000000,
+      "max_windows": 400000,
+      "max_descriptors": 50000
+    },
+    "scenarios": [
+      "benign_fleet_control",
+      "isolated_attack",
+      "unrelated_incidents",
+      "strong_campaign",
+      "weak_campaign"
+    ]
+  },
+  "files_processed": 28,
+  "rows_processed": 20406189,
+  "subsets_in_manifest": [
+    "test_01_known_vehicle_known_attack",
+    "test_02_unknown_vehicle_known_attack",
+    "test_03_known_vehicle_unknown_attack",
+    "train_01"
+  ],
+  "windows": 400000,
+  "subsets_in_windows": [
+    "test_01_known_vehicle_known_attack",
+    "test_02_unknown_vehicle_known_attack",
+    "test_03_known_vehicle_unknown_attack",
+    "train_01"
+  ],
+  "vehicles_in_windows": [
+    "chevrolet_impala",
+    "chevrolet_silverado"
+  ],
+  "descriptors": 50000,
+  "descriptor_vehicles": [
+    "chevrolet_impala",
+    "chevrolet_silverado"
+  ],
+  "descriptor_vehicle_counts": {
+    "chevrolet_impala": 2440,
+    "chevrolet_silverado": 47560
+  },
+  "graph_nodes": 50000,
+  "graph_edges": 241758,
+  "cross_vehicle_edge_pct": 0.0004136367772731,
+  "scenario_means": {
+    "campaign_detected": {
+      "benign_fleet_control": 1.0,
+      "isolated_attack": 1.0,
+      "strong_campaign": 0.0,
+      "unrelated_incidents": 0.0,
+      "weak_campaign": 0.0
+    },
+    "false_campaign": {
+      "benign_fleet_control": 1.0,
+      "isolated_attack": 1.0,
+      "strong_campaign": 0.0,
+      "unrelated_incidents": 0.0,
+      "weak_campaign": 0.0
+    },
+    "campaign_f1": {
+      "benign_fleet_control": 0.0,
+      "isolated_attack": 0.0,
+      "strong_campaign": 0.0,
+      "unrelated_incidents": 0.0,
+      "weak_campaign": 0.0
+    }
+  },
+  "descriptor_rate": 0.1388881172882373
+}

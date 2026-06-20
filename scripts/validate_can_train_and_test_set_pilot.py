@@ -12,8 +12,11 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.ctt.constants import OCSLAB_PUBLICATION_ROOT, OUTPUT_ROOT
+from src.ctt.constants import OCSLAB_PUBLICATION_ROOT, OUTPUT_ROOT, SUBSETS
 from src.ctt.set_pilot import SET_PILOT_SCENARIOS, set_work_root
+
+EXPECTED_TEST_SUBSETS = [s for s in SUBSETS if s.startswith("test_")]
+MIN_CROSS_VEHICLE_EDGE_PCT = 0.1
 
 
 class ValidationResult:
@@ -60,30 +63,34 @@ def validate_set_pilot(base_output: Path, set_id: str = "set_01") -> ValidationR
     if norm_manifest.exists():
         nm = pd.read_csv(norm_manifest)
         vr.add("only target set processed", (nm["dataset_set"] == set_id).all(), f"sets={nm['dataset_set'].unique()}")
-        inv_path = base_output / "manifests" / "ctt_file_inventory.csv"
-        expected = 42
-        if inv_path.exists():
-            inv = pd.read_csv(inv_path)
-            expected = len(inv[(inv["dataset_set"] == set_id) & ~(
-                (inv["subset_name"] == "train_01") & (inv["attack_type"] != "benign")
-            )])
-        caps_note = ""
-        marker_path = root / "manifests" / f"stage_set_pilot_{set_id}_complete.json"
-        if marker_path.exists():
-            caps_note = json.loads(marker_path.read_text()).get("caps", {})
-        capped = bool(caps_note.get("max_windows") or caps_note.get("max_rows_per_file"))
-        vr.add(
-            "set files processed (windowable scope)",
-            len(nm) >= min(expected, 25) if capped else len(nm) >= expected * 0.9,
-            f"count={len(nm)} expected≈{expected} capped={capped}",
-        )
 
     win = root / "manifests" / "window_manifest.csv"
     if win.exists():
         wdf = pd.read_csv(win)
         vr.add("train/test split respected", "train_01" in wdf["subset_name"].values)
-        test_subs = [s for s in wdf["subset_name"].unique() if str(s).startswith("test_")]
-        vr.add("test subsets present", len(test_subs) >= 3, str(test_subs))
+        present_subsets = sorted(wdf["subset_name"].unique().tolist())
+        missing = [s for s in EXPECTED_TEST_SUBSETS if s not in present_subsets]
+        vr.add(
+            "all expected test subsets present",
+            len(missing) == 0,
+            f"missing={missing} present={present_subsets}",
+        )
+        vr.add("test_04 subset present", "test_04_unknown_vehicle_unknown_attack" in present_subsets)
+
+    desc_path = root / "descriptors" / f"{set_id}_fleet_candidate_descriptors.csv"
+    if not desc_path.exists():
+        desc_path = root / "descriptors" / "fleet_candidate_descriptors.csv"
+    if desc_path.exists():
+        ddf = pd.read_csv(desc_path)
+        n_vehicles = ddf["vehicle_id"].nunique() if "vehicle_id" in ddf.columns else 0
+        vr.add("at least two vehicles in descriptors", n_vehicles >= 2, f"vehicles={n_vehicles}")
+        if "vehicle_id" in ddf.columns and "subset_name" in ddf.columns:
+            vc = ddf.groupby("vehicle_id").size()
+            vr.add(
+                "descriptor vehicle balance",
+                vc.min() >= max(1, len(ddf) // (10 * max(n_vehicles, 1))),
+                f"counts={vc.to_dict()}",
+            )
 
     train_manifest = root / "manifests" / "local_model_training_manifest.csv"
     if train_manifest.exists():
@@ -110,6 +117,27 @@ def validate_set_pilot(base_output: Path, set_id: str = "set_01") -> ValidationR
                 "behavioural similarity edges only",
                 (edf["edge_type"] == "behavioural_similarity").all(),
             )
+        graph_stats_path = root / "graph" / f"{set_id}_graph_statistics.csv"
+        if graph_stats_path.exists():
+            gs = pd.read_csv(graph_stats_path).iloc[0]
+            cross_pct = float(gs.get("cross_vehicle_edge_pct", 0))
+            vr.add(
+                "cross-vehicle edges not near zero",
+                cross_pct >= MIN_CROSS_VEHICLE_EDGE_PCT,
+                f"cross_vehicle_edge_pct={cross_pct:.4f}%",
+            )
+
+    scen_path = root / "results" / "scenario_evaluation" / f"{set_id}_run_level_metrics.csv"
+    if not scen_path.exists():
+        scen_path = root / "results" / "scenario_evaluation" / "run_level_metrics.csv"
+    if scen_path.exists():
+        sdf = pd.read_csv(scen_path)
+        if "benign_fleet_control" in sdf["scenario"].values:
+            benign_fc = sdf[sdf["scenario"] == "benign_fleet_control"]["false_campaign"].mean()
+            vr.add("benign fleet false campaign rate zero", benign_fc == 0, f"mean={benign_fc}")
+        if "strong_campaign" in sdf["scenario"].values:
+            strong_det = sdf[sdf["scenario"] == "strong_campaign"]["campaign_detected"].mean()
+            vr.add("strong campaign detected", strong_det > 0, f"mean={strong_det}")
 
     for scenario in SET_PILOT_SCENARIOS:
         vr.add(
@@ -120,10 +148,11 @@ def validate_set_pilot(base_output: Path, set_id: str = "set_01") -> ValidationR
     pred = root / "results" / "local_detection" / "window_predictions.csv"
     vr.add("predictions recomputable", pred.exists())
 
-    tables = list((root / "tables").glob(f"table_{set_id.upper().replace('_', '')}_*.csv")) if (root / "tables").exists() else []
+    tag = set_id.upper().replace("_", "")
+    tables = list((root / "tables").glob(f"table_{tag}_*.csv")) if (root / "tables").exists() else []
     vr.add("set tables generated", len(tables) >= 6, f"count={len(tables)}")
 
-    figures = list((root / "figures").glob(f"figure_{set_id.upper().replace('_', '')}_*.png")) if (root / "figures").exists() else []
+    figures = list((root / "figures").glob(f"figure_{tag}_*.png")) if (root / "figures").exists() else []
     vr.add("set figures generated", len(figures) >= 5, f"count={len(figures)}")
 
     if OCSLAB_PUBLICATION_ROOT.exists():

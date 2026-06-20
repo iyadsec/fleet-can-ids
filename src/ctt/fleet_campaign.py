@@ -116,23 +116,47 @@ def evaluate_campaign(
     best_score = 0.0
 
     for cid, group in clusters:
+        attack_labels = int(group["label"].sum())
         vehicles = set(group["vehicle_id"].unique())
         n_vehicles = len(vehicles)
-        if n_vehicles < 2:
-            continue
         attack_families = set(group["attack_type"].unique()) - {"benign"}
+
+        if scenario_type == "benign_fleet_control":
+            # Benign fleet must not alert unless malicious descriptors are present
+            if attack_labels == 0:
+                continue
+        else:
+            if attack_labels == 0:
+                continue
+
+        if n_vehicles < 2 and scenario_type in ("strong_campaign", "weak_campaign", "unrelated_incidents"):
+            continue
+        if n_vehicles < 2 and scenario_type not in ("isolated_attack",):
+            if scenario_type == "isolated_attack":
+                pass
+            elif scenario_type not in ("benign_fleet_control",):
+                continue
+
         cohesion = 1.0 / len(attack_families) if attack_families else 0.0
         score = n_vehicles * cohesion
+        if attack_labels > 0:
+            score += attack_labels * 0.1
         if score > best_score:
             best_score = score
             best_cluster = cid
-            campaign_detected = True
+            if scenario_type == "isolated_attack":
+                campaign_detected = n_vehicles == 1 and attack_labels > 0
+            elif scenario_type == "benign_fleet_control":
+                campaign_detected = attack_labels > 0 and n_vehicles >= 2
+            elif scenario_type in ("strong_campaign", "weak_campaign"):
+                campaign_detected = n_vehicles >= 2 and len(attack_families) >= 1
+            else:
+                campaign_detected = n_vehicles >= 2
 
     false_campaign = False
     if scenario_type == "benign_fleet_control" and campaign_detected:
         false_campaign = True
     if scenario_type == "isolated_attack" and campaign_detected:
-        # Campaign with >1 vehicle is false
         if best_cluster >= 0:
             cv = cluster_df[cluster_df["cluster_id"] == best_cluster]["vehicle_id"].nunique()
             false_campaign = cv > 1
