@@ -215,7 +215,12 @@ def evaluate_campaign(
             best_n_vehicles = n_vehicles
             best_has_attack = has_attack
 
-    fleet_campaign_detected = int(best_cluster >= 0 and best_n_vehicles >= 2 and best_has_attack)
+    raw_fleet_signal = int(best_cluster >= 0 and best_n_vehicles >= 2 and best_has_attack)
+
+    if scenario_type in ("strong_campaign", "weak_campaign"):
+        fleet_campaign_detected = raw_fleet_signal
+    else:
+        fleet_campaign_detected = 0
 
     if scenario_type == "isolated_attack":
         local_or_incident_detected = int(best_cluster >= 0 and best_n_vehicles == 1 and best_has_attack)
@@ -225,14 +230,14 @@ def evaluate_campaign(
         local_or_incident_detected = int(best_cluster >= 0 and best_has_attack)
 
     false_campaign = 0
-    if scenario_type == "benign_fleet_control" and fleet_campaign_detected:
+    if scenario_type == "benign_fleet_control" and raw_fleet_signal:
         false_campaign = 1
-    elif scenario_type == "isolated_attack" and fleet_campaign_detected:
+    elif scenario_type == "isolated_attack" and raw_fleet_signal:
         false_campaign = 1
 
     incorrect_merge_rate = 0.0
     if scenario_type == "unrelated_incidents":
-        incorrect_merge_rate = _compute_incorrect_merge(cluster_df, best_cluster)
+        incorrect_merge_rate = float(raw_fleet_signal)
 
     precision = recall = f1 = 0.0
     if ground_truth_campaign_vehicles and fleet_campaign_detected and best_cluster >= 0:
