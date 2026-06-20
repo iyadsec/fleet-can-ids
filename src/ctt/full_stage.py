@@ -50,6 +50,94 @@ def run_stage_full_set(cfg: RunConfig, progress: ProgressLogger) -> dict:
     return run_stage_set_pilot(cfg, progress)
 
 
+def generate_full_cross_dataset_summary(base_output: Path, set_ids: list[str]) -> Path:
+    """Write comprehensive full-run summary answering publication checklist questions."""
+    sections: dict[str, str] = {}
+    per_set: list[dict] = []
+
+    for set_id in set_ids:
+        root = full_work_root(base_output, set_id)
+        if not (root / "manifests" / f"stage_full_{set_id}_complete.json").exists():
+            continue
+        marker = json.loads((root / "manifests" / f"stage_full_{set_id}_complete.json").read_text())
+        nm = pd.read_csv(root / "manifests" / "normalization_manifest.csv")
+        wm = pd.read_csv(root / "manifests" / "window_manifest.csv")
+        gs = pd.read_csv(root / "graph" / f"{set_id}_graph_statistics.csv").iloc[0].to_dict()
+        scen = pd.read_csv(root / "results" / "scenario_evaluation" / f"{set_id}_run_level_metrics.csv")
+        comm = pd.read_csv(root / "results" / "descriptor_transfer" / "communication_summary.csv")
+        subset_metrics = pd.read_csv(root / "results" / "local_detection" / f"{set_id}_by_subset.csv")
+
+        vehicles = sorted(wm["vehicle_id"].unique())
+        attacks = sorted(set(wm["attack_type"].unique()) - {"benign"})
+        per_set.append(
+            {
+                "set_id": set_id,
+                "files": len(nm),
+                "rows": int(nm["row_count"].sum()) if "row_count" in nm.columns else 0,
+                "windows": len(wm),
+                "descriptors": marker.get("descriptors", 0),
+                "vehicles": vehicles,
+                "attacks": attacks,
+                "cross_vehicle_edge_pct": gs.get("cross_vehicle_edge_pct"),
+                "descriptor_rate": float(comm.iloc[0]["candidate_transmission_rate"]),
+            }
+        )
+
+        sections[f"{set_id} local detection by subset"] = (
+            subset_metrics[subset_metrics["attack_type"] == "all"]
+            .groupby("subset_name")[["precision", "recall", "f1"]]
+            .mean()
+            .round(4)
+            .to_string()
+        )
+        sections[f"{set_id} scenario means"] = (
+            scen.groupby("scenario")[
+                [
+                    "local_or_incident_detected",
+                    "fleet_campaign_detected",
+                    "false_campaign",
+                    "incorrect_merge_rate",
+                    "campaign_f1",
+                ]
+            ]
+            .mean()
+            .round(4)
+            .to_string()
+        )
+
+    if not per_set:
+        sections["Status"] = "No completed full sets found."
+    else:
+        df = pd.DataFrame(per_set)
+        sections["1. Sets processed"] = ", ".join(df["set_id"].tolist())
+        sections["2. Files/rows/windows/descriptors per set"] = df[
+            ["set_id", "files", "rows", "windows", "descriptors"]
+        ].to_string(index=False)
+        sections["3. Vehicles per set"] = "\n".join(f"{r['set_id']}: {', '.join(r['vehicles'])}" for r in per_set)
+        sections["4. Attacks per set"] = "\n".join(f"{r['set_id']}: {', '.join(r['attacks'])}" for r in per_set)
+        sections["8. Cross-vehicle edge % per set"] = "\n".join(
+            f"{r['set_id']}: {r['cross_vehicle_edge_pct']}" for r in per_set
+        )
+        sections["10. Descriptor candidate rate per set"] = "\n".join(
+            f"{r['set_id']}: {r['descriptor_rate']:.4f}" for r in per_set
+        )
+
+    pooled = pooled_work_root(base_output)
+    tables = sorted((pooled / "tables").glob("table_CTT*.csv")) if (pooled / "tables").exists() else []
+    figures = sorted((pooled / "figures").glob("figure_CTT*.png")) if (pooled / "figures").exists() else []
+    sections["18. Main-paper tables"] = ", ".join(t.name for t in tables)
+    sections["18. Main-paper figures"] = ", ".join(f.name for f in figures)
+    sections["19. Limitations"] = (
+        "Simulated cross-vehicle campaigns on independent CTT splits; "
+        "sensitivity analyses use graph-statistics proxies; "
+        "caps applied for reproducible publication runs."
+    )
+
+    summary_path = base_output / "full" / "CAN_TRAIN_AND_TEST_FULL_CROSS_DATASET_SUMMARY.md"
+    write_markdown(summary_path, "CAN Train-and-Test Full Cross-Dataset Summary", sections)
+    return summary_path
+
+
 def generate_pooled_outputs(base_output: Path, set_ids: list[str]) -> Path:
     """Aggregate per-set full outputs into full/pooled publication artifacts."""
     pooled = ensure_dir(pooled_work_root(base_output))
@@ -130,19 +218,7 @@ def generate_pooled_outputs(base_output: Path, set_ids: list[str]) -> Path:
         pooled,
     )
 
-    summary_sections = {
-        "Sets processed": ", ".join(set_ids),
-        "Total windows": f"{len(window_manifest):,}" if not window_manifest.empty else "0",
-        "Total scenario runs": str(len(scenario_results)),
-        "Pooled scenario summary": (
-            aggregate_scenario_results(scenario_results).to_string(index=False)
-            if not scenario_results.empty
-            else "n/a"
-        ),
-        "Graph statistics (first set)": json.dumps(graph_stats, indent=2),
-    }
-    summary_path = base_output / "full" / "CAN_TRAIN_AND_TEST_FULL_CROSS_DATASET_SUMMARY.md"
-    write_markdown(summary_path, "CAN Train-and-Test Full Cross-Dataset Summary", summary_sections)
+    summary_path = generate_full_cross_dataset_summary(base_output, completed)
     (base_output / "full" / "manifests" / "stage_full_complete.json").write_text(
         json.dumps({"stage": "full", "status": "complete", "sets": set_ids}, indent=2),
         encoding="utf-8",

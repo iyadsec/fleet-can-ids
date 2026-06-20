@@ -2,6 +2,7 @@
 # Run full publication stage for all CTT sets with v2 safety caps.
 set -euo pipefail
 cd /workspace
+mkdir -p new_experiments/can_train_and_test_cross_dataset_validation/full/logs
 
 CAPS=(
   --max-rows-per-file 475000
