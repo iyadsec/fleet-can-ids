@@ -55,7 +55,12 @@ def _tables_match_csv(root: Path, table_prefix: str) -> bool:
         if df.empty:
             continue
         md_text = md_path.read_text()
-        if str(df.iloc[0, 0]) not in md_text:
+        for col in df.columns:
+            if str(col) not in md_text:
+                return False
+        sample_vals = df.astype(str).head(5).values.flatten()
+        matches = sum(1 for v in sample_vals if v and v != "nan" and v in md_text)
+        if matches == 0:
             return False
     return True
 

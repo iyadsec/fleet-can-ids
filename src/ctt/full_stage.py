@@ -152,11 +152,13 @@ def generate_pooled_outputs(base_output: Path, set_ids: list[str]) -> Path:
     window_parts, metrics_parts, scenario_parts = [], [], []
     desc_parts, campaign_parts, edge_parts = [], [], []
     graph_rows = []
+    completed: list[str] = []
 
     for set_id in set_ids:
         root = full_work_root(base_output, set_id)
         if not (root / "manifests" / f"stage_full_{set_id}_complete.json").exists():
             continue
+        completed.append(set_id)
         wm = root / "manifests" / "window_manifest.csv"
         if wm.exists():
             window_parts.append(pd.read_csv(wm).assign(set_id=set_id))
