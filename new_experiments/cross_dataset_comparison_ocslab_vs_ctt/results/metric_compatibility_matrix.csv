@@ -1,0 +1,24 @@
+metric,compatibility,notes,label
+number of vehicles,A,Count of distinct vehicles; definition aligned.,Directly comparable
+attack families,A,Count/list of attack types; naming differs by dataset.,Directly comparable
+number of windows,B,Windowing parameters may differ; compare descriptively.,Comparable with caveat
+local precision,B,"Different vehicles, attacks, labels, thresholds.",Comparable with caveat
+local recall,B,"Different vehicles, attacks, labels, thresholds.",Comparable with caveat
+local F1,B,"Different vehicles, attacks, labels, thresholds.",Comparable with caveat
+ROC-AUC,B,Score ranking comparable in spirit; distributions differ.,Comparable with caveat
+PR-AUC,B,Class imbalance and label sets differ.,Comparable with caveat
+descriptor size,A,Same descriptor schema; byte counts directly readable.,Directly comparable
+bandwidth reduction,A,Same ratio definition when raw-window proxy matches.,Directly comparable
+candidate transmission rate,A,Same definition: weak candidates / windows.,Directly comparable
+graph nodes,B,Node caps and sampling may differ between runs.,Comparable with caveat
+graph edges,B,Threshold grids differ; compare trends not absolute counts.,Comparable with caveat
+cross-vehicle edge percentage,A,Same edge-typing definition in framework.,Directly comparable
+benign fleet false campaign rate,B,Same scenario intent; simulation details differ.,Comparable with caveat
+isolated attack false campaign rate,B,Same scenario intent; simulation details differ.,Comparable with caveat
+unrelated incident incorrect merge rate,B,Same metric definition (v3); attack mix differs.,Comparable with caveat
+strong campaign F1,B,Controlled simulations; not real synchronized campaigns.,Comparable with caveat
+weak campaign F1,B,Controlled simulations; not real synchronized campaigns.,Comparable with caveat
+campaign-size trend,B,Supported sizes differ; trend comparison only.,Comparable with caveat
+edge-sensitivity trend,B,Grid coverage may differ; trend comparison only.,Comparable with caveat
+runtime,B,"Hardware, caps, and dataset size differ.",Comparable with caveat
+memory,B,"Hardware, caps, and dataset size differ.",Comparable with caveat

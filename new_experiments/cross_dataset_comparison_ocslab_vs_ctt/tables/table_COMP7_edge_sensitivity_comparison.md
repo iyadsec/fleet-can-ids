@@ -1,0 +1,5 @@
+# table_COMP7_edge_sensitivity_comparison
+
+           Dataset              Edge range Best campaign F1 region    False campaign trend                              Fragmentation trend    Runtime/memory trend                       Interpretation
+            OCSLab SOURCE_NOT_IN_WORKSPACE SOURCE_NOT_IN_WORKSPACE SOURCE_NOT_IN_WORKSPACE                          SOURCE_NOT_IN_WORKSPACE SOURCE_NOT_IN_WORKSPACE Sync OCSLab edge-sensitivity tables.
+can-train-and-test     334,290 – 1,085,970                     0.9                 see CSV increases as edges decrease (stricter threshold) ~149.5506s mean rebuild   Descriptive trend comparison only.
