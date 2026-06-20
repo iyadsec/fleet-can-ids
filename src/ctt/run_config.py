@@ -101,19 +101,29 @@ class RunConfig:
     def set_work_root(self) -> Path:
         if self.stage == "set_pilot" and self.set_id:
             return self.output_root / "set_pilot" / self.set_id
+        if self.stage == "full" and self.set_id:
+            return self.output_root / "full" / self.set_id
+        if self.stage == "full":
+            return self.output_root / "full"
         return self.output_root
 
     def log_path(self) -> Path:
-        root = self.set_work_root() if self.stage == "set_pilot" else self.output_root
+        root = self.set_work_root() if self.stage in ("set_pilot", "full") else self.output_root
         logs = root / "logs"
         logs.mkdir(parents=True, exist_ok=True)
         if self.stage == "set_pilot" and self.set_id:
             return logs / f"stage_set_pilot_{self.set_id}.log"
+        if self.stage == "full" and self.set_id:
+            return logs / f"stage_full_{self.set_id}.log"
         return logs / f"stage_{self.stage}.log"
 
     def stage_marker_path(self) -> Path:
         if self.stage == "set_pilot" and self.set_id:
             return self.set_work_root() / "manifests" / f"stage_set_pilot_{self.set_id}_complete.json"
+        if self.stage == "full" and self.set_id:
+            return self.set_work_root() / "manifests" / f"stage_full_{self.set_id}_complete.json"
+        if self.stage == "full":
+            return self.output_root / "full" / "manifests" / "stage_full_complete.json"
         return self.output_root / "manifests" / f"stage_{self.stage}_complete.json"
 
     def should_process_record(self, rec: dict) -> bool:
@@ -134,7 +144,13 @@ class RunConfig:
             if rec["subset_name"] == "train_01" and rec["attack_type"] != "benign":
                 return False
             return True
-        return True  # full: all files (subject to caps)
+        if self.stage == "full" and self.set_id:
+            if rec["dataset_set"] != self.set_id:
+                return False
+            if rec["subset_name"] == "train_01" and rec["attack_type"] != "benign":
+                return False
+            return True
+        return True  # full without set_id: all files (subject to caps)
 
     def is_benign_train_file(self, rec: dict) -> bool:
         return rec["subset_name"].endswith("train_01") or rec["subset_name"] == "train_01"

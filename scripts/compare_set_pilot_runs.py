@@ -54,7 +54,13 @@ def main() -> int:
 
     bsc = before.get("scenario_means", {})
     asc = after.get("scenario_means", {})
-    for key in ("campaign_detected", "false_campaign", "campaign_f1"):
+    for key in (
+        "local_or_incident_detected",
+        "fleet_campaign_detected",
+        "false_campaign",
+        "incorrect_merge_rate",
+        "campaign_f1",
+    ):
         lines.append(f"### {key}")
         lines.append("| Scenario | Before | After |")
         lines.append("|----------|--------|-------|")

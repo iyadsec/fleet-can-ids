@@ -224,7 +224,17 @@ def run_scenario_evaluation(
             else:
                 scen_pred = windows[windows["weak_prediction"] == 1].copy()
             if scen_pred.empty:
-                run_rows.append({"scenario": scenario, "seed": seed, "campaign_detected": 0})
+                run_rows.append(
+                    {
+                        "scenario": scenario,
+                        "seed": seed,
+                        "local_or_incident_detected": 0,
+                        "fleet_campaign_detected": 0,
+                        "false_campaign": 0,
+                        "incorrect_merge_rate": 0.0,
+                        "campaign_f1": 0.0,
+                    }
+                )
                 continue
 
             desc_rows = []

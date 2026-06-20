@@ -129,23 +129,15 @@ def main() -> int:
             )
 
         elif cfg.stage == "full":
-            ok, msg = _check_prior_stages(cfg)
+            from src.ctt.full_stage import check_full_prerequisites
+
+            ok, msg = check_full_prerequisites(output_root)
             if not ok:
                 progress.info(f"ABORT: {msg}")
                 progress.stage_end("BLOCKED")
                 return 1
-            from scripts.validate_can_train_and_test_cross_dataset import validate
-
-            for prior_stage in ("audit", "pilot"):
-                vr = validate(output_root, prior_stage)
-                if vr.critical_failures:
-                    progress.info(
-                        f"ABORT: Stage 3 blocked — {prior_stage} validation failed: "
-                        f"{vr.critical_failures}"
-                    )
-                    progress.stage_end("BLOCKED")
-                    return 1
-            run_stage_full(cfg, progress)
+            result = run_stage_full(cfg, progress)
+            progress.info(f"Full stage complete: sets={result.get('sets')}")
 
         elapsed = time.perf_counter() - t0
         _, peak = tracemalloc.get_traced_memory()

@@ -13,6 +13,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.ctt.constants import OCSLAB_PUBLICATION_ROOT, OUTPUT_ROOT, SUBSETS
+from src.ctt.fleet_campaign import SCENARIO_METRIC_COLUMNS
 from src.ctt.set_pilot import SET_PILOT_SCENARIOS, set_work_root
 
 EXPECTED_TEST_SUBSETS = [s for s in SUBSETS if s.startswith("test_")]
@@ -132,12 +133,61 @@ def validate_set_pilot(base_output: Path, set_id: str = "set_01") -> ValidationR
         scen_path = root / "results" / "scenario_evaluation" / "run_level_metrics.csv"
     if scen_path.exists():
         sdf = pd.read_csv(scen_path)
+        missing_cols = [c for c in SCENARIO_METRIC_COLUMNS if c not in sdf.columns]
+        vr.add("scenario metric columns present", len(missing_cols) == 0, f"missing={missing_cols}")
+
         if "benign_fleet_control" in sdf["scenario"].values:
             benign_fc = sdf[sdf["scenario"] == "benign_fleet_control"]["false_campaign"].mean()
             vr.add("benign fleet false campaign rate zero", benign_fc == 0, f"mean={benign_fc}")
+
+        if "isolated_attack" in sdf["scenario"].values:
+            iso = sdf[sdf["scenario"] == "isolated_attack"]
+            fleet_det = iso["fleet_campaign_detected"].mean()
+            false_fc = iso["false_campaign"].mean()
+            vr.add(
+                "isolated attack fleet campaign not declared",
+                fleet_det == 0,
+                f"fleet_campaign_detected={fleet_det}",
+            )
+            vr.add("isolated attack false campaign zero", false_fc == 0, f"false_campaign={false_fc}")
+
+        if "unrelated_incidents" in sdf["scenario"].values:
+            unrel = sdf[sdf["scenario"] == "unrelated_incidents"]
+            vr.add(
+                "unrelated incidents fleet campaign not declared",
+                unrel["fleet_campaign_detected"].mean() == 0,
+                f"fleet_campaign_detected={unrel['fleet_campaign_detected'].mean()}",
+            )
+            vr.add(
+                "unrelated incidents incorrect merge rate reported",
+                "incorrect_merge_rate" in unrel.columns,
+            )
+
         if "strong_campaign" in sdf["scenario"].values:
-            strong_det = sdf[sdf["scenario"] == "strong_campaign"]["campaign_detected"].mean()
-            vr.add("strong campaign detected", strong_det > 0, f"mean={strong_det}")
+            strong = sdf[sdf["scenario"] == "strong_campaign"]
+            vr.add(
+                "strong campaign detected",
+                strong["fleet_campaign_detected"].mean() > 0,
+                f"fleet_campaign_detected={strong['fleet_campaign_detected'].mean()}",
+            )
+            vr.add(
+                "strong campaign F1 positive",
+                strong["campaign_f1"].mean() > 0,
+                f"campaign_f1={strong['campaign_f1'].mean()}",
+            )
+
+        if "weak_campaign" in sdf["scenario"].values:
+            weak = sdf[sdf["scenario"] == "weak_campaign"]
+            vr.add(
+                "weak campaign detected",
+                weak["fleet_campaign_detected"].mean() > 0,
+                f"fleet_campaign_detected={weak['fleet_campaign_detected'].mean()}",
+            )
+            vr.add(
+                "weak campaign F1 positive",
+                weak["campaign_f1"].mean() > 0,
+                f"campaign_f1={weak['campaign_f1'].mean()}",
+            )
 
     for scenario in SET_PILOT_SCENARIOS:
         vr.add(

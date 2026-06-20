@@ -13,12 +13,13 @@ import seaborn as sns
 from src.ctt.constants import (
     OUTPUT_ROOT,
     SCENARIO_SEEDS,
+    SCENARIO_DISPLAY_NAMES,
     SET_VEHICLE_POLICY,
     SUBSETS,
     VEHICLE_DISPLAY,
 )
 from src.ctt.descriptors import generate_descriptors
-from src.ctt.evaluation import run_campaign_size_sensitivity, run_edge_sensitivity
+from src.ctt.evaluation import aggregate_scenario_results, run_campaign_size_sensitivity, run_edge_sensitivity
 from src.ctt.features import LOCAL_FEATURE_COLUMNS, METADATA_COLS, write_feature_schema
 from src.ctt.fleet_campaign import write_fleet_transfer_policy
 from src.ctt.fleet_graph import build_behavioural_graph, save_graph_artifacts
@@ -206,12 +207,12 @@ def run_set_campaign_size_sensitivity(
                     "attack_family": family,
                     "campaign_size": size,
                     "n_vehicles_available": len(vehicles),
-                    "campaign_detected": int(detected),
+                    "fleet_campaign_detected": int(detected),
                     "campaign_f1": float(detected) * 0.8 if detected else 0.0,
                     "campaign_precision": 0.85 if detected else 0.0,
                     "campaign_recall": 0.75 if detected else 0.0,
                     "false_campaign_rate": 0.05,
-                    "fragmentation": 0.1,
+                    "fragmentation_rate": 0.1,
                 }
             )
 
@@ -242,7 +243,7 @@ def run_set_edge_sensitivity(desc_df: pd.DataFrame, set_id: str, output_root: Pa
                     "edge_count": stats.get("num_edges", 0),
                     "campaign_f1": min(0.9, stats.get("num_edges", 0) / max(len(desc_df), 1)),
                     "false_campaign_rate": max(0, 0.1 - th * 0.05),
-                    "fragmentation": stats.get("isolated_node_rate", 0),
+                    "fragmentation_rate": stats.get("isolated_node_rate", 0),
                     "runtime_sec": elapsed,
                 }
             )
@@ -337,18 +338,7 @@ def generate_set_tables(
         names.append(name)
 
     if not scenario_results.empty:
-        t6 = (
-            scenario_results.groupby("scenario")
-            .agg(
-                Campaign_detection=("campaign_detected", "mean"),
-                False_campaign_rate=("false_campaign", "mean"),
-                Campaign_precision=("campaign_precision", "mean"),
-                Campaign_recall=("campaign_recall", "mean"),
-                Campaign_F1=("campaign_f1", "mean"),
-            )
-            .reset_index()
-            .rename(columns={"scenario": "Scenario"})
-        )
+        t6 = aggregate_scenario_results(scenario_results)
         name = f"table_{tag}_6_scenario_results"
         _save_table(t6, name, output_root)
         names.append(name)
@@ -535,11 +525,19 @@ def generate_set_summary(
 
     scen_summary = ""
     if not scenario_results.empty:
+        summary_cols = [
+            c
+            for c in (
+                "local_or_incident_detected",
+                "fleet_campaign_detected",
+                "false_campaign",
+                "incorrect_merge_rate",
+                "campaign_f1",
+            )
+            if c in scenario_results.columns
+        ]
         scen_summary = (
-            scenario_results.groupby("scenario")[["campaign_detected", "campaign_f1", "false_campaign"]]
-            .mean()
-            .round(4)
-            .to_string()
+            scenario_results.groupby("scenario")[summary_cols].mean().round(4).to_string()
         )
 
     cand_rate = float(desc_summary.iloc[0]["candidate_transmission_rate"]) if not desc_summary.empty else 0.0
@@ -572,27 +570,27 @@ def generate_set_summary(
             else "n/a"
         ),
         "10. Isolated attacks": str(
-            scenario_results[scenario_results["scenario"] == "isolated_attack"]["campaign_detected"]
+            scenario_results[scenario_results["scenario"] == "isolated_attack"]["fleet_campaign_detected"]
             .mean()
-            if not scenario_results.empty
+            if not scenario_results.empty and "fleet_campaign_detected" in scenario_results.columns
             else "n/a"
         ),
         "11. Unrelated incidents separate": str(
-            scenario_results[scenario_results["scenario"] == "unrelated_incidents"]["fragmentation"]
+            scenario_results[scenario_results["scenario"] == "unrelated_incidents"]["incorrect_merge_rate"]
             .mean()
-            if not scenario_results.empty and "fragmentation" in scenario_results.columns
+            if not scenario_results.empty and "incorrect_merge_rate" in scenario_results.columns
             else "n/a"
         ),
         "12. Strong campaigns detected": str(
-            scenario_results[scenario_results["scenario"] == "strong_campaign"]["campaign_detected"]
+            scenario_results[scenario_results["scenario"] == "strong_campaign"]["fleet_campaign_detected"]
             .mean()
-            if not scenario_results.empty
+            if not scenario_results.empty and "fleet_campaign_detected" in scenario_results.columns
             else "n/a"
         ),
         "13. Weak campaigns detected": str(
-            scenario_results[scenario_results["scenario"] == "weak_campaign"]["campaign_detected"]
+            scenario_results[scenario_results["scenario"] == "weak_campaign"]["fleet_campaign_detected"]
             .mean()
-            if not scenario_results.empty
+            if not scenario_results.empty and "fleet_campaign_detected" in scenario_results.columns
             else "n/a"
         ),
         "14. Campaign sizes supported": (
@@ -655,7 +653,7 @@ def run_stage_set_pilot(
     )
 
     work_cfg = RunConfig(
-        stage="set_pilot",
+        stage=cfg.stage if cfg.stage in ("set_pilot", "full") else "set_pilot",
         dataset_root=cfg.dataset_root,
         output_root=work_root,
         set_id=set_id,
@@ -749,11 +747,12 @@ def run_stage_set_pilot(
         0.0, 0.0, table_names, figure_names,
     )
 
-    marker = work_root / "manifests" / f"stage_set_pilot_{set_id}_complete.json"
+    marker = cfg.stage_marker_path()
+    marker.parent.mkdir(parents=True, exist_ok=True)
     marker.write_text(
         json.dumps(
             {
-                "stage": "set_pilot",
+                "stage": cfg.stage,
                 "set_id": set_id,
                 "status": "complete",
                 "files_processed": len(norm_manifest),

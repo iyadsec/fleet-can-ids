@@ -139,6 +139,14 @@ MIN_VALID_FRAMES = 80
 
 SCENARIO_SEEDS = [11, 23, 37, 41, 53, 67, 71, 83, 97, 101]
 
+SCENARIO_DISPLAY_NAMES = {
+    "benign_fleet_control": "Benign fleet control",
+    "isolated_attack": "Isolated attack",
+    "unrelated_incidents": "Unrelated incidents",
+    "strong_campaign": "Strong coordinated campaign",
+    "weak_campaign": "Weak coordinated campaign",
+}
+
 WEAK_THRESHOLD_PERCENTILE = 90.0
 STRONG_THRESHOLD_PERCENTILE = 97.5
 

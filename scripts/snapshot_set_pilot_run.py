@@ -57,7 +57,18 @@ def collect_snapshot(root: Path, set_id: str = "set_01", label: str = "v1") -> d
     if scen.exists():
         sdf = pd.read_csv(scen)
         snap["scenario_means"] = (
-            sdf.groupby("scenario")[["campaign_detected", "false_campaign", "campaign_f1"]].mean().round(4).to_dict()
+            sdf.groupby("scenario")[
+                [
+                    "local_or_incident_detected",
+                    "fleet_campaign_detected",
+                    "false_campaign",
+                    "incorrect_merge_rate",
+                    "campaign_f1",
+                ]
+            ]
+            .mean()
+            .round(4)
+            .to_dict()
         )
 
     comm = root / "results" / "descriptor_transfer" / "communication_summary.csv"
