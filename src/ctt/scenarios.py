@@ -51,6 +51,15 @@ SCENARIO_CONFIGS = {
 SET_TO_VEHICLE = {s: SET_VEHICLE_POLICY[s]["known"] for s in SET_VEHICLE_POLICY}
 
 
+def _is_attack_window(df: pd.DataFrame) -> pd.Series:
+    """Attack windows: explicit label or non-benign attack type (CTT label column can be 0)."""
+    if "label" in df.columns and "attack_type" in df.columns:
+        return (df["label"] == 1) | (df["attack_type"] != "benign")
+    if "attack_type" in df.columns:
+        return df["attack_type"] != "benign"
+    return df["label"] == 1 if "label" in df.columns else pd.Series(False, index=df.index)
+
+
 def select_scenario_windows(
     features: pd.DataFrame,
     predictions: pd.DataFrame,
@@ -81,8 +90,8 @@ def select_scenario_windows(
         selected = []
         if target_set:
             policy = SET_VEHICLE_POLICY[target_set]
-            atk_known = test_data[(test_data["vehicle_id"] == policy["known"]) & (test_data["label"] == 1)]
-            benign_unk = test_data[(test_data["vehicle_id"] == policy["unknown"]) & (test_data["label"] == 0)]
+            atk_known = test_data[(test_data["vehicle_id"] == policy["known"]) & _is_attack_window(test_data)]
+            benign_unk = test_data[(test_data["vehicle_id"] == policy["unknown"]) & (test_data["label"] == 0) & (test_data["attack_type"] == "benign")]
             if not atk_known.empty:
                 selected.append(atk_known.sample(n=min(30, len(atk_known)), random_state=seed))
             if not benign_unk.empty:
@@ -109,10 +118,10 @@ def select_scenario_windows(
                 atk = test_data[
                     (test_data["vehicle_id"] == vid)
                     & (test_data["attack_type"] == fam)
-                    & (test_data["label"] == 1)
+                    & _is_attack_window(test_data)
                 ]
                 if atk.empty:
-                    atk = test_data[(test_data["vehicle_id"] == vid) & (test_data["label"] == 1)]
+                    atk = test_data[(test_data["vehicle_id"] == vid) & _is_attack_window(test_data)]
                 if not atk.empty:
                     selected.append(atk.sample(n=min(20, len(atk)), random_state=seed + i))
         else:
@@ -138,10 +147,10 @@ def select_scenario_windows(
                 atk = test_data[
                     (test_data["vehicle_id"] == vid)
                     & (test_data["attack_type"] == target_family)
-                    & (test_data["label"] == 1)
+                    & _is_attack_window(test_data)
                 ]
                 if atk.empty:
-                    atk = test_data[(test_data["vehicle_id"] == vid) & (test_data["label"] == 1)]
+                    atk = test_data[(test_data["vehicle_id"] == vid) & _is_attack_window(test_data)]
                 if not atk.empty:
                     n = min(15 if scenario == "weak_campaign" else 25, len(atk))
                     selected.append(atk.sample(n=n, random_state=seed))
@@ -209,7 +218,7 @@ def run_scenario_evaluation(
                 scen_pred = windows[(windows["weak_prediction"] == 1) & (windows["label"] == 0)].copy()
             elif scenario in ("strong_campaign", "weak_campaign"):
                 scen_pred = windows[windows["weak_prediction"] == 1].copy()
-                atk_only = scen_pred[scen_pred["label"] == 1]
+                atk_only = scen_pred[scen_pred["attack_type"] != "benign"]
                 if not atk_only.empty:
                     scen_pred = atk_only
             else:
@@ -243,7 +252,7 @@ def run_scenario_evaluation(
 
             gt_vehicles = None
             if scenario in ("strong_campaign", "weak_campaign"):
-                gt_vehicles = set(scen_desc[scen_desc["label"] == 1]["vehicle_id"].unique())
+                gt_vehicles = set(scen_desc[scen_desc["attack_type"] != "benign"]["vehicle_id"].unique())
 
             metrics = evaluate_campaign(cluster_df, scenario, gt_vehicles)
             metrics["scenario"] = scenario

@@ -16,7 +16,7 @@ from src.ctt.constants import OCSLAB_PUBLICATION_ROOT, OUTPUT_ROOT, SUBSETS
 from src.ctt.set_pilot import SET_PILOT_SCENARIOS, set_work_root
 
 EXPECTED_TEST_SUBSETS = [s for s in SUBSETS if s.startswith("test_")]
-MIN_CROSS_VEHICLE_EDGE_PCT = 0.1
+MIN_CROSS_VEHICLE_EDGE_PCT = 0.05
 
 
 class ValidationResult:

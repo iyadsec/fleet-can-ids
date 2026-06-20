@@ -20,9 +20,9 @@ set_01
 
 {
   "max_files": null,
-  "max_rows_per_file": 1000000,
-  "max_windows": 400000,
-  "max_descriptors": 50000,
+  "max_rows_per_file": 475000,
+  "max_windows": 800000,
+  "max_descriptors": 100000,
   "max_graph_nodes": null,
   "confirm_large_run": false
 }

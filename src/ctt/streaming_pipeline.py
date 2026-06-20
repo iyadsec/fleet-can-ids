@@ -370,11 +370,17 @@ def run_streaming_pipeline(
         output_root / "windows" / f"feature_shard_index{stage_suffix}.csv", index=False
     )
 
-    if all_feature_rows:
+    if shard_paths:
+        parts = []
+        for i, sp in enumerate(shard_paths):
+            parts.append(pd.read_parquet(sp))
+            if (i + 1) % 25 == 0:
+                parts = [pd.concat(parts, ignore_index=True)]
+        features_df = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
+        if not features_df.empty:
+            features_df.to_parquet(features_path, index=False)
+    elif all_feature_rows:
         features_df = pd.DataFrame(all_feature_rows)
-        features_df.to_parquet(features_path, index=False)
-    elif shard_paths:
-        features_df = pd.concat([pd.read_parquet(p) for p in shard_paths], ignore_index=True)
         features_df.to_parquet(features_path, index=False)
     else:
         features_df = pd.DataFrame()

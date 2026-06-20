@@ -35,7 +35,7 @@ def build_behavioural_graph(
         return pd.DataFrame(), pd.DataFrame(), {"num_nodes": 0, "num_edges": 0}
 
     cross_th = cross_vehicle_threshold if cross_vehicle_threshold is not None else max(
-        similarity_threshold - 0.05, 0.75
+        similarity_threshold - 0.08, 0.72
     )
 
     X, event_ids = load_descriptor_vectors(desc_df)
@@ -44,18 +44,17 @@ def build_behavioural_graph(
 
     n = len(X)
     id_to_meta = desc_df.set_index("event_id").to_dict("index")
-    vehicle_ids = desc_df["vehicle_id"].tolist()
+    vehicle_ids = desc_df["vehicle_id"].to_numpy()
     unique_vehicles = desc_df["vehicle_id"].unique().tolist()
 
     edges_map: dict[tuple[str, str], dict] = {}
+    pair_cross_counts: dict[str, int] = {}
 
-    # Global kNN edges (within and cross vehicle)
     nn = NearestNeighbors(metric="cosine", n_neighbors=min(knn_cap + 1, n), n_jobs=-1)
     nn.fit(X_norm)
     distances, indices = nn.kneighbors(X_norm)
 
     for i in range(n):
-        cross_count: dict[str, int] = {}
         for dist, j in zip(distances[i], indices[i]):
             if i == j:
                 continue
@@ -68,59 +67,69 @@ def build_behavioural_graph(
             if sim < th:
                 continue
             key = _edge_key(u, v)
-            if key in edges_map:
-                continue
             if cross_vehicle:
                 pair_key = f"{u_vid}|{v_vid}"
-                cross_count[pair_key] = cross_count.get(pair_key, 0) + 1
-                if cross_count[pair_key] > cross_vehicle_cap:
+                pair_cross_counts[pair_key] = pair_cross_counts.get(pair_key, 0) + 1
+                if pair_cross_counts[pair_key] > cross_vehicle_cap:
                     continue
-            edges_map[key] = {
-                "source": key[0],
-                "target": key[1],
-                "similarity": sim,
-                "edge_type": "behavioural_similarity",
-                "cross_vehicle": cross_vehicle,
-                "cross_manufacturer": id_to_meta[u].get("manufacturer") != id_to_meta[v].get("manufacturer"),
-                "temporal_edge": False,
-            }
+            if key not in edges_map or edges_map[key]["similarity"] < sim:
+                edges_map[key] = {
+                    "source": key[0],
+                    "target": key[1],
+                    "similarity": sim,
+                    "edge_type": "behavioural_similarity",
+                    "cross_vehicle": cross_vehicle,
+                    "cross_manufacturer": id_to_meta[u].get("manufacturer") != id_to_meta[v].get("manufacturer"),
+                    "temporal_edge": False,
+                }
 
-    # Explicit cross-vehicle neighbour pass so caps do not suppress all cross links
+    # Efficient batched cross-vehicle neighbour search (one index per target vehicle)
     if len(unique_vehicles) >= 2:
-        cross_k = min(knn_cap, max(3, cross_vehicle_cap))
-        for i in range(n):
-            u = event_ids[i]
-            u_vid = vehicle_ids[i]
-            other_idx = [j for j in range(n) if vehicle_ids[j] != u_vid]
-            if not other_idx:
+        cross_k = min(max(knn_cap, cross_vehicle_cap * 2), 20)
+        vehicle_index: dict[str, np.ndarray] = {
+            vid: np.where(vehicle_ids == vid)[0] for vid in unique_vehicles
+        }
+        for src_vid in unique_vehicles:
+            src_idx = vehicle_index[src_vid]
+            if len(src_idx) == 0:
                 continue
-            other_X = X_norm[other_idx]
-            nn_cross = NearestNeighbors(metric="cosine", n_neighbors=min(cross_k, len(other_idx)), n_jobs=1)
-            nn_cross.fit(other_X)
-            dists, idxs = nn_cross.kneighbors(X_norm[i : i + 1])
-            pair_cross_count: dict[str, int] = {}
-            for dist, oj in zip(dists[0], idxs[0]):
-                j = other_idx[int(oj)]
-                sim = 1.0 - float(dist)
-                if sim < cross_th:
+            for dst_vid in unique_vehicles:
+                if src_vid == dst_vid:
                     continue
-                v = event_ids[j]
-                v_vid = vehicle_ids[j]
-                key = _edge_key(u, v)
-                pair_key = f"{u_vid}|{v_vid}"
-                pair_cross_count[pair_key] = pair_cross_count.get(pair_key, 0) + 1
-                if pair_cross_count[pair_key] > cross_vehicle_cap:
+                dst_idx = vehicle_index[dst_vid]
+                if len(dst_idx) == 0:
                     continue
-                if key not in edges_map or edges_map[key]["similarity"] < sim:
-                    edges_map[key] = {
-                        "source": key[0],
-                        "target": key[1],
-                        "similarity": sim,
-                        "edge_type": "behavioural_similarity",
-                        "cross_vehicle": True,
-                        "cross_manufacturer": id_to_meta[u].get("manufacturer") != id_to_meta[v].get("manufacturer"),
-                        "temporal_edge": False,
-                    }
+                nn_cross = NearestNeighbors(
+                    metric="cosine",
+                    n_neighbors=min(cross_k, len(dst_idx)),
+                    n_jobs=-1,
+                )
+                nn_cross.fit(X_norm[dst_idx])
+                dists, neigh = nn_cross.kneighbors(X_norm[src_idx])
+                for row_i, (drow, irow) in enumerate(zip(dists, neigh)):
+                    gi = int(src_idx[row_i])
+                    u = event_ids[gi]
+                    for dist, lj in zip(drow, irow):
+                        sim = 1.0 - float(dist)
+                        if sim < cross_th:
+                            continue
+                        gj = int(dst_idx[int(lj)])
+                        v = event_ids[gj]
+                        key = _edge_key(u, v)
+                        pair_key = f"{src_vid}|{dst_vid}"
+                        pair_cross_counts[pair_key] = pair_cross_counts.get(pair_key, 0) + 1
+                        if pair_cross_counts[pair_key] > cross_vehicle_cap * max(len(src_idx) // 1000, 1):
+                            continue
+                        if key not in edges_map or edges_map[key]["similarity"] < sim:
+                            edges_map[key] = {
+                                "source": key[0],
+                                "target": key[1],
+                                "similarity": sim,
+                                "edge_type": "behavioural_similarity",
+                                "cross_vehicle": True,
+                                "cross_manufacturer": id_to_meta[u].get("manufacturer") != id_to_meta[v].get("manufacturer"),
+                                "temporal_edge": False,
+                            }
 
     edge_df = pd.DataFrame(edges_map.values()) if edges_map else pd.DataFrame()
     node_df = desc_df[["event_id", "vehicle_id", "manufacturer", "attack_type", "anomaly_score", "label"]].copy()

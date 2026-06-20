@@ -2,11 +2,11 @@
 
 ## 1. Files processed
 
-28 files for set_01 (inventory: 52)
+42 files for set_01 (inventory: ?)
 
 ## 2. Rows and windows
 
-Rows read (manifest sum): 20406189; windows: 400,000
+Rows read (manifest sum): 26911803; windows: 530,098
 
 ## 3. Vehicles
 
@@ -19,46 +19,57 @@ combined_spoofing, dos, fuzzing, gear_spoofing, interval, rpm_spoofing, speed_sp
 ## 5. Local detection by subset
 
 precision  recall      f1  roc_auc
-subset_name                                                             
-test_01_known_vehicle_known_attack       0.0555     1.0  0.1052   0.9944
-test_02_unknown_vehicle_known_attack     0.0000     0.0  0.0000      NaN
-test_03_known_vehicle_unknown_attack     0.0000     0.0  0.0000      NaN
+subset_name                                                               
+test_01_known_vehicle_known_attack         0.0555     1.0  0.1052   0.9944
+test_02_unknown_vehicle_known_attack       0.0000     0.0  0.0000      NaN
+test_03_known_vehicle_unknown_attack       0.0000     0.0  0.0000      NaN
+test_04_unknown_vehicle_unknown_attack     0.0000     0.0  0.0000      NaN
 
 ## 6. Local detection by attack type
 
-Empty DataFrame
-Columns: [precision, recall, f1]
-Index: []
+precision  recall      f1
+attack_type                                 
+combined_spoofing     0.0000     0.0  0.0000
+dos                   0.0773     0.5  0.1339
+fuzzing               0.0000     0.0  0.0000
+gear_spoofing         0.0000     0.0  0.0000
+interval              0.0000     0.0  0.0000
+rpm_spoofing          0.0000     0.0  0.0000
+speed_spoofing        0.0000     0.0  0.0000
+standstill            0.0000     0.0  0.0000
+systematic            0.0000     0.0  0.0000
 
 ## 7. Descriptor transmission rate
 
-0.1389
+0.2040
 
 ## 8. Graph statistics
 
 {
-  "num_nodes": 50000.0,
-  "num_edges": 241758.0,
-  "cross_vehicle_edges": 1.0,
-  "cross_vehicle_edge_pct": 0.0004136367772731,
-  "cross_manufacturer_edges": 0.0,
-  "average_degree": 9.73515613989168,
-  "isolated_node_rate": 0.00666,
+  "num_nodes": 100000,
+  "num_edges": 710147,
+  "cross_vehicle_edges": 1968,
+  "cross_vehicle_edge_pct": 0.2771257218575872,
+  "cross_manufacturer_edges": 0,
+  "average_degree": 14.222567142656866,
+  "isolated_node_rate": 0.00138,
   "similarity_threshold": 0.85,
-  "knn_cap": 10.0,
-  "temporal_edges": 0.0,
-  "mean_similarity": 0.927394650143477,
-  "connected_components": 391.0,
-  "largest_component": 37647.0
+  "cross_vehicle_threshold": 0.77,
+  "knn_cap": 10,
+  "cross_vehicle_cap": 20,
+  "temporal_edges": 0,
+  "mean_similarity": 0.9486186681905442,
+  "connected_components": 172,
+  "largest_component": 99405
 }
 
 ## 9. Benign-fleet campaign-free
 
-1.0
+0.0
 
 ## 10. Isolated attacks
 
-1.0
+0.0
 
 ## 11. Unrelated incidents separate
 
@@ -82,18 +93,18 @@ nan
 
 ## 16. Runtime and memory
 
-0.0s, peak 0.0 MB
+2128.5s, peak 2861.0 MB
 
 ## 17. Ready for full four-set run
 
-NO — review caps/validation first
+YES
 
 ## Safety caps applied
 
 {
-  "max_rows_per_file": 1000000,
-  "max_windows": 400000,
-  "max_descriptors": 50000
+  "max_rows_per_file": 475000,
+  "max_windows": 800000,
+  "max_descriptors": 100000
 }
 
 ## Tables
@@ -102,14 +113,14 @@ table_SET01_1_dataset_summary, table_SET01_2_local_detection_by_subset, table_SE
 
 ## Figures
 
-figure_SET01_1_local_score_distribution, figure_SET01_2_detection_by_subset, figure_SET01_4_graph_statistics, figure_SET01_5_campaign_f1_by_scenario, figure_SET01_6_campaign_size_sensitivity, figure_SET01_7_edge_count_vs_campaign_f1
+figure_SET01_1_local_score_distribution, figure_SET01_2_detection_by_subset, figure_SET01_3_detection_by_attack_type, figure_SET01_4_graph_statistics, figure_SET01_5_campaign_f1_by_scenario, figure_SET01_6_campaign_size_sensitivity, figure_SET01_7_edge_count_vs_campaign_f1
 
 ## Scenario summary
 
 campaign_detected  campaign_f1  false_campaign
 scenario                                                            
-benign_fleet_control                1.0          0.0             1.0
-isolated_attack                     1.0          0.0             1.0
+benign_fleet_control                0.0          0.0             0.0
+isolated_attack                     0.0          0.0             0.0
 strong_campaign                     0.0          0.0             0.0
 unrelated_incidents                 0.0          0.0             0.0
 weak_campaign                       0.0          0.0             0.0

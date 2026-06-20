@@ -3,8 +3,8 @@
 ## Summary
 
 - Stage: set_pilot
-- Files processed: 28
-- Windows: 400,000
-- Feature rows: 400,000
-- max_rows_per_file: 1000000
-- max_windows: 400000
+- Files processed: 0
+- Windows: 530,098
+- Feature rows: 530,098
+- max_rows_per_file: 475000
+- max_windows: 800000

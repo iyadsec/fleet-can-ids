@@ -116,17 +116,20 @@ def evaluate_campaign(
     best_score = 0.0
 
     for cid, group in clusters:
-        attack_labels = int(group["label"].sum())
+        attack_labels = int((group["label"] == 1).sum())
+        attack_families = set(group["attack_type"].unique()) - {"benign"}
+        if scenario_type == "benign_fleet_control":
+            has_attack = attack_labels > 0
+        else:
+            has_attack = attack_labels > 0 or bool(attack_families)
         vehicles = set(group["vehicle_id"].unique())
         n_vehicles = len(vehicles)
-        attack_families = set(group["attack_type"].unique()) - {"benign"}
 
         if scenario_type == "benign_fleet_control":
-            # Benign fleet must not alert unless malicious descriptors are present
-            if attack_labels == 0:
+            if not has_attack:
                 continue
         else:
-            if attack_labels == 0:
+            if not has_attack:
                 continue
 
         if n_vehicles < 2 and scenario_type in ("strong_campaign", "weak_campaign", "unrelated_incidents"):
@@ -139,17 +142,17 @@ def evaluate_campaign(
 
         cohesion = 1.0 / len(attack_families) if attack_families else 0.0
         score = n_vehicles * cohesion
-        if attack_labels > 0:
-            score += attack_labels * 0.1
+        if attack_labels > 0 or attack_families:
+            score += (attack_labels + len(attack_families)) * 0.1
         if score > best_score:
             best_score = score
             best_cluster = cid
             if scenario_type == "isolated_attack":
-                campaign_detected = n_vehicles == 1 and attack_labels > 0
+                campaign_detected = n_vehicles == 1 and has_attack
             elif scenario_type == "benign_fleet_control":
-                campaign_detected = attack_labels > 0 and n_vehicles >= 2
+                campaign_detected = has_attack and n_vehicles >= 2
             elif scenario_type in ("strong_campaign", "weak_campaign"):
-                campaign_detected = n_vehicles >= 2 and len(attack_families) >= 1
+                campaign_detected = n_vehicles >= 2 and has_attack
             else:
                 campaign_detected = n_vehicles >= 2
 

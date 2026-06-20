@@ -1,4 +1,4 @@
 # table_SET01_5_graph_statistics
 
- num_nodes  num_edges  cross_vehicle_edges  cross_vehicle_edge_pct  cross_manufacturer_edges  average_degree  isolated_node_rate  similarity_threshold  knn_cap  temporal_edges  mean_similarity  connected_components  largest_component set_id
-   50000.0   241758.0                  1.0                0.000414                       0.0        9.735156             0.00666                  0.85     10.0             0.0         0.927395                 391.0            37647.0 set_01
+ num_nodes  num_edges  cross_vehicle_edges  cross_vehicle_edge_pct  cross_manufacturer_edges  average_degree  isolated_node_rate  similarity_threshold  cross_vehicle_threshold  knn_cap  cross_vehicle_cap  temporal_edges  mean_similarity  connected_components  largest_component set_id
+    100000     710147                 1968                0.277126                         0       14.222567             0.00138                  0.85                     0.77       10                 20               0         0.948619                   172              99405 set_01

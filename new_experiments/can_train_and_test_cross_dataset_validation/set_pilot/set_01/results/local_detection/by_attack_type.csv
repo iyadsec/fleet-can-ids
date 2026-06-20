@@ -15,8 +15,8 @@ set_01,test_02_unknown_vehicle_known_attack,chevrolet_silverado,rpm_spoofing,wea
 set_01,test_02_unknown_vehicle_known_attack,chevrolet_silverado,rpm_spoofing,strong,descriptor_only_unknown_vehicle,0.0,0.0,0.0,,0.0,1.0,0.0,0,25617,0,0,1.0
 set_01,test_02_unknown_vehicle_known_attack,chevrolet_silverado,standstill,weak,descriptor_only_unknown_vehicle,0.0,0.0,0.0,,0.0,1.0,0.0,0,25621,0,0,1.0
 set_01,test_02_unknown_vehicle_known_attack,chevrolet_silverado,standstill,strong,descriptor_only_unknown_vehicle,0.0,0.0,0.0,,0.0,1.0,0.0,0,25621,0,0,1.0
-set_01,test_03_known_vehicle_unknown_attack,chevrolet_impala,combined_spoofing,weak,local_model,0.0,0.0,0.0,,0.0,0.2511046077925059,0.7488953922074941,26102,8752,0,0,0.2511046077925059
-set_01,test_03_known_vehicle_unknown_attack,chevrolet_impala,combined_spoofing,strong,local_model,0.0,0.0,0.0,,0.0,0.028605038159178288,0.9713949618408217,33857,997,0,0,0.028605038159178288
+set_01,test_03_known_vehicle_unknown_attack,chevrolet_impala,combined_spoofing,weak,local_model,0.0,0.0,0.0,,0.0,0.2537881601426131,0.7462118398573869,40185,13667,0,0,0.2537881601426131
+set_01,test_03_known_vehicle_unknown_attack,chevrolet_impala,combined_spoofing,strong,local_model,0.0,0.0,0.0,,0.0,0.04547649112382084,0.9545235088761792,51403,2449,0,0,0.04547649112382084
 set_01,test_03_known_vehicle_unknown_attack,chevrolet_impala,fuzzing,weak,local_model,0.0,0.0,0.0,,0.0,0.2146527601119308,0.7853472398880692,15436,4219,0,0,0.2146527601119308
 set_01,test_03_known_vehicle_unknown_attack,chevrolet_impala,fuzzing,strong,local_model,0.0,0.0,0.0,,0.0,0.03775120834393284,0.9622487916560671,18913,742,0,0,0.03775120834393284
 set_01,test_03_known_vehicle_unknown_attack,chevrolet_impala,interval,weak,local_model,0.0,0.0,0.0,,0.0,0.14888396864340853,0.8511160313565914,28446,4976,0,0,0.14888396864340853
@@ -25,3 +25,13 @@ set_01,test_03_known_vehicle_unknown_attack,chevrolet_impala,speed_spoofing,weak
 set_01,test_03_known_vehicle_unknown_attack,chevrolet_impala,speed_spoofing,strong,local_model,0.0,0.0,0.0,,0.0,0.06223586635834463,0.9377641336416553,23521,1561,0,0,0.06223586635834463
 set_01,test_03_known_vehicle_unknown_attack,chevrolet_impala,systematic,weak,local_model,0.0,0.0,0.0,,0.0,0.18290751689189189,0.8170924831081081,15479,3465,0,0,0.18290751689189189
 set_01,test_03_known_vehicle_unknown_attack,chevrolet_impala,systematic,strong,local_model,0.0,0.0,0.0,,0.0,0.030616554054054054,0.9693834459459459,18364,580,0,0,0.030616554054054054
+set_01,test_04_unknown_vehicle_unknown_attack,chevrolet_silverado,combined_spoofing,weak,descriptor_only_unknown_vehicle,0.0,0.0,0.0,,0.0,1.0,0.0,0,37996,0,0,1.0
+set_01,test_04_unknown_vehicle_unknown_attack,chevrolet_silverado,combined_spoofing,strong,descriptor_only_unknown_vehicle,0.0,0.0,0.0,,0.0,0.9958943046636488,0.004105695336351195,156,37840,0,0,0.9958943046636488
+set_01,test_04_unknown_vehicle_unknown_attack,chevrolet_silverado,fuzzing,weak,descriptor_only_unknown_vehicle,0.0,0.0,0.0,,0.0,1.0,0.0,0,18998,0,0,1.0
+set_01,test_04_unknown_vehicle_unknown_attack,chevrolet_silverado,fuzzing,strong,descriptor_only_unknown_vehicle,0.0,0.0,0.0,,0.0,0.995841667543952,0.004158332456048005,79,18919,0,0,0.995841667543952
+set_01,test_04_unknown_vehicle_unknown_attack,chevrolet_silverado,interval,weak,descriptor_only_unknown_vehicle,0.0,0.0,0.0,,0.0,1.0,0.0,0,18998,0,0,1.0
+set_01,test_04_unknown_vehicle_unknown_attack,chevrolet_silverado,interval,strong,descriptor_only_unknown_vehicle,0.0,0.0,0.0,,0.0,0.986682808716707,0.013317191283292978,253,18745,0,0,0.986682808716707
+set_01,test_04_unknown_vehicle_unknown_attack,chevrolet_silverado,speed_spoofing,weak,descriptor_only_unknown_vehicle,0.0,0.0,0.0,,0.0,1.0,0.0,0,18998,0,0,1.0
+set_01,test_04_unknown_vehicle_unknown_attack,chevrolet_silverado,speed_spoofing,strong,descriptor_only_unknown_vehicle,0.0,0.0,0.0,,0.0,0.9978418780924307,0.002158121907569218,41,18957,0,0,0.9978418780924307
+set_01,test_04_unknown_vehicle_unknown_attack,chevrolet_silverado,systematic,weak,descriptor_only_unknown_vehicle,0.0,0.0,0.0,,0.0,1.0,0.0,0,16110,0,0,1.0
+set_01,test_04_unknown_vehicle_unknown_attack,chevrolet_silverado,systematic,strong,descriptor_only_unknown_vehicle,0.0,0.0,0.0,,0.0,0.9924270639354438,0.007572936064556176,122,15988,0,0,0.9924270639354438
