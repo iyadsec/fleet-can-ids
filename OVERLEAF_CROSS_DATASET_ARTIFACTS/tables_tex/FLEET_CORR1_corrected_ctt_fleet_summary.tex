@@ -1,0 +1,11 @@
+\begin{tabular}{llllllllllllllll}
+\hline
+\textbf{scenario} \textbf{expected_decision} \textbf{local_or_incident_detected} \textbf{fleet_campaign_detected} \textbf{false_campaign} \textbf{incorrect_merge_rate_before_rule} \textbf{incorrect_merge_rate_after_rule} \textbf{campaign_precision} \textbf{campaign_recall} \textbf{campaign_f1} \textbf{membership_precision} \textbf{membership_recall} \textbf{membership_f1} \textbf{fragmentation_rate} \textbf{benign_contamination_rate} \textbf{interpretation} \\
+\hline
+Benign-Fleet Control & no coordinated campaign & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & No false fleet campaign; benign fleet remained safe. \\
+Isolated Single-Vehicle Attack & local incident only & 0.225 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.225 & 0.012625 & 0.0238155787875997 & 0.203234126984127 & 0.0 & Local incident without false fleet escalation. \\
+Unrelated Multi-Vehicle Incidents & separate incidents & 0.0 & 0.0 & 0.0 & 1.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & Over-merge before rule (1.0→0.0); fixed by consistency rule. \\
+Strong Behaviourally Related Campaign & fleet campaign & 1.0 & 1.0 & 0.0 & 0.0 & 0.0 & 1.0 & 1.0 & 1.0 & 1.0 & 1.0 & 1.0 & 0.99425 & 0.0 & Coordinated campaign detected with perfect pooled campaign F1. \\
+Weak Behaviourally Related Campaign & weak fleet campaign & 1.0 & 1.0 & 0.0 & 0.0 & 0.0 & 1.0 & 1.0 & 1.0 & 1.0 & 1.0 & 1.0 & 0.994375 & 0.0 & Coordinated campaign detected with perfect pooled campaign F1. \\
+\hline
+\end{tabular}
