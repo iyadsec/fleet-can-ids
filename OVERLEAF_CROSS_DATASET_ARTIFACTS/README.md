@@ -22,8 +22,8 @@ OVERLEAF_CROSS_DATASET_ARTIFACTS/
 1. `figures_pdf/figure_LOCAL_COMP1_pooled_comparison.pdf`
 2. `figures_pdf/figure_FLEET_CORR2_unrelated_merge_before_after.pdf`
 3. `figures_pdf/figure_CTT_CORR4_corrected_scenario_outcomes.pdf`
-4. `tables_tex/LOCAL_COMP1_pooled_ocslab_vs_ctt.tex`
-5. `tables_tex/FLEET_CORR1_corrected_ctt_fleet_summary.tex`
+4. `tables_tex/FLEET_CORR1_corrected_ctt_fleet_summary.tex`
+5. `tables_csv/LOCAL_COMP1_pooled_ocslab_vs_ctt.csv` (no `.tex` in source; use CSV or convert for Overleaf)
 
 ## Recommended main-paper tables
 
