@@ -1,0 +1,8 @@
+Dataset,Vehicle/model,Manufacturer,Threshold policy,PR-AUC,Precision,Recall,F1,FPR,Support attacks,Support benign,Notes
+OCSLab,Hyundai Sonata,Hyundai,FPR<=5%,,,,,,,,Per-vehicle/model metrics at FPR<=5% not present in curated paper/results/table_01; pooled headline only. Sonata/Soul/Spark not separately exported at this threshold.
+OCSLab,Kia Soul,Kia,FPR<=5%,,,,,,,,Per-vehicle/model metrics at FPR<=5% not present in curated paper/results/table_01; pooled headline only. Sonata/Soul/Spark not separately exported at this threshold.
+OCSLab,Chevrolet Spark,Chevrolet,FPR<=5%,,,,,,,,Per-vehicle/model metrics at FPR<=5% not present in curated paper/results/table_01; pooled headline only. Sonata/Soul/Spark not separately exported at this threshold.
+CTT,Chevrolet Impala,Chevrolet,FPR <= 5% (corrected eval ground truth),0.91,0.9101,0.1094,0.195,0.0497,19309.0,36109.0,Corrected eval_attack ground truth; mean across available subsets per vehicle.
+CTT,Chevrolet Silverado,Chevrolet,FPR <= 5% (corrected eval ground truth),0.9567,0.9681,0.2929,0.4497,0.0497,57975.0,36106.0,Corrected eval_attack ground truth; mean across available subsets per vehicle.
+CTT,Chevrolet Traverse,Chevrolet,FPR <= 5% (corrected eval ground truth),0.9231,0.9303,0.1388,0.2415,0.0497,25820.0,36109.0,Corrected eval_attack ground truth; mean across available subsets per vehicle.
+CTT,Subaru Forester,Subaru,FPR <= 5% (corrected eval ground truth),0.9645,0.9776,0.3676,0.531,0.0498,74320.0,30822.0,Corrected eval_attack ground truth; mean across available subsets per vehicle.
