@@ -1,0 +1,16 @@
+# table_CUR_COMP2_headline_local_descriptor
+
+                     Metric OCSLab curated paper result can-train-and-test full validation result            Comparable?                                                                          Interpretation
+              local ROC-AUC                      0.7855                                    0.8028 Comparable with caveat Descriptive cross-dataset comparison; datasets differ in vehicles, attacks, and splits.
+               local PR-AUC                      0.9273                                    0.9386 Comparable with caveat Descriptive cross-dataset comparison; datasets differ in vehicles, attacks, and splits.
+            local precision                      0.9728                                    0.9465 Comparable with caveat Descriptive cross-dataset comparison; datasets differ in vehicles, attacks, and splits.
+               local recall                      0.4596                                    0.2272 Comparable with caveat Descriptive cross-dataset comparison; datasets differ in vehicles, attacks, and splits.
+                   local F1                      0.6243                                    0.3543 Comparable with caveat Descriptive cross-dataset comparison; datasets differ in vehicles, attacks, and splits.
+                  local FPR                      0.0395                                    0.0497 Comparable with caveat Descriptive cross-dataset comparison; datasets differ in vehicles, attacks, and splits.
+    raw window size (bytes)                      2075.8                                    1600.0 Comparable with caveat Descriptive cross-dataset comparison; datasets differ in vehicles, attacks, and splits.
+    descriptor size (bytes)                       165.1                                     482.3 Comparable with caveat Descriptive cross-dataset comparison; datasets differ in vehicles, attacks, and splits.
+        bandwidth reduction                      0.9205                                    0.6986    Directly comparable Descriptive cross-dataset comparison; datasets differ in vehicles, attacks, and splits.
+          compression ratio                       12.57                                      3.32    Directly comparable Descriptive cross-dataset comparison; datasets differ in vehicles, attacks, and splits.
+candidate transmission rate                           —                                    0.2581 Comparable with caveat Descriptive cross-dataset comparison; datasets differ in vehicles, attacks, and splits.
+
+> Local detection metrics are **Comparable with caveat** — different vehicles, attacks, labels, and alert thresholds.
