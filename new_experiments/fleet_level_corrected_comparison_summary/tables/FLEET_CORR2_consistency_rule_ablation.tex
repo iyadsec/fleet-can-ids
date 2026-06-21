@@ -1,0 +1,8 @@
+\begin{tabular}{lllllllllllll}
+\hline
+\textbf{rule_state} \textbf{interpretation} \textbf{graph_config} \textbf{mutual_knn} \textbf{cosine_threshold} \textbf{k} \textbf{cross_vehicle_edge_cap} \textbf{benign_false_campaign} \textbf{isolated_false_campaign} \textbf{unrelated_incorrect_merge_rate} \textbf{strong_campaign_f1} \textbf{weak_campaign_f1} \textbf{mean_campaign_f1} \\
+\hline
+without consistency rule & Unrelated over-merge before post-clustering rule. & τ=0.88, k=10, mutual kNN, cross-vehicle cap=3 (200-node) & True & 0.88 & 10 & 3 & 0.075 & 1.0 & 1.0 & 1.0 & 1.0 & 1.0 \\
+with consistency rule & Unrelated merge 1.0→0.0; strong/weak F1 remain 1.0. & τ=0.88, k=10, mutual kNN, cross-vehicle cap=3 (200-node) & True & 0.88 & 10 & 3 & 0.0 & 0.0 & 0.0 & 1.0 & 1.0 & 1.0 \\
+\hline
+\end{tabular}
