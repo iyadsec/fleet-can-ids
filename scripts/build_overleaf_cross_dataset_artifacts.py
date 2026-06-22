@@ -27,6 +27,9 @@ SOURCE_ROOTS: dict[str, list[str]] = {
     "origin/cursor/ctt-f1-merge-diagnostics-8f28": [
         "new_experiments/can_train_and_test_cross_dataset_validation/diagnostics_ctt_f1_merge",
     ],
+    "origin/cursor/correlation-detection-effectiveness-8f28": [
+        "new_experiments/correlation_detection_effectiveness_comparison",
+    ],
 }
 
 # Explicit required copies: (source_prefix, relative_path, dest_subfolder)
@@ -90,6 +93,16 @@ REQUIRED = [
     ("new_experiments/can_train_and_test_cross_dataset_validation/diagnostics_ctt_f1_merge/figures", "campaign_f1_vs_graph_edge_count", "figure"),
     ("new_experiments/can_train_and_test_cross_dataset_validation/diagnostics_ctt_f1_merge/figures", "incorrect_merge_vs_graph_edge_count", "figure"),
     ("new_experiments/can_train_and_test_cross_dataset_validation/diagnostics_ctt_f1_merge", "CTT_F1_AND_MERGE_DIAGNOSTIC_SUMMARY.md", "report"),
+    # Correlation detection effectiveness (fleet-correlation proof figures)
+    ("new_experiments/correlation_detection_effectiveness_comparison/tables", "CORR_EFF1_ocslab_vs_ctt_campaign_correlation", "table"),
+    ("new_experiments/correlation_detection_effectiveness_comparison/tables", "CORR_EFF2_local_vs_fleet_correlation", "table"),
+    ("new_experiments/correlation_detection_effectiveness_comparison/tables", "CORR_EFF3_consistency_rule_ablation", "table"),
+    ("new_experiments/correlation_detection_effectiveness_comparison/figures", "figure_CORR_EFF1_ocslab_vs_ctt_fleet_correlation", "figure"),
+    ("new_experiments/correlation_detection_effectiveness_comparison/figures", "figure_CORR_EFF2_fleet_correlation_gain", "figure"),
+    ("new_experiments/correlation_detection_effectiveness_comparison/figures", "figure_CORR_EFF3_consistency_rule_ablation", "figure"),
+    ("new_experiments/correlation_detection_effectiveness_comparison/figures", "figure_CORR_EFF4_campaign_detection_only", "figure"),
+    ("new_experiments/correlation_detection_effectiveness_comparison", "CORRELATION_DETECTION_EFFECTIVENESS_PAPER_WORDING.md", "report"),
+    ("new_experiments/correlation_detection_effectiveness_comparison", "CORRELATION_DETECTION_EFFECTIVENESS_SUMMARY.md", "report"),
 ]
 
 REF_FOR_PATH: dict[str, str] = {}
@@ -272,8 +285,16 @@ def build_artifact_index(manifest: list[CopyRow]) -> list[dict]:
         "FLEET_CORR1_corrected_ctt_fleet_summary.csv",
         "figure_FLEET_CORR2_unrelated_merge_before_after.pdf",
         "figure_CTT_CORR4_corrected_scenario_outcomes.pdf",
+        "CORR_EFF1_ocslab_vs_ctt_campaign_correlation.csv",
+        "CORR_EFF1_ocslab_vs_ctt_campaign_correlation.tex",
+        "figure_CORR_EFF4_campaign_detection_only.pdf",
+        "figure_CORR_EFF1_ocslab_vs_ctt_fleet_correlation.pdf",
     }
-    supplement_keywords = ["LOCAL_COMP2", "LOCAL_COMP3", "LOCAL_COMP4", "CTT_CORR2", "CTT_CORR3", "CTT_CORR4", "CTT_CORR5", "CTT_CORR7", "FLEET_CORR3", "diagnostic", "local_f1", "fpr_tpr", "incorrect_merge", "campaign_f1_vs"]
+    supplement_keywords = [
+        "LOCAL_COMP2", "LOCAL_COMP3", "LOCAL_COMP4", "CTT_CORR2", "CTT_CORR3", "CTT_CORR4",
+        "CTT_CORR5", "CTT_CORR7", "FLEET_CORR3", "CORR_EFF2", "CORR_EFF3",
+        "diagnostic", "local_f1", "fpr_tpr", "incorrect_merge", "campaign_f1_vs",
+    ]
 
     rows = []
     for m in manifest:
@@ -293,7 +314,8 @@ def build_artifact_index(manifest: list[CopyRow]) -> list[dict]:
         else:
             atype = "other"
 
-        topic = "local_ids" if "LOCAL" in fname or "CTT_CORR1" in fname else \
+        topic = "fleet_correlation" if "CORR_EFF" in fname else \
+                "local_ids" if "LOCAL" in fname or "CTT_CORR1" in fname else \
                 "fleet" if "FLEET" in fname or "CTT_CORR4" in fname or "CTT_CORR5" in fname or "CTT_CORR6" in fname else \
                 "cross_dataset" if "CUR_COMP" in fname else \
                 "diagnostic" if any(x in fname for x in ("local_f1", "merge", "threshold", "campaign_f1")) else "ctt_corrected"
@@ -327,6 +349,11 @@ def caption_for(fname: str) -> str:
         "figure_CTT_CORR4_corrected_scenario_outcomes": "Corrected CTT fleet scenario outcomes (200-node graphs).",
         "FLEET_CORR1_corrected_ctt_fleet_summary": "Corrected CTT fleet scenario summary table.",
         "LOCAL_COMP1_pooled_ocslab_vs_ctt": "Pooled local IDS metrics: OCSLab vs corrected CTT.",
+        "CORR_EFF1_ocslab_vs_ctt_campaign_correlation": "Fleet-correlation outcomes: OCSLab vs corrected CTT across scenario types.",
+        "figure_CORR_EFF1_ocslab_vs_ctt_fleet_correlation": "Fleet-correlation comparison: OCSLab vs corrected CTT (200-node graphs).",
+        "figure_CORR_EFF4_campaign_detection_only": "Campaign detection F1 for strong and weak scenarios (OCSLab vs CTT).",
+        "figure_CORR_EFF2_fleet_correlation_gain": "Local incident detection vs fleet campaign decision (CTT corrected).",
+        "figure_CORR_EFF3_consistency_rule_ablation": "Campaign consistency rule ablation: unrelated merge 1.0 to 0.0.",
     }
     stem = Path(fname).stem
     for k, v in caps.items():
@@ -357,27 +384,29 @@ OVERLEAF_CROSS_DATASET_ARTIFACTS/
 
 ## Upload to Overleaf first
 
-1. `figures_pdf/figure_LOCAL_COMP1_pooled_comparison.pdf`
-2. `figures_pdf/figure_FLEET_CORR2_unrelated_merge_before_after.pdf`
-3. `figures_pdf/figure_CTT_CORR4_corrected_scenario_outcomes.pdf`
-4. `tables_tex/LOCAL_COMP1_pooled_ocslab_vs_ctt.tex`
-5. `tables_tex/FLEET_CORR1_corrected_ctt_fleet_summary.tex`
+1. `figures_pdf/figure_CORR_EFF4_campaign_detection_only.pdf` — fleet campaign detection (simple)
+2. `figures_pdf/figure_CORR_EFF1_ocslab_vs_ctt_fleet_correlation.pdf` — full fleet-correlation comparison
+3. `figures_pdf/figure_LOCAL_COMP1_pooled_comparison.pdf`
+4. `figures_pdf/figure_FLEET_CORR2_unrelated_merge_before_after.pdf`
+5. `tables_tex/CORR_EFF1_ocslab_vs_ctt_campaign_correlation.tex`
+6. `tables_tex/FLEET_CORR1_corrected_ctt_fleet_summary.tex`
 
 ## Recommended main-paper tables
 
+- `CORR_EFF1_ocslab_vs_ctt_campaign_correlation` — fleet-correlation proof table (OCSLab vs CTT)
 - `LOCAL_COMP1_pooled_ocslab_vs_ctt` — local IDS pooled comparison
 - `FLEET_CORR1_corrected_ctt_fleet_summary` — corrected fleet scenarios
-- `table_CUR_COMP3_fleet_scenario_comparison` — OCSLab vs CTT scenarios (supplement if space tight)
 
 ## Recommended main-paper figures
 
-- `figure_LOCAL_COMP1_pooled_comparison`
-- `figure_FLEET_CORR2_unrelated_merge_before_after`
-- `figure_CTT_CORR4_corrected_scenario_outcomes`
+- `figure_CORR_EFF4_campaign_detection_only` — simple campaign F1 (strong/weak)
+- `figure_CORR_EFF1_ocslab_vs_ctt_fleet_correlation` — full fleet-correlation safety metrics
+- `figure_FLEET_CORR2_unrelated_merge_before_after` — consistency rule effect
+- `figure_LOCAL_COMP1_pooled_comparison` — local IDS comparison
 
 ## Supplementary
 
-Per-vehicle, per-subset, per-attack local tables (LOCAL_COMP2–4), CTT_CORR2–7, FLEET_CORR3–6, diagnostic figures.
+Per-vehicle local tables (LOCAL_COMP2–4), CORR_EFF2–3, CTT_CORR2–7, FLEET_CORR3–6, diagnostic figures.
 
 ## Corrected CTT evaluation notes
 

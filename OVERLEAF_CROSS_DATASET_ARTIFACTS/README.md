@@ -19,27 +19,29 @@ OVERLEAF_CROSS_DATASET_ARTIFACTS/
 
 ## Upload to Overleaf first
 
-1. `figures_pdf/figure_LOCAL_COMP1_pooled_comparison.pdf`
-2. `figures_pdf/figure_FLEET_CORR2_unrelated_merge_before_after.pdf`
-3. `figures_pdf/figure_CTT_CORR4_corrected_scenario_outcomes.pdf`
-4. `tables_tex/FLEET_CORR1_corrected_ctt_fleet_summary.tex`
-5. `tables_csv/LOCAL_COMP1_pooled_ocslab_vs_ctt.csv` (no `.tex` in source; use CSV or convert for Overleaf)
+1. `figures_pdf/figure_CORR_EFF4_campaign_detection_only.pdf` — fleet campaign detection (simple)
+2. `figures_pdf/figure_CORR_EFF1_ocslab_vs_ctt_fleet_correlation.pdf` — full fleet-correlation comparison
+3. `figures_pdf/figure_LOCAL_COMP1_pooled_comparison.pdf`
+4. `figures_pdf/figure_FLEET_CORR2_unrelated_merge_before_after.pdf`
+5. `tables_tex/CORR_EFF1_ocslab_vs_ctt_campaign_correlation.tex`
+6. `tables_tex/FLEET_CORR1_corrected_ctt_fleet_summary.tex`
 
 ## Recommended main-paper tables
 
+- `CORR_EFF1_ocslab_vs_ctt_campaign_correlation` — fleet-correlation proof table (OCSLab vs CTT)
 - `LOCAL_COMP1_pooled_ocslab_vs_ctt` — local IDS pooled comparison
 - `FLEET_CORR1_corrected_ctt_fleet_summary` — corrected fleet scenarios
-- `table_CUR_COMP3_fleet_scenario_comparison` — OCSLab vs CTT scenarios (supplement if space tight)
 
 ## Recommended main-paper figures
 
-- `figure_LOCAL_COMP1_pooled_comparison`
-- `figure_FLEET_CORR2_unrelated_merge_before_after`
-- `figure_CTT_CORR4_corrected_scenario_outcomes`
+- `figure_CORR_EFF4_campaign_detection_only` — simple campaign F1 (strong/weak)
+- `figure_CORR_EFF1_ocslab_vs_ctt_fleet_correlation` — full fleet-correlation safety metrics
+- `figure_FLEET_CORR2_unrelated_merge_before_after` — consistency rule effect
+- `figure_LOCAL_COMP1_pooled_comparison` — local IDS comparison
 
 ## Supplementary
 
-Per-vehicle, per-subset, per-attack local tables (LOCAL_COMP2–4), CTT_CORR2–7, FLEET_CORR3–6, diagnostic figures.
+Per-vehicle local tables (LOCAL_COMP2–4), CORR_EFF2–3, CTT_CORR2–7, FLEET_CORR3–6, diagnostic figures.
 
 ## Corrected CTT evaluation notes
 
