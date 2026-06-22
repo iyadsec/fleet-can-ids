@@ -1,0 +1,31 @@
+OVERLEAF CROSS-DATASET ARTIFACTS — LOCATION
+=============================================
+
+The folder name is exactly (case-sensitive):
+
+  OVERLEAF_CROSS_DATASET_ARTIFACTS
+
+NOT: overleaf_sross_dataset_artifcats
+NOT: paper/publication_artifacts
+
+Full path on your Mac:
+
+  /Users/iyadatieh/Library/CloudStorage/OneDrive-Personal/University of Reading/CodeRepo/OVERLEAF_CROSS_DATASET_ARTIFACTS/
+
+If you do not see this folder in Finder, run in Terminal:
+
+  cd "/Users/iyadatieh/Library/CloudStorage/OneDrive-Personal/University of Reading/CodeRepo"
+  bash scripts/sync_overleaf_artifacts_mac.sh
+
+Or manually:
+
+  git fetch origin main
+  git checkout main
+  git pull origin main
+  open OVERLEAF_CROSS_DATASET_ARTIFACTS
+
+The folder is stored in GitHub (branch: main). It will only appear locally after git pull.
+
+Contents: 117 files — PDF/PNG figures, TeX/CSV/MD tables, reports, README, index.
+
+GitHub repo: https://github.com/iyadsec/fleet-can-ids

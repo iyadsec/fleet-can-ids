@@ -24,6 +24,23 @@ Research codebase for detecting intrusions on Controller Area Network (CAN) bus 
     └── utils/            # Config, paths, logging
 ```
 
+## Overleaf cross-dataset artifacts (paper figures & tables)
+
+All corrected figures and tables for the cross-dataset validation section live in:
+
+```
+OVERLEAF_CROSS_DATASET_ARTIFACTS/
+```
+
+**On your Mac**, if this folder is missing in Finder, pull from GitHub:
+
+```bash
+cd "/Users/iyadatieh/Library/CloudStorage/OneDrive-Personal/University of Reading/CodeRepo"
+bash scripts/sync_overleaf_artifacts_mac.sh
+```
+
+See `OVERLEAF_CROSS_DATASET_ARTIFACTS_HERE.txt` and `OVERLEAF_CROSS_DATASET_ARTIFACTS/README.md` for upload guidance.
+
 ## GitHub
 
 **Repository:** [github.com/iyadsec/fleet-can-ids](https://github.com/iyadsec/fleet-can-ids)
