@@ -1,0 +1,5 @@
+set_id,attack_family,campaign_size,n_vehicles_available,fleet_campaign_detected,campaign_f1,campaign_precision,campaign_recall,false_campaign_rate,fragmentation_rate
+set_01,dos,1,2,0,0.0,0.0,0.0,0.05,0.1
+set_01,dos,2,2,1,0.8,0.85,0.75,0.05,0.1
+set_01,dos,2,2,1,0.8,0.85,0.75,0.05,0.1
+set_01,dos,2,2,1,0.8,0.85,0.75,0.05,0.1

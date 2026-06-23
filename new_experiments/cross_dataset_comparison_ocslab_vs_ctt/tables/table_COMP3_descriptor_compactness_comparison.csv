@@ -1,0 +1,6 @@
+Metric,OCSLab,can-train-and-test,Difference,Interpretation
+raw window size,SOURCE_NOT_IN_WORKSPACE,1600,—,Same descriptor abstraction pipeline; absolute bytes may differ by window proxy.
+descriptor size,SOURCE_NOT_IN_WORKSPACE,482.2586,—,Same descriptor abstraction pipeline; absolute bytes may differ by window proxy.
+compression ratio,SOURCE_NOT_IN_WORKSPACE,3.3177,—,Same descriptor abstraction pipeline; absolute bytes may differ by window proxy.
+bandwidth reduction,SOURCE_NOT_IN_WORKSPACE,0.6986,—,Same descriptor abstraction pipeline; absolute bytes may differ by window proxy.
+candidate transmission rate,SOURCE_NOT_IN_WORKSPACE,0.2581,—,Same descriptor abstraction pipeline; absolute bytes may differ by window proxy.

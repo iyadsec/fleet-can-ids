@@ -88,3 +88,9 @@ new_experiments/can_train_and_test_cross_dataset_validation/scenarios/
 new_experiments/can_train_and_test_cross_dataset_validation/manifests/window_manifest.csv
 new_experiments/can_train_and_test_cross_dataset_validation/manifests/window_manifest_pilot.csv
 new_experiments/can_train_and_test_cross_dataset_validation/logs/
+new_experiments/can_train_and_test_cross_dataset_validation/set_pilot/**/normalized/
+new_experiments/can_train_and_test_cross_dataset_validation/set_pilot/**/windows/
+new_experiments/can_train_and_test_cross_dataset_validation/set_pilot/**/local_models/
+new_experiments/can_train_and_test_cross_dataset_validation/set_pilot/**/scalers/
+new_experiments/can_train_and_test_cross_dataset_validation/set_pilot/**/scenarios/
+new_experiments/can_train_and_test_cross_dataset_validation/set_pilot/**/manifests/window_manifest.csv

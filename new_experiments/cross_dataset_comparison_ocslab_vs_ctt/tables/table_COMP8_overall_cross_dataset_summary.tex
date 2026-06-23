@@ -1,0 +1,16 @@
+\begin{tabular}{llll}
+\toprule
+Evaluation dimension & OCSLab conclusion & can-train-and-test conclusion & Combined evidence for framework \\
+\midrule
+local anomaly detection & SOURCE_NOT_IN_WORKSPACE & Cross-vehicle subsets challenging (test_01 F1=0.0417); ROC-AUC high (~0.99) & Framework runs end-to-end; local alert calibration differs on CTT cross-vehicle tests. \\
+descriptor abstraction & SOURCE_NOT_IN_WORKSPACE & ~69.9% bandwidth reduction; ~482 B descriptors & Both datasets confirm compact descriptor layer. \\
+graph construction & SOURCE_NOT_IN_WORKSPACE & ~0.27% cross-vehicle edges; 0 temporal edges & Behaviour-only graph construction transfers to CTT. \\
+benign fleet safety & SOURCE_NOT_IN_WORKSPACE & false_campaign rate = 0 & No benign false campaign escalation in CTT. \\
+isolated incident handling & SOURCE_NOT_IN_WORKSPACE & local detected; fleet_campaign=0; false_campaign=0 & Isolated attacks stay local in CTT. \\
+strong campaign detection & SOURCE_NOT_IN_WORKSPACE & campaign F1 = 1.0 & Strong coordinated campaigns detected in CTT. \\
+weak campaign detection & SOURCE_NOT_IN_WORKSPACE & campaign F1 = 1.0 & Weak campaigns also detected in CTT. \\
+unrelated incident separation & SOURCE_NOT_IN_WORKSPACE & incorrect_merge_rate = 1.0; fleet_campaign=0 & Limitation exposed: behaviour-only graph over-merges unrelated incidents in CTT. \\
+scalability/cost & SOURCE_NOT_IN_WORKSPACE & ~4.5k s/set, ~2.8 GB peak memory (capped publication run) & CTT full run feasible under publication caps. \\
+limitations & OCSLab scope: 3 vehicles, 4 attacks, controlled campaigns & 9 attacks, 4 vehicles, 2 manufacturers; unrelated merge failure & Joint: descriptive validation confirms applicability with known fleet-graph limitation. \\
+\bottomrule
+\end{tabular}

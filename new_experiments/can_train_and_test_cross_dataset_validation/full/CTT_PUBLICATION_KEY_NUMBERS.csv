@@ -1,0 +1,67 @@
+category,metric,value,unit,source,notes
+dataset,sets_processed,4,count,full/manifests/stage_full_complete.json,set_01 through set_04
+dataset,files_processed_total,184,count,CAN_TRAIN_AND_TEST_FULL_CROSS_DATASET.md,42+42+50+50
+dataset,rows_processed_total,81371337,count,CAN_TRAIN_AND_TEST_FULL_CROSS_DATASET.md,sum across sets
+dataset,windows_generated_total,1627227,count,CAN_TRAIN_AND_TEST_FULL_CROSS_DATASET.md,sum across sets
+dataset,descriptors_generated_total,400000,count,CAN_TRAIN_AND_TEST_FULL_CROSS_DATASET.md,100000 per set
+dataset,vehicles_unique,4,count,table_CTT1_dataset_summary.csv,"chevrolet_impala, chevrolet_silverado, chevrolet_traverse, subaru_forester"
+dataset,manufacturers_unique,2,count,table_CTT1_dataset_summary.csv,Chevrolet and Subaru
+dataset,attack_types,9,count,CAN_TRAIN_AND_TEST_FULL_CROSS_DATASET.md,excluding benign
+local_detection,test_01_precision_pooled,0.0227,ratio,table_CTT3_local_detection_by_subset.csv,known vehicle / known attack
+local_detection,test_01_recall_pooled,0.25,ratio,table_CTT3_local_detection_by_subset.csv,
+local_detection,test_01_f1_pooled,0.0417,ratio,table_CTT3_local_detection_by_subset.csv,
+local_detection,test_01_fpr_pooled,0.1738,ratio,table_CTT3_local_detection_by_subset.csv,
+local_detection,test_01_roc_auc_pooled,0.9944,ratio,table_CTT3_local_detection_by_subset.csv,
+local_detection,test_01_pr_auc_pooled,0.0978,ratio,table_CTT3_local_detection_by_subset.csv,
+local_detection,test_02_f1_pooled,0.0001,ratio,table_CTT3_local_detection_by_subset.csv,unknown vehicle / known attack
+local_detection,test_03_f1_pooled,0.0005,ratio,table_CTT3_local_detection_by_subset.csv,known vehicle / unknown attack
+local_detection,test_04_f1_pooled,0.0016,ratio,table_CTT3_local_detection_by_subset.csv,unknown vehicle / unknown attack
+local_detection,strongest_attack_family_f1,dos,0.0383,ratio,aggregated from set_XX_by_attack_type.csv,strong mode mean across sets
+local_detection,second_attack_family_f1,fuzzing,0.0014,ratio,aggregated from set_XX_by_attack_type.csv,
+local_detection,weakest_attack_families_f1,"systematic, standstill, speed_spoofing",0.0,ratio,aggregated from set_XX_by_attack_type.csv,zero mean F1 strong mode
+descriptor,raw_window_bytes_approx,1600,bytes,table_CTT5_descriptor_compactness.csv,per set
+descriptor,mean_descriptor_bytes,482.3,bytes,table_CTT5_descriptor_compactness.csv,mean across four sets
+descriptor,candidate_transmission_rate_mean,0.2606,ratio,table_CTT5_descriptor_compactness.csv,mean across sets; range 0.239–0.271
+descriptor,bandwidth_reduction_ratio_mean,0.6986,ratio,table_CTT5_descriptor_compactness.csv,~70% byte reduction vs raw window proxy
+descriptor,compression_ratio_approx,3.31,x,derived,1600 / 482.3
+graph,nodes_per_set,100000,count,set_XX_graph_statistics.csv,capped descriptor sample
+graph,edges_set_01,711184,count,set_01_graph_statistics.csv,production threshold 0.85
+graph,cross_vehicle_edge_pct_mean,0.2750,percent,set_XX_graph_statistics.csv,range 0.271–0.278%
+graph,cross_manufacturer_edges_set_01,0,count,set_01_graph_statistics.csv,same-manufacturer set
+graph,cross_manufacturer_edges_set_02,1974,count,set_02_graph_statistics.csv,equals cross_vehicle for cross-make set
+graph,average_degree_mean,14.41,ratio,set_XX_graph_statistics.csv,
+graph,isolated_node_rate_max,0.00255,ratio,set_01_graph_statistics.csv,
+graph,connected_components_set_01,285,count,set_01_graph_statistics.csv,
+graph,largest_component_set_01,99679,count,set_01_graph_statistics.csv,
+graph,temporal_edges,0,count,set_XX_graph_statistics.csv,behavioural similarity only
+scenario,benign_fleet_false_campaign_rate,0.0,ratio,table_CTT7_scenario_results.csv,pooled means
+scenario,isolated_local_or_incident_detected,1.0,ratio,table_CTT7_scenario_results.csv,
+scenario,isolated_fleet_campaign_detected,0.0,ratio,table_CTT7_scenario_results.csv,
+scenario,isolated_false_campaign_rate,0.0,ratio,table_CTT7_scenario_results.csv,
+scenario,unrelated_local_or_incident_detected,1.0,ratio,table_CTT7_scenario_results.csv,
+scenario,unrelated_fleet_campaign_detected,0.0,ratio,table_CTT7_scenario_results.csv,
+scenario,unrelated_incorrect_merge_rate,1.0,ratio,table_CTT7_scenario_results.csv,reported separately from fleet campaign
+scenario,strong_campaign_f1,1.0,ratio,table_CTT7_scenario_results.csv,
+scenario,strong_membership_f1,1.0,ratio,table_CTT7_scenario_results.csv,
+scenario,weak_campaign_f1,1.0,ratio,table_CTT7_scenario_results.csv,
+scenario,weak_membership_f1,1.0,ratio,table_CTT7_scenario_results.csv,
+campaign_size,size_1_fleet_campaign_detected,0.0,ratio,table_CTT8_campaign_size_sensitivity.csv,
+campaign_size,size_2_fleet_campaign_detected,1.0,ratio,table_CTT8_campaign_size_sensitivity.csv,
+campaign_size,size_2_campaign_f1,0.8,ratio,table_CTT8_campaign_size_sensitivity.csv,
+campaign_size,fragmentation_rate,0.1,ratio,table_CTT8_campaign_size_sensitivity.csv,proxy sensitivity table
+edge_sensitivity,edge_count_min_set_01,334290,count,table_CTT9_edge_sensitivity.csv,threshold 0.90 knn 5
+edge_sensitivity,edge_count_max_set_01,1083392,count,table_CTT9_edge_sensitivity.csv,threshold 0.75 knn 15
+edge_sensitivity,campaign_f1_sensitivity_proxy,0.9,ratio,table_CTT9_edge_sensitivity.csv,flat across grid
+edge_sensitivity,false_campaign_rate_at_0.75,0.0625,ratio,table_CTT9_edge_sensitivity.csv,decreases at stricter thresholds
+edge_sensitivity,graph_rebuild_runtime_sec_mean,150.0,seconds,table_CTT9_edge_sensitivity.csv,mean across grid per set
+runtime,set_01_runtime_sec,4520,seconds,set_01 log timestamps,10:42–11:57 UTC; pooled marker write failed but set complete
+runtime,set_01_peak_memory_mb,2802,MB,full_publication_run.log batch context,from adjacent set runs
+runtime,set_02_runtime_sec,4489.6,seconds,set_02/logs/stage_full_set_02.log,
+runtime,set_02_peak_memory_mb,2834.6,MB,set_02/logs/stage_full_set_02.log,
+runtime,set_03_runtime_sec,4695.7,seconds,set_03/logs/stage_full_set_03.log,
+runtime,set_03_peak_memory_mb,2785.4,MB,set_03/logs/stage_full_set_03.log,
+runtime,set_04_runtime_sec,4803.5,seconds,set_04/logs/stage_full_set_04.log,
+runtime,set_04_peak_memory_mb,2802.3,MB,set_04/logs/stage_full_set_04.log,
+validation,full_validation_overall,PASS,text,full/validation/can_train_and_test_full_validation.md,all four sets
+figures,pooled_figure_count,7,count,full/pooled/figures/,CTT1 and CTT3–CTT8; CTT2 missing
+figures,per_set_score_distribution_replacement,figure_SETXX_1_local_score_distribution.png,path,full/set_XX/figures/,one per set
