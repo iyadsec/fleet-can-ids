@@ -74,7 +74,7 @@ def build_figure(means: dict[str, list[float]], stds: dict[str, list[float]]) ->
     ax.set_ylim(0.0, 1.05)
     ax.legend(loc="lower right", frameon=True)
     ax.grid(axis="y", alpha=0.3)
-    ax.set_title("Strong vs weak coordinated-campaign F1 (balanced OCSLab)")
+    ax.set_title("Strong vs weak coordinated-campaign F1")
 
     for cs, val in zip(x, means["Strong"], strict=True):
         ax.annotate(f"{val:.3f}", (cs, val), textcoords="offset points", xytext=(0, 8), ha="center", fontsize=8, color="#2c6eab")
