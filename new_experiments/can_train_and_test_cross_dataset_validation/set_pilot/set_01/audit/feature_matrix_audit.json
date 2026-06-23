@@ -1,0 +1,16 @@
+{
+  "n_feature_columns": 36,
+  "forbidden_in_features": [],
+  "metadata_columns": [
+    "window_id",
+    "vehicle_id",
+    "attack_type",
+    "label",
+    "dataset_set",
+    "subset_name",
+    "source_file",
+    "normalized_path",
+    "start_frame_idx",
+    "end_frame_idx"
+  ]
+}

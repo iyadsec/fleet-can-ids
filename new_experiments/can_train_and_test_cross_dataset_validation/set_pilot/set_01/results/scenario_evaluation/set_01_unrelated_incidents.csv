@@ -1,0 +1,11 @@
+scenario_type,campaign_detected,false_campaign,campaign_precision,campaign_recall,campaign_f1,best_cluster,n_clusters,fragmentation,scenario,seed
+unrelated_incidents,1,0,0.0,0.0,0.0,0,1,23,unrelated_incidents,11
+unrelated_incidents,1,0,0.0,0.0,0.0,0,1,23,unrelated_incidents,23
+unrelated_incidents,1,0,0.0,0.0,0.0,0,1,24,unrelated_incidents,37
+unrelated_incidents,1,0,0.0,0.0,0.0,0,1,22,unrelated_incidents,41
+unrelated_incidents,1,0,0.0,0.0,0.0,0,1,26,unrelated_incidents,53
+unrelated_incidents,1,0,0.0,0.0,0.0,0,1,24,unrelated_incidents,67
+unrelated_incidents,1,0,0.0,0.0,0.0,0,1,22,unrelated_incidents,71
+unrelated_incidents,1,0,0.0,0.0,0.0,0,1,23,unrelated_incidents,83
+unrelated_incidents,1,0,0.0,0.0,0.0,0,1,25,unrelated_incidents,97
+unrelated_incidents,1,0,0.0,0.0,0.0,0,1,23,unrelated_incidents,101

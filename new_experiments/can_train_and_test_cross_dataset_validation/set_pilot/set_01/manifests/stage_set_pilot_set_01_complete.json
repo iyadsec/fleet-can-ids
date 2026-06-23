@@ -1,0 +1,16 @@
+{
+  "stage": "set_pilot",
+  "set_id": "set_01",
+  "status": "complete",
+  "files_processed": 42,
+  "windows": 530098,
+  "descriptors": 100000,
+  "caps": {
+    "max_rows_per_file": 475000,
+    "max_windows": 800000,
+    "max_descriptors": 100000
+  },
+  "runtime_sec": 2128.5427911669976,
+  "peak_memory_mb": 2861.0120544433594,
+  "cross_vehicle_edge_pct": 0.2771257218575872
+}

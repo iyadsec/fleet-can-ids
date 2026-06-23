@@ -1,0 +1,10 @@
+Attack type,Precision,Recall,F1
+combined_spoofing,0.0,0.0,0.0
+dos,0.07729861676159479,0.5,0.1338971106412967
+fuzzing,0.0,0.0,0.0
+gear_spoofing,0.0,0.0,0.0
+interval,0.0,0.0,0.0
+rpm_spoofing,0.0,0.0,0.0
+speed_spoofing,0.0,0.0,0.0
+standstill,0.0,0.0,0.0
+systematic,0.0,0.0,0.0

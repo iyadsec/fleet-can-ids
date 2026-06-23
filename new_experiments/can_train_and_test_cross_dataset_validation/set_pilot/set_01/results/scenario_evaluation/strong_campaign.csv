@@ -1,0 +1,11 @@
+scenario_type,campaign_detected,false_campaign,campaign_precision,campaign_recall,campaign_f1,best_cluster,n_clusters,fragmentation,scenario,seed
+strong_campaign,1,0,1.0,1.0,1.0,0,1,28,strong_campaign,11
+strong_campaign,1,0,1.0,1.0,1.0,0,1,29,strong_campaign,23
+strong_campaign,1,0,1.0,1.0,1.0,0,1,31,strong_campaign,37
+strong_campaign,1,0,1.0,1.0,1.0,0,1,28,strong_campaign,41
+strong_campaign,1,0,1.0,1.0,1.0,0,1,33,strong_campaign,53
+strong_campaign,1,0,1.0,1.0,1.0,0,1,30,strong_campaign,67
+strong_campaign,1,0,1.0,1.0,1.0,0,1,27,strong_campaign,71
+strong_campaign,1,0,1.0,1.0,1.0,0,1,30,strong_campaign,83
+strong_campaign,1,0,1.0,1.0,1.0,0,1,33,strong_campaign,97
+strong_campaign,1,0,1.0,1.0,1.0,0,1,28,strong_campaign,101
