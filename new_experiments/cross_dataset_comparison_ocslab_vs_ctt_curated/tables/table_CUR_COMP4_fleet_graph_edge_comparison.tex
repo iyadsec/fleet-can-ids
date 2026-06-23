@@ -1,0 +1,14 @@
+\begin{tabular}{llll}
+\toprule
+Metric & OCSLab curated result & can-train-and-test result & Interpretation \\
+\midrule
+graph nodes (production / evaluation graph) & 77,233 (full fleet graph) & 100,000 (descriptor sample cap) & Different graph scales; compare trends not absolute counts. \\
+graph edges & 819,914 & ~719,943 mean/set & CTT production similarity graph per set. \\
+cross-vehicle edge percentage & 39.68% (full graph) & 0.275% & OCSLab GNN-normalized view vs CTT behavioural-only edges. \\
+temporal edges used & 0 (behavioural similarity) & 0 & Both exclude temporal edges in reported graphs. \\
+scenario graph nodes (fixed package) & 200 & 200-node scenario graphs (CTT v3 scenarios) & OCSLab final scenario package uses fixed 200-node graphs. \\
+scenario edge sensitivity range & 370–1311 unique edges & 334k–1.08M (CTT edge grid on ~100k nodes) & Different graph sizes; OCSLab sweep is 370–1311 on 200 nodes. \\
+best edge / connectivity region & S3 ~437 edges; S4 ~370 edges & Campaign F1 flat ~0.9 across CTT edge grid (proxy) & Empirical trade-off regions differ by dataset. \\
+fragmentation / over-connection trend & S2 partial incorrect merge; edge sweep documented in final_publication_scenarios & High unrelated incorrect_merge on CTT; low cross-vehicle edge fraction & Behaviour-only graphs can over- or under-connect. \\
+\bottomrule
+\end{tabular}

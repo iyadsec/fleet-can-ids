@@ -1,0 +1,5 @@
+set_id,seed,attack_types,vehicles,n_nodes,n_edges,cross_vehicle_edges,mean_cross_vehicle_similarity,cluster_count,largest_cluster_size,attack_type_mixture_best_cluster,vehicle_mixture_best_cluster,dbscan_merged_all,incorrect_merge_rate,best_cluster,campaign_decision_reason,official_incorrect_merge_rate
+set_01,101,dos|fuzzing,chevrolet_impala|chevrolet_silverado,40,11,0,0.0,1,40,dos|fuzzing,chevrolet_impala|chevrolet_silverado,1,1.0,0,multi_vehicle_attack_cluster_selected,1.0
+set_02,101,dos|fuzzing,chevrolet_traverse|subaru_forester,40,23,0,0.0,1,40,dos|fuzzing,chevrolet_traverse|subaru_forester,1,1.0,0,multi_vehicle_attack_cluster_selected,1.0
+set_03,101,dos|fuzzing,chevrolet_silverado|subaru_forester,40,43,0,0.0,1,40,dos|fuzzing,chevrolet_silverado|subaru_forester,1,1.0,0,multi_vehicle_attack_cluster_selected,1.0
+set_04,101,dos|fuzzing,chevrolet_traverse|subaru_forester,40,38,0,0.0,1,40,dos|fuzzing,chevrolet_traverse|subaru_forester,1,1.0,0,multi_vehicle_attack_cluster_selected,1.0

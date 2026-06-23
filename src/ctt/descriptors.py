@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from src.ctt.constants import OUTPUT_ROOT
+from src.ctt.descriptor_sampling import balanced_sample_descriptors
 from src.ctt.features import LOCAL_FEATURE_COLUMNS
 from src.ctt.utils import ensure_dir, write_markdown
 
@@ -30,7 +31,7 @@ def generate_descriptors(
     )
     candidates = merged[merged["weak_prediction"] == 1].copy()
     if max_descriptors is not None and len(candidates) > max_descriptors:
-        candidates = candidates.nlargest(max_descriptors, "anomaly_score")
+        candidates = balanced_sample_descriptors(candidates, max_descriptors)
 
     desc_rows = []
     meta_rows = []

@@ -1,0 +1,15 @@
+\begin{tabular}{llll}
+\toprule
+Metric & OCSLab / DataChallenge 2019 & can-train-and-test & Interpretation \\
+\midrule
+vehicles & 3 & 4 & CTT expands vehicle diversity (4 vs 3 OCSLab vehicles). \\
+manufacturers & 3 & 2 & CTT adds Subaru alongside Chevrolet. \\
+attack families & 4 & 9 & Different attack taxonomies; CTT includes nine families. \\
+labelled traffic & Yes (OCSLab DataChallenge labels) & Yes (attack/benign window labels) & Both provide labelled CAN traffic; schema differs. \\
+dataset role & Primary controlled fleet-campaign evaluation (OCSLab / DataChallenge 2019) & Independent cross-dataset external validation & Complementary roles — not interchangeable benchmarks. \\
+real synchronized campaigns available & No (controlled simulation) & No (controlled simulation) & Neither dataset provides ground-truth synchronized real-world fleet campaigns. \\
+controlled campaign simulation used & Yes & Yes & Both evaluate fleet layer via scripted multi-vehicle scenarios. \\
+train/test design & SOURCE_NOT_IN_WORKSPACE & Four-set CTT protocol: train_01 benign-only; test_01–04 cross-vehicle/attack grid & Protocols differ; compare framework behaviour descriptively. \\
+main purpose in paper & Primary end-to-end evaluation on DataChallenge 2019 fleet campaign & External validation on can-train-and-test across manufacturers and attack types & Joint evidence: primary + validation, not score equivalence. \\
+\bottomrule
+\end{tabular}

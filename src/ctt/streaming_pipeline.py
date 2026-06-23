@@ -183,6 +183,52 @@ def process_source_file(
     return win_meta, feats, row_count
 
 
+def _select_records(cfg: RunConfig, records: list[dict]) -> list[dict]:
+    """Select files for processing; round-robin by subset for set_pilot."""
+    from collections import defaultdict
+
+    from src.ctt.constants import SUBSETS
+
+    filtered = [r for r in records if cfg.should_process_record(r)]
+    if cfg.stage != "set_pilot":
+        selected: list[dict] = []
+        for rec in filtered:
+            selected.append(rec)
+            if cfg.max_files is not None and len(selected) >= cfg.max_files:
+                break
+        return selected
+
+    buckets: dict[str, list[dict]] = defaultdict(list)
+    for rec in filtered:
+        buckets[rec["subset_name"]].append(rec)
+    subset_order = [s for s in SUBSETS if buckets.get(s)]
+    selected = []
+    while subset_order:
+        if cfg.max_files is not None and len(selected) >= cfg.max_files:
+            break
+        progressed = False
+        for subset in subset_order:
+            if buckets[subset]:
+                selected.append(buckets[subset].pop(0))
+                progressed = True
+                if cfg.max_files is not None and len(selected) >= cfg.max_files:
+                    break
+        if not progressed:
+            break
+    return selected
+
+
+def _subset_window_budgets(cfg: RunConfig, selected: list[dict]) -> dict[str, int]:
+    """Allocate global window cap evenly across subsets (set_pilot)."""
+    if cfg.stage != "set_pilot" or cfg.max_windows is None:
+        return {}
+    subsets = sorted({r["subset_name"] for r in selected})
+    if not subsets:
+        return {}
+    per_subset = max(cfg.max_windows // len(subsets), 1)
+    return {s: per_subset for s in subsets}
+
+
 def run_streaming_pipeline(
     dataset_root: Path,
     output_root: Path = OUTPUT_ROOT,
@@ -197,20 +243,16 @@ def run_streaming_pipeline(
     audit_dir = ensure_dir(output_root / "audit")
     features_dir = ensure_dir(output_root / "windows" / "feature_shards")
 
-    stage_suffix = f"_{cfg.stage}" if cfg.stage != "full" else ""
+    stage_suffix = "" if cfg.stage in ("full", "set_pilot") else f"_{cfg.stage}"
     window_manifest_path = manifest_dir / f"window_manifest{stage_suffix}.csv"
     window_header_written = (
         cfg.resume and window_manifest_path.exists() and window_manifest_path.stat().st_size > 0
     )
 
     records = discover_ctt_files(dataset_root)
-    selected: list[dict] = []
-    for rec in records:
-        if not cfg.should_process_record(rec):
-            continue
-        selected.append(rec)
-        if cfg.max_files is not None and len(selected) >= cfg.max_files:
-            break
+    selected = _select_records(cfg, records)
+    subset_budgets = _subset_window_budgets(cfg, selected)
+    subset_windows_used: dict[str, int] = {s: 0 for s in subset_budgets}
 
     norm_manifest: list[dict] = []
     shard_paths: list[Path] = []
@@ -218,11 +260,31 @@ def run_streaming_pipeline(
     total_windows = 0
     global_window_cap = cfg.max_windows
 
+    if cfg.resume and window_manifest_path.exists() and window_manifest_path.stat().st_size > 0:
+        existing_windows = pd.read_csv(window_manifest_path)
+        total_windows = len(existing_windows)
+        if cfg.stage == "set_pilot" and subset_budgets and not existing_windows.empty:
+            counts = existing_windows.groupby("subset_name").size().to_dict()
+            for subset, cap in subset_budgets.items():
+                subset_windows_used[subset] = int(counts.get(subset, 0))
+
     if progress:
         progress.info(
             f"Processing {len(selected)} files (stage={cfg.stage}, "
-            f"max_rows={cfg.max_rows_per_file}, max_windows={global_window_cap})"
+            f"max_rows={cfg.max_rows_per_file}, max_windows={global_window_cap}, "
+            f"subset_budgets={subset_budgets or 'none'})"
         )
+        if cfg.resume and total_windows > 0:
+            progress.info(f"Resuming with {total_windows:,} existing windows")
+
+    processed_sources: set[str] = set()
+    norm_manifest_path = manifest_dir / f"normalization_manifest{stage_suffix}.csv"
+    if cfg.resume and norm_manifest_path.exists():
+        processed_sources = set(pd.read_csv(norm_manifest_path)["source_file"].astype(str))
+
+    shard_index_path = output_root / "windows" / f"feature_shard_index{stage_suffix}.csv"
+    if cfg.resume and shard_index_path.exists():
+        shard_paths = [Path(p) for p in pd.read_csv(shard_index_path)["shard_path"].tolist()]
 
     for rec in selected:
         if global_window_cap is not None and total_windows >= global_window_cap:
@@ -231,21 +293,29 @@ def run_streaming_pipeline(
             break
 
         path = Path(rec["source_file"])
+        subset = rec["subset_name"]
+        if subset in subset_budgets and subset_windows_used.get(subset, 0) >= subset_budgets[subset]:
+            continue
+
         shard_path = shard_path_for_file(features_dir, rec["dataset_set"], rec["subset_name"], path.stem)
 
-        if cfg.skip_existing and shard_path.exists():
-            shard_paths.append(shard_path)
-            norm_manifest.append({
-                "source_file": str(path), "dataset_set": rec["dataset_set"],
-                "subset_name": rec["subset_name"], "window_count": 0, "skipped": True,
-            })
+        if cfg.skip_existing and shard_path.exists() and str(path) in processed_sources:
+            if shard_path not in shard_paths:
+                shard_paths.append(shard_path)
             if progress:
                 progress.file_processed(str(path), rows=0, windows=0)
             continue
 
-        remaining = None
-        if global_window_cap is not None:
-            remaining = global_window_cap - total_windows
+        remaining_global = global_window_cap - total_windows if global_window_cap is not None else None
+        remaining_subset = None
+        if subset in subset_budgets:
+            remaining_subset = subset_budgets[subset] - subset_windows_used.get(subset, 0)
+        if remaining_global is not None and remaining_subset is not None:
+            remaining = min(remaining_global, remaining_subset)
+        else:
+            remaining = remaining_global if remaining_global is not None else remaining_subset
+        if remaining is not None and remaining <= 0:
+            continue
 
         win_meta, feats, row_count = process_source_file(
             path, rec["dataset_set"], rec["subset_name"], output_root,
@@ -268,6 +338,8 @@ def run_streaming_pipeline(
             all_feature_rows.extend(feats)
 
         total_windows += len(win_meta)
+        if subset in subset_windows_used:
+            subset_windows_used[subset] += len(win_meta)
         norm_manifest.append({
             "source_file": str(path),
             "normalized_path": str(
@@ -279,7 +351,18 @@ def run_streaming_pipeline(
             "window_count": len(win_meta),
         })
 
-    pd.DataFrame(norm_manifest).to_csv(manifest_dir / f"normalization_manifest{stage_suffix}.csv", index=False)
+    if cfg.resume and norm_manifest_path.exists():
+        prior = pd.read_csv(norm_manifest_path)
+        new_df = pd.DataFrame(norm_manifest)
+        if not new_df.empty:
+            combined = pd.concat([prior, new_df], ignore_index=True).drop_duplicates(
+                subset=["source_file"], keep="last"
+            )
+        else:
+            combined = prior
+        combined.to_csv(norm_manifest_path, index=False)
+    else:
+        pd.DataFrame(norm_manifest).to_csv(norm_manifest_path, index=False)
 
     window_df = pd.read_csv(window_manifest_path) if window_manifest_path.exists() else pd.DataFrame()
     features_path = output_root / "windows" / f"all_window_features{stage_suffix}.parquet"
@@ -287,11 +370,17 @@ def run_streaming_pipeline(
         output_root / "windows" / f"feature_shard_index{stage_suffix}.csv", index=False
     )
 
-    if all_feature_rows:
+    if shard_paths:
+        parts = []
+        for i, sp in enumerate(shard_paths):
+            parts.append(pd.read_parquet(sp))
+            if (i + 1) % 25 == 0:
+                parts = [pd.concat(parts, ignore_index=True)]
+        features_df = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
+        if not features_df.empty:
+            features_df.to_parquet(features_path, index=False)
+    elif all_feature_rows:
         features_df = pd.DataFrame(all_feature_rows)
-        features_df.to_parquet(features_path, index=False)
-    elif shard_paths:
-        features_df = pd.concat([pd.read_parquet(p) for p in shard_paths], ignore_index=True)
         features_df.to_parquet(features_path, index=False)
     else:
         features_df = pd.DataFrame()

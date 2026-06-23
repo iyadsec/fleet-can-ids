@@ -9,8 +9,19 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from src.ctt.constants import OUTPUT_ROOT, SCENARIO_SEEDS, SET_VEHICLE_POLICY, VEHICLE_DISPLAY
+from src.ctt.constants import OUTPUT_ROOT, SCENARIO_SEEDS, SCENARIO_DISPLAY_NAMES, SET_VEHICLE_POLICY, VEHICLE_DISPLAY
+from src.ctt.fleet_campaign import SCENARIO_METRIC_COLUMNS
 from src.ctt.utils import ensure_dir
+
+
+def aggregate_scenario_results(scenario_results: pd.DataFrame) -> pd.DataFrame:
+    """Mean scenario metrics with descriptive scenario names."""
+    if scenario_results.empty:
+        return pd.DataFrame()
+    available = [c for c in SCENARIO_METRIC_COLUMNS if c in scenario_results.columns]
+    agg = scenario_results.groupby("scenario")[available].mean().reset_index()
+    agg["Scenario"] = agg["scenario"].map(SCENARIO_DISPLAY_NAMES).fillna(agg["scenario"])
+    return agg.drop(columns=["scenario"])
 
 
 def _save_table(df: pd.DataFrame, name: str, output_root: Path) -> None:
@@ -111,26 +122,15 @@ def generate_publication_tables(
         _save_table(t6, "table_CTT6_graph_statistics", output_root)
 
     if not scenario_results.empty:
-        t7 = (
-            scenario_results.groupby("scenario")
-            .agg(
-                Campaign_detection=("campaign_detected", "mean"),
-                False_campaign_rate=("false_campaign", "mean"),
-                Campaign_precision=("campaign_precision", "mean"),
-                Campaign_recall=("campaign_recall", "mean"),
-                Campaign_F1=("campaign_f1", "mean"),
-            )
-            .reset_index()
-        )
+        t7 = aggregate_scenario_results(scenario_results)
         expected = {
-            "benign_fleet_control": "no_campaign",
-            "isolated_attack": "isolated",
-            "unrelated_incidents": "separate",
-            "strong_campaign": "campaign",
-            "weak_campaign": "weak_campaign",
+            "Benign fleet control": "no coordinated campaign",
+            "Isolated attack": "local incident only",
+            "Unrelated incidents": "separate incidents",
+            "Strong coordinated campaign": "fleet campaign",
+            "Weak coordinated campaign": "weak fleet campaign",
         }
-        t7["Expected decision"] = t7["scenario"].map(expected)
-        t7 = t7.rename(columns={"scenario": "Scenario"})
+        t7["Expected decision"] = t7["Scenario"].map(expected)
         _save_table(t7, "table_CTT7_scenario_results", output_root)
 
     if not campaign_size.empty:
@@ -298,12 +298,12 @@ def run_campaign_size_sensitivity(
                     "attack_family": family,
                     "campaign_size": size,
                     "n_vehicles_available": size,
-                    "campaign_detected": int(detected),
+                    "fleet_campaign_detected": int(detected),
                     "campaign_f1": float(detected) * 0.8 if detected else 0.0,
                     "campaign_precision": 0.85 if detected else 0.0,
                     "campaign_recall": 0.75 if detected else 0.0,
                     "false_campaign_rate": 0.05,
-                    "fragmentation": 0.1,
+                    "fragmentation_rate": 0.1,
                 }
             )
 
@@ -345,7 +345,7 @@ def run_edge_sensitivity(
                     "edge_count": stats.get("num_edges", 0),
                     "campaign_f1": min(0.9, stats.get("num_edges", 0) / 100),
                     "false_campaign_rate": max(0, 0.1 - th * 0.05),
-                    "fragmentation": stats.get("isolated_node_rate", 0),
+                    "fragmentation_rate": stats.get("isolated_node_rate", 0),
                     "runtime_sec": elapsed,
                     "memory_mb": 0.0,
                 }

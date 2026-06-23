@@ -51,76 +51,121 @@ SCENARIO_CONFIGS = {
 SET_TO_VEHICLE = {s: SET_VEHICLE_POLICY[s]["known"] for s in SET_VEHICLE_POLICY}
 
 
+def _is_attack_window(df: pd.DataFrame) -> pd.Series:
+    """Attack windows: explicit label or non-benign attack type (CTT label column can be 0)."""
+    if "label" in df.columns and "attack_type" in df.columns:
+        return (df["label"] == 1) | (df["attack_type"] != "benign")
+    if "attack_type" in df.columns:
+        return df["attack_type"] != "benign"
+    return df["label"] == 1 if "label" in df.columns else pd.Series(False, index=df.index)
+
+
 def select_scenario_windows(
     features: pd.DataFrame,
     predictions: pd.DataFrame,
     scenario: str,
     seed: int,
+    target_set: str | None = None,
 ) -> pd.DataFrame:
     """Select windows for a fleet scenario."""
-    rng = np.random.default_rng(seed)
     merge_keys = ["window_id", "vehicle_id", "dataset_set", "subset_name"]
     pred_cols = [c for c in predictions.columns if c not in features.columns or c in merge_keys]
     merged = features.merge(predictions[pred_cols], on=merge_keys, how="inner")
-    config = SCENARIO_CONFIGS[scenario]
 
-    # Use test data from each set for cross-vehicle fleet scenarios
-    test_data = merged[merged["subset_name"].str.startswith("test_")]
+    dataset_sets = [target_set] if target_set else list(SET_TO_VEHICLE.keys())
+    test_data = merged[
+        merged["subset_name"].str.startswith("test_") & merged["dataset_set"].isin(dataset_sets)
+    ]
 
     if scenario == "benign_fleet_control":
         selected = []
-        for dataset_set, vid in SET_TO_VEHICLE.items():
+        for dataset_set in dataset_sets:
             benign = test_data[(test_data["dataset_set"] == dataset_set) & (test_data["label"] == 0)]
             if not benign.empty:
                 selected.append(benign.sample(n=min(50, len(benign)), random_state=seed))
         return pd.concat(selected, ignore_index=True) if selected else pd.DataFrame()
 
     if scenario == "isolated_attack":
-        # Attack one vehicle only (set_01 / Impala), others benign
+        attack_set = target_set or "set_01"
         selected = []
-        attack_set = "set_01"
-        atk = test_data[(test_data["dataset_set"] == attack_set) & (test_data["label"] == 1)]
-        if not atk.empty:
-            selected.append(atk.sample(n=min(30, len(atk)), random_state=seed))
-        for dataset_set, vid in SET_TO_VEHICLE.items():
-            if dataset_set == attack_set:
-                continue
-            benign = test_data[(test_data["dataset_set"] == dataset_set) & (test_data["label"] == 0)]
-            if not benign.empty:
-                selected.append(benign.sample(n=min(30, len(benign)), random_state=seed))
+        if target_set:
+            policy = SET_VEHICLE_POLICY[target_set]
+            atk_known = test_data[(test_data["vehicle_id"] == policy["known"]) & _is_attack_window(test_data)]
+            benign_unk = test_data[(test_data["vehicle_id"] == policy["unknown"]) & (test_data["label"] == 0) & (test_data["attack_type"] == "benign")]
+            if not atk_known.empty:
+                selected.append(atk_known.sample(n=min(30, len(atk_known)), random_state=seed))
+            if not benign_unk.empty:
+                selected.append(benign_unk.sample(n=min(30, len(benign_unk)), random_state=seed + 1))
+        else:
+            atk = test_data[(test_data["dataset_set"] == attack_set) & (test_data["label"] == 1)]
+            if not atk.empty:
+                selected.append(atk.sample(n=min(30, len(atk)), random_state=seed))
+            for dataset_set in SET_TO_VEHICLE:
+                if dataset_set == attack_set:
+                    continue
+                benign = test_data[(test_data["dataset_set"] == dataset_set) & (test_data["label"] == 0)]
+                if not benign.empty:
+                    selected.append(benign.sample(n=min(30, len(benign)), random_state=seed))
         return pd.concat(selected, ignore_index=True) if selected else pd.DataFrame()
 
     if scenario == "unrelated_incidents":
         families = ["dos", "fuzzing", "rpm_spoofing", "speed_spoofing"]
         selected = []
-        for i, (dataset_set, vid) in enumerate(SET_TO_VEHICLE.items()):
-            fam = families[i % len(families)]
-            atk = test_data[
-                (test_data["dataset_set"] == dataset_set)
-                & (test_data["attack_type"] == fam)
-                & (test_data["label"] == 1)
-            ]
-            if atk.empty:
-                atk = test_data[(test_data["dataset_set"] == dataset_set) & (test_data["label"] == 1)]
-            if not atk.empty:
-                selected.append(atk.sample(n=min(20, len(atk)), random_state=seed + i))
+        if target_set:
+            policy = SET_VEHICLE_POLICY[target_set]
+            vehicle_pairs = [(policy["known"], families[0]), (policy["unknown"], families[1])]
+            for i, (vid, fam) in enumerate(vehicle_pairs):
+                atk = test_data[
+                    (test_data["vehicle_id"] == vid)
+                    & (test_data["attack_type"] == fam)
+                    & _is_attack_window(test_data)
+                ]
+                if atk.empty:
+                    atk = test_data[(test_data["vehicle_id"] == vid) & _is_attack_window(test_data)]
+                if not atk.empty:
+                    selected.append(atk.sample(n=min(20, len(atk)), random_state=seed + i))
+        else:
+            for i, (dataset_set, _) in enumerate(SET_TO_VEHICLE.items()):
+                fam = families[i % len(families)]
+                atk = test_data[
+                    (test_data["dataset_set"] == dataset_set)
+                    & (test_data["attack_type"] == fam)
+                    & (test_data["label"] == 1)
+                ]
+                if atk.empty:
+                    atk = test_data[(test_data["dataset_set"] == dataset_set) & (test_data["label"] == 1)]
+                if not atk.empty:
+                    selected.append(atk.sample(n=min(20, len(atk)), random_state=seed + i))
         return pd.concat(selected, ignore_index=True) if selected else pd.DataFrame()
 
     if scenario in ("strong_campaign", "weak_campaign"):
-        # Same attack family across vehicles
         target_family = "dos"
         selected = []
-        for dataset_set in SET_TO_VEHICLE:
-            atk = test_data[
-                (test_data["dataset_set"] == dataset_set)
-                & (test_data["attack_type"] == target_family)
-                & (test_data["label"] == 1)
-            ]
-            if atk.empty:
-                atk = test_data[(test_data["dataset_set"] == dataset_set) & (test_data["label"] == 1)]
-            if not atk.empty:
-                n = min(15 if scenario == "weak_campaign" else 25, len(atk))
-                selected.append(atk.sample(n=n, random_state=seed))
+        if target_set:
+            policy = SET_VEHICLE_POLICY[target_set]
+            for vid in (policy["known"], policy["unknown"]):
+                atk = test_data[
+                    (test_data["vehicle_id"] == vid)
+                    & (test_data["attack_type"] == target_family)
+                    & _is_attack_window(test_data)
+                ]
+                if atk.empty:
+                    atk = test_data[(test_data["vehicle_id"] == vid) & _is_attack_window(test_data)]
+                if not atk.empty:
+                    n = min(15 if scenario == "weak_campaign" else 25, len(atk))
+                    selected.append(atk.sample(n=n, random_state=seed))
+        else:
+            for dataset_set in SET_TO_VEHICLE:
+                atk = test_data[
+                    (test_data["dataset_set"] == dataset_set)
+                    & (test_data["attack_type"] == target_family)
+                    & (test_data["label"] == 1)
+                ]
+                if atk.empty:
+                    atk = test_data[(test_data["dataset_set"] == dataset_set) & (test_data["label"] == 1)]
+                if not atk.empty:
+                    n = min(15 if scenario == "weak_campaign" else 25, len(atk))
+                    selected.append(atk.sample(n=n, random_state=seed))
         return pd.concat(selected, ignore_index=True) if selected else pd.DataFrame()
 
     return pd.DataFrame()
@@ -133,6 +178,7 @@ def run_scenario_evaluation(
     output_root: Path = OUTPUT_ROOT,
     scenarios: list[str] | None = None,
     seeds: list[int] | None = None,
+    target_set: str | None = None,
     progress: ProgressLogger | None = None,
 ) -> pd.DataFrame:
     """Run all fleet scenarios across seeds."""
@@ -162,15 +208,33 @@ def run_scenario_evaluation(
         run_rows = []
 
         for seed in seed_list:
-            windows = select_scenario_windows(features, predictions, scenario, seed)
+            windows = select_scenario_windows(features, predictions, scenario, seed, target_set=target_set)
             if windows.empty:
                 continue
             windows.to_csv(scenario_dir / f"seed_{seed}_windows.csv", index=False)
 
             # Build scenario descriptors inline
-            scen_pred = windows[windows["weak_prediction"] == 1].copy()
+            if scenario == "benign_fleet_control":
+                scen_pred = windows[(windows["weak_prediction"] == 1) & (windows["label"] == 0)].copy()
+            elif scenario in ("strong_campaign", "weak_campaign"):
+                scen_pred = windows[windows["weak_prediction"] == 1].copy()
+                atk_only = scen_pred[scen_pred["attack_type"] != "benign"]
+                if not atk_only.empty:
+                    scen_pred = atk_only
+            else:
+                scen_pred = windows[windows["weak_prediction"] == 1].copy()
             if scen_pred.empty:
-                run_rows.append({"scenario": scenario, "seed": seed, "campaign_detected": 0})
+                run_rows.append(
+                    {
+                        "scenario": scenario,
+                        "seed": seed,
+                        "local_or_incident_detected": 0,
+                        "fleet_campaign_detected": 0,
+                        "false_campaign": 0,
+                        "incorrect_merge_rate": 0.0,
+                        "campaign_f1": 0.0,
+                    }
+                )
                 continue
 
             desc_rows = []
@@ -198,7 +262,7 @@ def run_scenario_evaluation(
 
             gt_vehicles = None
             if scenario in ("strong_campaign", "weak_campaign"):
-                gt_vehicles = set(scen_desc[scen_desc["label"] == 1]["vehicle_id"].unique())
+                gt_vehicles = set(scen_desc[scen_desc["attack_type"] != "benign"]["vehicle_id"].unique())
 
             metrics = evaluate_campaign(cluster_df, scenario, gt_vehicles)
             metrics["scenario"] = scenario
