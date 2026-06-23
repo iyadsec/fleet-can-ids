@@ -1,0 +1,17 @@
+\begin{tabular}{llll}
+\toprule
+Evaluation dimension & OCSLab curated evidence & can-train-and-test evidence & Combined interpretation \\
+\midrule
+local anomaly detection & ROC-AUC 0.785, F1 0.624 (OCSLab primary) & High ROC-AUC, low pooled F1 on cross-vehicle subsets (CTT) & Both support end-to-end pipeline; alert calibration differs on CTT. \\
+descriptor abstraction & 165 B, 92.0% reduction & ~482 B, ~69.9% reduction & Both confirm compact descriptors; byte budgets differ. \\
+privacy/bandwidth reduction & Raw payload not transmitted on descriptor uplink (paper Table 2) & Behavioural descriptors with ~70% byte reduction & CTT confirms bandwidth benefit at different absolute scale. \\
+graph-based fleet correlation & Full graph 77,233 nodes; scenario package 200-node sweeps & ~100k-node graphs; ~0.27% cross-vehicle edges & Framework transfers; graph density differs. \\
+benign fleet safety & S0 false campaign = 0.0 & false_campaign = 0.0 & No benign false campaign escalation on CTT. \\
+isolated attack handling & S1 isolated incident rate = 1.0; no fleet campaign & local detected; fleet_campaign = 0 & Isolated incidents stay local on CTT. \\
+strong campaign detection & S3 campaign F1 ≈ 0.694 & campaign F1 = 1.0 & Strong campaigns detected in both; not score-equivalent. \\
+weak campaign detection & S4 campaign F1 ≈ 0.667 & campaign F1 = 1.0 & Weak campaigns detected on CTT with perfect pooled F1. \\
+unrelated incident separation & S2 incorrect merge ≈ 0.33 & incorrect_merge_rate = 1.0 & CTT exposes behaviour-only over-merge limitation. \\
+scalability & Paper fleet bandwidth @ 100 vehicles: 425 MB descriptors vs 7.6 GB raw & ~4.5k s/set, ~2.8 GB peak under publication caps & Both feasible under stated caps. \\
+limitation & Scenario package uses controlled simulations; S2 imperfect separation & Cross-vehicle local F1 conservative; unrelated merge failure & Descriptive validation, not benchmark equivalence. \\
+\bottomrule
+\end{tabular}

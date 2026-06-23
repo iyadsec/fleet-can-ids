@@ -1,0 +1,8 @@
+# table_SET01_6_scenario_results
+
+ local_or_incident_detected  fleet_campaign_detected  false_campaign  incorrect_merge_rate  campaign_precision  campaign_recall  campaign_f1  membership_precision  membership_recall  membership_f1  fragmentation_rate  benign_contamination_rate                    Scenario
+                        0.0                      0.0             0.0                   0.0                 0.0              0.0          0.0                   0.0                0.0            0.0            0.964092                        0.0        Benign fleet control
+                        1.0                      0.0             0.0                   0.0                 0.0              0.0          0.0                   1.0                1.0            1.0            0.821825                        0.0             Isolated attack
+                        1.0                      1.0             0.0                   0.0                 1.0              1.0          1.0                   1.0                1.0            1.0            0.967291                        0.0 Strong coordinated campaign
+                        1.0                      0.0             0.0                   1.0                 0.0              0.0          0.0                   1.0                1.0            1.0            0.959088                        0.0         Unrelated incidents
+                        1.0                      1.0             0.0                   0.0                 1.0              1.0          1.0                   1.0                1.0            1.0            0.945675                        0.0   Weak coordinated campaign

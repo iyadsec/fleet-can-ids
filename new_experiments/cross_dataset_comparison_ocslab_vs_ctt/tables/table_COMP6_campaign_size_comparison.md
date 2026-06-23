@@ -1,0 +1,5 @@
+# table_COMP6_campaign_size_comparison
+
+ Campaign size OCSLab campaign detection      OCSLab campaign F1 can-train-and-test campaign detection can-train-and-test campaign F1                      Interpretation
+             1   SOURCE_NOT_IN_WORKSPACE SOURCE_NOT_IN_WORKSPACE                                     0                              0  Size 1 vehicles: CTT detection=no.
+             2   SOURCE_NOT_IN_WORKSPACE SOURCE_NOT_IN_WORKSPACE                                     1                            0.8 Size 2 vehicles: CTT detection=yes.

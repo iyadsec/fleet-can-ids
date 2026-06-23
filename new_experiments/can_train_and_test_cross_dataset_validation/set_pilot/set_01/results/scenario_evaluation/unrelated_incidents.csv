@@ -1,0 +1,11 @@
+scenario_type,local_or_incident_detected,fleet_campaign_detected,false_campaign,incorrect_merge_rate,campaign_precision,campaign_recall,campaign_f1,membership_precision,membership_recall,membership_f1,fragmentation_rate,benign_contamination_rate,best_cluster,n_clusters,scenario,seed
+unrelated_incidents,1,0,0,1.0,0.0,0.0,0.0,1.0,1.0,1.0,0.9583333333333334,0.0,0,1,unrelated_incidents,11
+unrelated_incidents,1,0,0,1.0,0.0,0.0,0.0,1.0,1.0,1.0,0.9583333333333334,0.0,0,1,unrelated_incidents,23
+unrelated_incidents,1,0,0,1.0,0.0,0.0,0.0,1.0,1.0,1.0,0.96,0.0,0,1,unrelated_incidents,37
+unrelated_incidents,1,0,0,1.0,0.0,0.0,0.0,1.0,1.0,1.0,0.9565217391304348,0.0,0,1,unrelated_incidents,41
+unrelated_incidents,1,0,0,1.0,0.0,0.0,0.0,1.0,1.0,1.0,0.9629629629629629,0.0,0,1,unrelated_incidents,53
+unrelated_incidents,1,0,0,1.0,0.0,0.0,0.0,1.0,1.0,1.0,0.96,0.0,0,1,unrelated_incidents,67
+unrelated_incidents,1,0,0,1.0,0.0,0.0,0.0,1.0,1.0,1.0,0.9565217391304348,0.0,0,1,unrelated_incidents,71
+unrelated_incidents,1,0,0,1.0,0.0,0.0,0.0,1.0,1.0,1.0,0.9583333333333334,0.0,0,1,unrelated_incidents,83
+unrelated_incidents,1,0,0,1.0,0.0,0.0,0.0,1.0,1.0,1.0,0.9615384615384616,0.0,0,1,unrelated_incidents,97
+unrelated_incidents,1,0,0,1.0,0.0,0.0,0.0,1.0,1.0,1.0,0.9583333333333334,0.0,0,1,unrelated_incidents,101
