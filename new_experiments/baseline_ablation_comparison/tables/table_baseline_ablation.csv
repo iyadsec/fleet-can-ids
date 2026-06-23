@@ -1,0 +1,4 @@
+Method,Independent merge,Strong F1,Weak F1,Notes
+M1 Local IF only,0.000,N/A,N/A,Vehicle-level IF only; campaign F1 N/A (no fleet layer)
+M2 Descriptor clustering,0.308 $\pm$ 0.480,0.322 $\pm$ 0.412,0.533 $\pm$ 0.456,DBSCAN on descriptors; no GNN
+M3 GraphSAGE fleet,0.000,0.406 $\pm$ 0.439,0.472 $\pm$ 0.473,Behavioural graph + GraphSAGE + clustering + campaign logic

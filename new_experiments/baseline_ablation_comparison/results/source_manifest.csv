@@ -1,0 +1,9 @@
+artifact_key,git_ref,repo_path
+table_06,origin/cursor/campaign-clustering,new_experiments/publication_ready/tables/table_06_method_ablation.csv
+S2_summary,origin/cursor/campaign-clustering,new_experiments/results/S2_non_coordinated/summary_mean_std.csv
+S3_summary,origin/cursor/campaign-clustering,new_experiments/results/S3_strong_campaign/summary_mean_std.csv
+S4_summary,origin/cursor/campaign-clustering,new_experiments/results/S4_weak_campaign/summary_mean_std.csv
+S0_summary,origin/cursor/campaign-clustering,new_experiments/results/S0_benign_control/summary_mean_std.csv
+S3_runs,origin/cursor/campaign-clustering,new_experiments/results/S3_strong_campaign/run_level_metrics.csv
+S4_runs,origin/cursor/campaign-clustering,new_experiments/results/S4_weak_campaign/run_level_metrics.csv
+S2_runs,origin/cursor/campaign-clustering,new_experiments/results/S2_non_coordinated/run_level_metrics.csv
