@@ -204,6 +204,22 @@ Original git branches are unchanged; restore from git history if needed.
         encoding="utf-8",
     )
 
+    # Regenerate P4 with canonical balanced F1 (overwrites git-copied legacy figure)
+    p4_script = REPO / "scripts" / "build_figure_P4_strong_vs_weak_campaign_f1.py"
+    if p4_script.is_file():
+        import subprocess as sp
+
+        sp.run(["python3", str(p4_script)], cwd=REPO, check=True)
+        manifest.append(
+            ManifestRow(
+                "01_primary_ocslab_balanced/figures/figure_P4_strong_vs_weak_campaign_F1.pdf",
+                "generated",
+                str(p4_script),
+                True,
+                "canonical balanced F1 from campaign_metrics.csv",
+            )
+        )
+
     missing = [r for r in manifest if not r.copied and r.source_type != "archived"]
     print(f"Bundle: {OUT}")
     print(f"Archived: {archived}")
