@@ -1,0 +1,11 @@
+Scenario,Method,Event recall,Event F1,Vehicle recall,Campaign detection rate,Campaign F1,False campaign rate
+S3,M1 Local IDS,1.000 $\pm$ 0.000,0.796 $\pm$ 0.147,1.000 $\pm$ 0.000,0.000 $\pm$ 0.000,0.000 $\pm$ 0.000,0.000 $\pm$ 0.000
+S3,M2 Descriptor clustering,1.000 $\pm$ 0.000,0.796 $\pm$ 0.147,1.000 $\pm$ 0.000,0.700 $\pm$ 0.462,0.322 $\pm$ 0.412,0.700 $\pm$ 0.462
+S3,M3 Standard GNN,1.000 $\pm$ 0.000,0.796 $\pm$ 0.147,1.000 $\pm$ 0.000,0.933 $\pm$ 0.252,0.367 $\pm$ 0.410,0.933 $\pm$ 0.252
+S3,M4 Proposed FCGNN (GraphSAGEFleetCorrelator),1.000 $\pm$ 0.000,0.796 $\pm$ 0.147,1.000 $\pm$ 0.000,0.967 $\pm$ 0.181,0.406 $\pm$ 0.439,0.967 $\pm$ 0.181
+S3,Δ FCGNN − Local,+0.000,+0.000,+0.000,+0.967,+0.406,+0.967
+S4,M1 Local IDS,1.000 $\pm$ 0.000,0.742 $\pm$ 0.097,1.000 $\pm$ 0.000,0.000 $\pm$ 0.000,0.000 $\pm$ 0.000,0.000 $\pm$ 0.000
+S4,M2 Descriptor clustering,1.000 $\pm$ 0.000,0.742 $\pm$ 0.097,1.000 $\pm$ 0.000,0.717 $\pm$ 0.454,0.533 $\pm$ 0.456,0.717 $\pm$ 0.454
+S4,M3 Standard GNN,1.000 $\pm$ 0.000,0.742 $\pm$ 0.097,1.000 $\pm$ 0.000,0.600 $\pm$ 0.494,0.322 $\pm$ 0.425,0.600 $\pm$ 0.494
+S4,M4 Proposed FCGNN (GraphSAGEFleetCorrelator),1.000 $\pm$ 0.000,0.742 $\pm$ 0.097,1.000 $\pm$ 0.000,0.750 $\pm$ 0.437,0.472 $\pm$ 0.473,0.750 $\pm$ 0.437
+S4,Δ FCGNN − Local,+0.000,+0.000,+0.000,+0.750,+0.472,+0.750

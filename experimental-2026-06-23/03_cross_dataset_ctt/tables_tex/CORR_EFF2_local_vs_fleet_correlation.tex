@@ -1,0 +1,12 @@
+\begin{tabular}{lllllllll}
+\hline
+\textbf{dataset} \textbf{scenario} \textbf{local_or_incident_detected} \textbf{local_campaign_decision_if_available} \textbf{fleet_campaign_detected} \textbf{campaign_f1} \textbf{false_campaign} \textbf{incorrect_merge} \textbf{interpretation} \\
+\hline
+OCSLab & Strong Behaviourally Related Campaign & nan & N/A & 0.8125 & 0.6944444444444445 & 0.0 & nan & Campaign identification is a fleet-correlation function. Local IDS provides individual detection; fleet layer declares campaigns. \\
+OCSLab & Weak Behaviourally Related Campaign & nan & N/A & 0.71875 & 0.6666666666666666 & 0.0 & nan & Campaign identification is a fleet-correlation function. Local IDS provides individual detection; fleet layer declares campaigns. \\
+CTT & Strong Behaviourally Related Campaign & 1.0 & N/A & 1.0 & 1.0 & 0.0 & 0.0 & Local IDS detects individual anomaly windows but does not infer fleet-level campaigns. Fleet correlation provides campaign decision. \\
+CTT & Weak Behaviourally Related Campaign & 1.0 & N/A & 1.0 & 1.0 & 0.0 & 0.0 & Local IDS detects individual anomaly windows but does not infer fleet-level campaigns. Fleet correlation provides campaign decision. \\
+CTT & Isolated Single-Vehicle Attack & 0.225 & N/A & 0.0 & 0.0 & 0.0 & 0.0 & Local IDS detects individual anomaly windows but does not infer fleet-level campaigns. Fleet correlation provides campaign decision. \\
+CTT & Unrelated Multi-Vehicle Incidents & 0.0 & N/A & 0.0 & 0.0 & 0.0 & 0.0 & Local IDS detects individual anomaly windows but does not infer fleet-level campaigns. Fleet correlation provides campaign decision. \\
+\hline
+\end{tabular}
