@@ -2,12 +2,21 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
-# Dataset root (override via CTT_DATASET_ROOT env or runner --dataset-root)
-DEFAULT_CTT_DATASET_ROOT = Path(
-    "/workspace/Dataset/can-train-and-test"
-)
+from src.utils.paths import resolve_project_root
+
+
+def _default_ctt_dataset_root() -> Path:
+    env = os.environ.get("CTT_DATASET_ROOT")
+    if env:
+        return Path(env).expanduser().resolve()
+    return (resolve_project_root() / "Dataset" / "can-train-and-test").resolve()
+
+
+# can-train-and-test (DTU, DOI 10.11583/DTU.24805533)
+DEFAULT_CTT_DATASET_ROOT = _default_ctt_dataset_root()
 
 OUTPUT_ROOT = Path("new_experiments/can_train_and_test_cross_dataset_validation")
 

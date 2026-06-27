@@ -9,15 +9,22 @@ from typing import Any, Iterator
 import numpy as np
 import pandas as pd
 
+import os
+
 from src.utils.logging import get_logger
+from src.utils.paths import resolve_project_root
 
 logger = get_logger(__name__)
 
-# Default external dataset (Car Hacking / Car Track challenge layout)
-DEFAULT_EXTERNAL_DATASET = Path(
-    "/Users/iyadatieh/Library/CloudStorage/OneDrive-Personal/"
-    "University of Reading/CodeRepo/Dataset"
-)
+# OCSLab Car-Hacking / DataChallenge 2019 (override with OCSLAB_DATASET_DIR)
+def _default_external_dataset() -> Path:
+    env = os.environ.get("OCSLAB_DATASET_DIR")
+    if env:
+        return Path(env).expanduser().resolve()
+    return (resolve_project_root() / "Dataset" / "ocslab").resolve()
+
+
+DEFAULT_EXTERNAL_DATASET = _default_external_dataset()
 
 STANDARD_COLUMNS: list[str] = [
     "timestamp",

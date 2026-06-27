@@ -1,31 +1,30 @@
-OVERLEAF CROSS-DATASET ARTIFACTS — LOCATION
-=============================================
+OVERLEAF CROSS-DATASET ARTIFACTS
+================================
 
-The folder name is exactly (case-sensitive):
+Folder name (case-sensitive):
 
-  OVERLEAF_CROSS_DATASET_ARTIFACTS
+  OVERLEAF_CROSS_DATASET_ARTIFACTS/
 
-NOT: overleaf_sross_dataset_artifcats
-NOT: paper/publication_artifacts
+This directory is part of the GitHub repository (branch: main).
 
-Full path on your Mac:
+After cloning or pulling:
 
-  /Users/iyadatieh/Library/CloudStorage/OneDrive-Personal/University of Reading/CodeRepo/OVERLEAF_CROSS_DATASET_ARTIFACTS/
+  git clone https://github.com/iyadsec/fleet-can-ids.git
+  cd fleet-can-ids
+  # artifacts are already in OVERLEAF_CROSS_DATASET_ARTIFACTS/
 
-If you do not see this folder in Finder, run in Terminal:
+Optional sync helper (macOS/Linux):
 
-  cd "/Users/iyadatieh/Library/CloudStorage/OneDrive-Personal/University of Reading/CodeRepo"
   bash scripts/sync_overleaf_artifacts_mac.sh
 
-Or manually:
+Contents: PDF/PNG figures, TeX/CSV/MD tables, reports, README, ARTIFACT_INDEX.csv.
 
-  git fetch origin main
-  git checkout main
-  git pull origin main
-  open OVERLEAF_CROSS_DATASET_ARTIFACTS
+Regenerate from repository root:
 
-The folder is stored in GitHub (branch: main). It will only appear locally after git pull.
+  python scripts/regenerate_paper_artifacts.py
 
-Contents: 117 files — PDF/PNG figures, TeX/CSV/MD tables, reports, README, index.
+See also:
+- OVERLEAF_CROSS_DATASET_ARTIFACTS/README.md
+- docs/paper_pipeline.md
 
-GitHub repo: https://github.com/iyadsec/fleet-can-ids
+GitHub: https://github.com/iyadsec/fleet-can-ids

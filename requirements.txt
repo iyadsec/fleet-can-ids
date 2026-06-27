@@ -24,7 +24,7 @@ tqdm>=4.66,<5
 python-dotenv>=1.0,<2
 polars>=1.0,<2
 
-# Development (optional)
-# pytest>=8.0,<9
+# Development / testing
+pytest>=8.0,<9
 # ruff>=0.4,<1
 # mypy>=1.9,<2

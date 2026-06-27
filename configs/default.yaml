@@ -1,7 +1,9 @@
-# Fleet-Aware CAN-Bus Intrusion Detection — default configuration
+# FLEET-GUARD — default configuration
+# Fleet-Level Graph-Based Anomaly Reasoning for Coordinated CAN Attack Detection
 
 project:
-  name: fleet-can-ids
+  name: fleet-guard
+  framework: FLEET-GUARD
   seed: 42
 
 paths:
@@ -11,27 +13,121 @@ paths:
   metrics_dir: outputs/metrics
   figures_dir: outputs/figures
 
+# Full OCSLab pipeline: python experiments/run_full_pipeline.py --config configs/default.yaml
+pipeline:
+  stop_on_error: true
+  skip_if_outputs_exist: false
+  steps:
+    - load_dataset
+    - generate_windows
+    - extract_features
+    - train_vehicle_ids
+    - classify_evidence
+    - generate_descriptors
+    - evaluate_privacy
+    - compare_descriptor_size
+    - build_fleet_graph
+    - train_gnn
+    - cluster_campaigns
+    - final_decision
+    - summarize_research_evidence
+    - generate_research_figures
+  artifacts:
+    clean_can_data: data/processed/clean_can_data.csv
+    window_metadata: data/processed/window_metadata.csv
+    window_features: data/processed/window_features.csv
+    vehicle_results: outputs/metrics/vehicle_level_self_supervised_results.csv
+    vehicle_ids_model: outputs/models/vehicle_isolation_forest.joblib
+    vehicle_anomaly_predictions: data/processed/vehicle_anomaly_predictions.csv
+    anomaly_descriptors: data/processed/anomaly_descriptors.csv
+    anomaly_descriptors_transmit: data/processed/anomaly_descriptors_transmit.csv
+    fleet_nodes: data/processed/fleet_nodes.csv
+    fleet_edges: data/processed/fleet_edges.csv
+    fleet_graph: data/processed/fleet_graph.pt
+    fleet_graph_graphml: outputs/fleet_graph.graphml
+    graph_statistics: outputs/metrics/graph_statistics.csv
+    node_embeddings: data/processed/node_embeddings.csv
+    gnn_checkpoints: outputs/checkpoints
+    gnn_metrics: outputs/metrics/gnn_training_metrics.csv
+    gnn_loss_figure: outputs/figures/gnn_training_loss.png
+    gnn_tsne_figure: outputs/figures/gnn_embeddings_tsne.png
+    fleet_cluster_results: data/processed/fleet_cluster_results.csv
+    final_detection_outcomes: outputs/metrics/final_detection_outcomes.csv
+    final_outcome_summary: outputs/metrics/final_outcome_summary.csv
+    fleet_value_summary: outputs/metrics/fleet_value_summary.csv
+    weak_signal_upgrade_summary: outputs/metrics/weak_signal_upgrade_summary.csv
+    cross_vehicle_cluster_summary: outputs/metrics/cross_vehicle_cluster_summary.csv
+    raw_vs_descriptor_size: outputs/metrics/raw_vs_descriptor_size.csv
+    raw_vs_descriptor_size_figure: outputs/figures/raw_vs_descriptor_size.png
+    privacy_vehicle_reidentification: outputs/metrics/privacy_vehicle_reidentification.csv
+    privacy_reconstruction_risk: outputs/metrics/privacy_reconstruction_risk.csv
+    report: outputs/metrics/pipeline_report.md
+
 data:
-  dataset: car_track
-  external_dataset_dir: /Users/iyadatieh/Library/CloudStorage/OneDrive-Personal/University of Reading/CodeRepo/Dataset
+  # Primary dataset: OCSLab Car-Hacking / DataChallenge 2019
+  dataset: ocslab_car_hacking
+  # Place dataset under Dataset/ocslab/ (see docs/datasets.md). Override with OCSLAB_DATASET_DIR.
+  external_dataset_dir: Dataset/ocslab
   train_split: 0.7
   val_split: 0.15
   test_split: 0.15
 
 features:
   window_size: 100
-  overlap: 50          # overlapping frames; stride = window_size - overlap
-  stride: 50           # optional override if overlap is omitted
-  # CAN-specific fields to use when available
+  overlap: 50
+  stride: 50
+  generate_plots: true
   use_id: true
   use_payload: true
   use_timestamp: true
 
+vehicle_ids:
+  test_size: 0.2
+  primary_model: isolation_forest
+  include_autoencoder: false
+  strong_threshold: 0.80
+  weak_threshold: 0.55
+
+descriptors:
+  test_size: 0.2
+  score_threshold: 0.5
+  primary_model: isolation_forest
+  regenerate_predictions: false
+  include_autoencoder: false
+
+gnn:
+  architecture: graphsage
+  gnn_model: GraphSAGE
+  hidden_channels: 64
+  embedding_dim: 32
+  epochs: 30
+  learning_rate: 0.01
+  weight_decay: 0.0005
+  train_ratio: 0.7
+  val_ratio: 0.15
+  use_ground_truth_labels: true
+
 graph:
-  # Fleet anomaly graph: nodes = descriptors, edges = behavioural similarity only
-  similarity_metric: cosine      # cosine | euclidean
-  similarity_threshold: 0.85      # edge if similarity >= threshold
-  max_nodes: null                 # optional subsample for fast experiments
+  similarity_metric: cosine
+  similarity_threshold: 0.85
+  max_nodes: null
+  max_neighbors: 50
+  max_neighbours_per_node: 50
+
+clustering:
+  method: dbscan
+  clustering_method: DBSCAN
+  kmeans_clusters: 12
+  dbscan_eps: 1.2
+  dbscan_min_samples: 10
+  dbscan_pca_components: 8
+  max_clustering_samples: 20000
+  similarity_threshold: 0.85
+  min_vehicles: 2
+
+final_decision:
+  similarity_threshold: 0.85
+  minimum_cluster_size: 2
 
 evaluation:
   metrics:
@@ -44,3 +140,8 @@ evaluation:
 experiment:
   name: baseline
   tags: []
+
+research:
+  report_path: outputs/experiment_report.md
+  graph_viz_max_nodes: 800
+  autoencoder_epochs_report: 15

@@ -71,6 +71,15 @@ def main() -> int:
         except FileNotFoundError:
             logger.warning("Config not found; using CLI defaults.")
 
+    if not external_root.exists():
+        logger.error(
+            "OCSLab dataset not found: %s\n"
+            "Download OCSLab Car-Hacking / DataChallenge 2019 and place under Dataset/ocslab/\n"
+            "or set OCSLAB_DATASET_DIR. See docs/datasets.md",
+            external_root,
+        )
+        return 1
+
     logger.info("External dataset root: %s", external_root)
     logger.info("Local raw root:        %s", raw_root)
     logger.info("Output:                %s", output_path)

@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
@@ -17,6 +16,7 @@ from src.graph.fleet_graph_builder import (
     load_anomaly_descriptors,
     print_graph_statistics,
     save_fleet_graph,
+    save_graph_tables,
 )
 from src.utils import get_logger, load_config
 from src.utils.paths import ProjectPaths
@@ -38,6 +38,16 @@ def parse_args() -> argparse.Namespace:
         default="data/processed/fleet_graph.pt",
     )
     parser.add_argument(
+        "--nodes-output",
+        type=str,
+        default="data/processed/fleet_nodes.csv",
+    )
+    parser.add_argument(
+        "--edges-output",
+        type=str,
+        default="data/processed/fleet_edges.csv",
+    )
+    parser.add_argument(
         "--graphml-output",
         type=str,
         default="outputs/fleet_graph.graphml",
@@ -45,7 +55,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--stats-output",
         type=str,
-        default="outputs/metrics/fleet_graph_stats.json",
+        default="outputs/metrics/graph_statistics.csv",
     )
     parser.add_argument(
         "--metric",
@@ -66,6 +76,12 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Subsample nodes (for faster experiments)",
     )
+    parser.add_argument(
+        "--max-neighbors",
+        type=int,
+        default=None,
+        help="Connect each node to at most this many nearest neighbours before thresholding",
+    )
     parser.add_argument("--seed", type=int, default=None)
     return parser.parse_args()
 
@@ -78,7 +94,10 @@ def main() -> int:
     metric = args.metric or "cosine"
     threshold = args.threshold if args.threshold is not None else 0.85
     max_nodes = args.max_nodes
+    max_neighbors = args.max_neighbors
     seed = args.seed if args.seed is not None else 42
+    use_gt_labels = True
+    cfg: dict = {}
 
     if args.config:
         try:
@@ -89,12 +108,19 @@ def main() -> int:
                 threshold = float(graph_cfg.get("similarity_threshold", threshold))
             if args.max_nodes is None and graph_cfg.get("max_nodes"):
                 max_nodes = int(graph_cfg["max_nodes"])
+            if args.max_neighbors is None:
+                cfg_neighbors = graph_cfg.get("max_neighbors", graph_cfg.get("max_neighbours_per_node"))
+                if cfg_neighbors:
+                    max_neighbors = int(cfg_neighbors)
             seed = int(cfg.get("project", {}).get("seed", seed))
+            use_gt_labels = bool(cfg.get("gnn", {}).get("use_ground_truth_labels", True))
         except FileNotFoundError:
             logger.warning("Config not found; using CLI defaults.")
 
     descriptors_path = paths.root / args.descriptors
     pt_path = paths.root / args.pt_output
+    nodes_path = paths.root / args.nodes_output
+    edges_path = paths.root / args.edges_output
     graphml_path = paths.root / args.graphml_output
     stats_path = paths.root / args.stats_output
 
@@ -105,18 +131,39 @@ def main() -> int:
     logger.info("Descriptors: %s", descriptors_path)
     logger.info("Metric:      %s, threshold: %.4f", metric, threshold)
 
-    descriptors = load_anomaly_descriptors(descriptors_path)
+    features_path = paths.root / "data/processed/window_features.csv"
+    descriptors = load_anomaly_descriptors(
+        descriptors_path, features_path=features_path if features_path.exists() else None
+    )
     G, pyg_data, stats, _ = build_fleet_anomaly_graph(
         descriptors,
         metric=metric,  # type: ignore[arg-type]
         threshold=threshold,
         max_nodes=max_nodes,
+        max_neighbors=max_neighbors,
         seed=seed,
+        prefer_ground_truth_labels=use_gt_labels,
     )
 
     save_fleet_graph(G, pyg_data, stats, pt_path=pt_path, graphml_path=graphml_path)
+    save_graph_tables(G, nodes_path=nodes_path, edges_path=edges_path)
     stats_path.parent.mkdir(parents=True, exist_ok=True)
-    stats_path.write_text(json.dumps(stats, indent=2), encoding="utf-8")
+    import pandas as pd
+
+    pd.DataFrame(
+        [
+            {
+                "num_nodes": int(stats.get("num_nodes", 0)),
+                "num_edges": int(stats.get("num_edges", 0)),
+                "similarity_threshold": float(stats.get("similarity_threshold", 0.0)),
+                "max_neighbours_per_node": int(stats.get("max_neighbors", 0)),
+                "num_cross_vehicle_edges": int(stats.get("num_cross_vehicle_edges", 0)),
+                "graph_density": float(stats.get("graph_density", 0.0)),
+                "average_degree": float(stats.get("average_degree", 0.0)),
+                "connected_components": int(stats.get("connected_components", 0)),
+            }
+        ]
+    ).to_csv(stats_path, index=False)
     logger.info("Wrote stats to %s", stats_path)
 
     print_graph_statistics(stats)

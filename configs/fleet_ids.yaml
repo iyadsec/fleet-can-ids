@@ -1,0 +1,295 @@
+# Fleet-Aware CAN IDS — paper deliverables configuration
+#
+# This config keeps the existing pipeline outputs under `outputs/` and `data/processed/`,
+# and additionally enables a publication-ready export package under:
+#   results/, figures/, tables/, logs/
+#
+# Run:
+#   python run_all_experiments.py --config configs/fleet_ids.yaml
+
+project:
+  name: fleet-guard
+  seed: 42
+
+paths:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  outputs_dir: outputs
+  metrics_dir: outputs/metrics
+  figures_dir: outputs/figures
+
+publication:
+  enabled: true
+  results_dir: results
+  figures_dir: figures
+  tables_dir: tables
+  logs_dir: logs
+  overwrite: true
+
+pipeline:
+  stop_on_error: true
+  skip_if_outputs_exist: false
+  steps:
+    - load_dataset
+    - generate_windows
+    - extract_features
+    - train_vehicle_ids
+    - classify_evidence
+    - generate_descriptors
+    - evaluate_privacy
+    - compare_descriptor_size
+    - build_fleet_graph
+    - train_gnn
+    - cluster_campaigns
+    - final_decision
+    - summarize_research_evidence
+    - generate_research_figures
+  artifacts:
+    clean_can_data: data/processed/clean_can_data.csv
+    window_metadata: data/processed/window_metadata.csv
+    window_features: data/processed/window_features.csv
+    vehicle_results: outputs/metrics/vehicle_level_self_supervised_results.csv
+    vehicle_ids_model: outputs/models/vehicle_isolation_forest.joblib
+    vehicle_anomaly_predictions: data/processed/vehicle_anomaly_predictions.csv
+    anomaly_descriptors: data/processed/anomaly_descriptors.csv
+    anomaly_descriptors_transmit: data/processed/anomaly_descriptors_transmit.csv
+    fleet_nodes: data/processed/fleet_nodes.csv
+    fleet_edges: data/processed/fleet_edges.csv
+    fleet_graph: data/processed/fleet_graph.pt
+    fleet_graph_graphml: outputs/fleet_graph.graphml
+    graph_statistics: outputs/metrics/graph_statistics.csv
+    node_embeddings: data/processed/node_embeddings.csv
+    gnn_checkpoints: outputs/checkpoints
+    gnn_metrics: outputs/metrics/gnn_training_metrics.csv
+    gnn_loss_figure: outputs/figures/gnn_training_loss.png
+    gnn_tsne_figure: outputs/figures/gnn_embeddings_tsne.png
+    fleet_cluster_results: data/processed/fleet_cluster_results.csv
+    final_detection_outcomes: outputs/metrics/final_detection_outcomes.csv
+    final_outcome_summary: outputs/metrics/final_outcome_summary.csv
+    fleet_value_summary: outputs/metrics/fleet_value_summary.csv
+    weak_signal_upgrade_summary: outputs/metrics/weak_signal_upgrade_summary.csv
+    cross_vehicle_cluster_summary: outputs/metrics/cross_vehicle_cluster_summary.csv
+    raw_vs_descriptor_size: outputs/metrics/raw_vs_descriptor_size.csv
+    raw_vs_descriptor_size_figure: outputs/figures/raw_vs_descriptor_size.png
+    privacy_vehicle_reidentification: outputs/metrics/privacy_vehicle_reidentification.csv
+    privacy_reconstruction_risk: outputs/metrics/privacy_reconstruction_risk.csv
+    report: outputs/metrics/pipeline_report.md
+
+data:
+  dataset: ocslab_car_hacking
+  external_dataset_dir: Dataset/ocslab
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+
+features:
+  window_size: 100
+  overlap: 50
+  stride: 50
+  generate_plots: true
+  use_id: true
+  use_payload: true
+  use_timestamp: true
+
+vehicle_ids:
+  primary_model: isolation_forest
+  include_autoencoder: true
+  strong_threshold: 0.80
+  weak_threshold: 0.55
+  # Paper deliverables (vehicle-level evidence package)
+  eval_threshold_percentile: 95.0
+
+# Vehicle-level IDS paper outputs (run_vehicle_level_evaluation.py)
+vehicle_level_evaluation:
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+  n_estimators: 200
+  primary_fpr_cap: 0.05
+  fallback_fpr_cap: 0.10
+
+descriptor_security:
+  fleet_sizes: [10, 50, 100, 500, 1000]
+
+descriptors:
+  score_threshold: 0.5
+  primary_model: isolation_forest
+  regenerate_predictions: false
+  include_autoencoder: true
+
+graph:
+  similarity_metric: cosine      # cosine | euclidean
+  similarity_threshold: 0.85
+  max_nodes: null
+  max_neighbors: 50
+  max_neighbours_per_node: 50
+
+gnn:
+  # The deliverables runner will sweep: graphsage, gcn, gat
+  architecture: graphsage
+  hidden_channels: 64
+  embedding_dim: 32
+  epochs: 30
+  learning_rate: 0.01
+  weight_decay: 0.0005
+  train_ratio: 0.7
+  val_ratio: 0.15
+  use_ground_truth_labels: true
+
+clustering:
+  method: dbscan
+  kmeans_clusters: 12
+  dbscan_eps: 1.2
+  dbscan_min_samples: 10
+  dbscan_pca_components: 8
+  max_clustering_samples: 20000
+  similarity_threshold: 0.85
+  min_vehicles: 2
+
+final_decision:
+  similarity_threshold: 0.85
+  minimum_cluster_size: 2
+
+# Fleet graph similarity (behaviour-focused views for graph construction only)
+fleet_graph:
+  similarity_feature_view: behavior_only_vehicle_normalized
+  feature_dominance_threshold: 5.0
+  allowed_high_dominance_features: []
+  top_k_neighbors: 15
+  top_k_same_vehicle: 10
+  top_k_cross_vehicle: 5
+  similarity_threshold: 0.95
+
+behavior_view_similarity:
+  promotion_mean_score: 0.60
+  promotion_strong_support: 0.40
+
+# Cross-vehicle descriptor generalisation (run_cross_vehicle_generalisation.py)
+cross_vehicle_generalisation:
+  max_embedding_samples: 5000
+  max_similarity_pairs: 30000
+  dbscan_eps: 1.2
+  dbscan_min_samples: 10
+  random_forest_estimators: 200
+
+# Coordinated campaign detection (run_campaign_detection_evaluation.py)
+campaign_detection:
+  top_k_same_vehicle: 10
+  top_k_cross_vehicle: 5
+  similarity_threshold: 0.95
+  min_vehicles: 2
+  min_cluster_size: 10
+  min_cohesion: 0.85
+  min_dominant_attack_ratio: 0.60
+  campaign_match_recall: 0.10
+  campaign_match_min_nodes: 15
+  dbscan_eps: 1.2
+  dbscan_min_samples: 10
+  dbscan_pca_components: 8
+  max_clustering_samples: 20000
+  max_graph_viz_nodes: 800
+  max_embedding_samples: 5000
+  embedding_method: tsne
+
+# GNN fleet final decision: isolated_attack vs coordinated_attack
+final_gnn_fleet_decision:
+  top_k_same_vehicle: 10
+  top_k_cross_vehicle: 5
+  similarity_threshold: 0.95
+  gnn_hidden_channels: 64
+  gnn_embedding_dim: 32
+  gnn_epochs: 30
+  gnn_learning_rate: 0.01
+  gnn_weight_decay: 0.0005
+  campaign_score_threshold: 0.55
+  min_cluster_size: 10
+  min_vehicles: 2
+  min_behavioral_cohesion: 0.85
+  gnn_supervision: structure
+  dbscan_eps: 0.8
+  dbscan_min_samples: 10
+  dbscan_pca_components: 8
+  max_clustering_samples: 20000
+  max_graph_viz_nodes: 800
+  max_embedding_samples: 5000
+  embedding_method: tsne
+  checkpoint_path: outputs/models/final_graphsage_fleet.pt
+  retrain_gnn: true
+
+# Fleet correlation experiment (run_fleet_correlation_evaluation.py)
+# Top-k neighbourhoods + high cosine threshold (Equation 4 / meaningful N(u))
+fleet_correlation:
+  top_k_neighbors: 15
+  similarity_threshold: 0.95
+  minimum_cluster_size: 2
+  minimum_vehicle_count: 3
+  fleet_cluster_score_threshold: 0.7
+  max_graph_viz_nodes: 800
+
+# Weak anomaly recovery (run_weak_anomaly_recovery_evaluation.py)
+weak_anomaly_recovery:
+  top_k_neighbors: 15
+  similarity_threshold: 0.95
+  minimum_cluster_size: 2
+  minimum_vehicle_count: 2
+  recovery_score_threshold: 0.55
+  max_viz_nodes: 1200
+
+fleet_similarity_diagnosis:
+  top_k_neighbors: 15
+  similarity_threshold: 0.95
+  max_pairs_per_category: 50000
+
+graph_construction_comparison:
+  top_k_neighbors: 15
+  top_k_same_vehicle: 10
+  top_k_cross_vehicle: 5
+  similarity_threshold: 0.95
+  fleet_minimum_vehicle_count: 3
+  fleet_cluster_score_threshold: 0.7
+
+selective_weak_promotion:
+  top_k_same_vehicle: 10
+  top_k_cross_vehicle: 5
+  similarity_threshold: 0.95
+  min_vehicles: 2
+  min_cluster_size: 5
+  min_cohesion: 0.97
+  mean_score_thresholds: [0.60, 0.70, 0.80]
+  strong_support_thresholds: [0.40, 0.60, 0.80]
+  meaningful_recovery_min_rate: 1.0
+  max_false_positive_rate: 0.50
+  dbscan_eps: 1.2
+  dbscan_min_samples: 10
+  dbscan_pca_components: 8
+  max_clustering_samples: 20000
+
+# Final weak anomaly recovery optimization (run_weak_recovery_optimization.py)
+weak_recovery_optimization:
+  top_k_same_vehicle: 10
+  top_k_cross_vehicle: 5
+  top_k_neighbors: 15
+  similarity_threshold: 0.95
+  weak_minimum_cluster_size: 2
+  weak_minimum_vehicle_count: 2
+  recovery_score_threshold: 0.55
+  dbscan_pca_components: 8
+  max_clustering_samples: 20000
+  max_cohesion_pairs: 8000
+  ieee_recovery_min_percent: 10.0
+  balanced_max_fpr: 0.10
+  conservative_max_fpr: 0.05
+  # DBSCAN eps is Euclidean distance in scaled 8-D PCA space (not cosine similarity).
+  # Values 0.03–0.20 yield all-noise; extended range includes operational eps (e.g. 1.2).
+  dbscan_eps_values: [0.03, 0.05, 0.07, 0.10, 0.12, 0.15, 0.20, 0.25, 0.35, 0.50, 0.70, 0.90, 1.0, 1.2, 1.5, 2.0]
+  dbscan_min_samples_values: [3, 5, 10, 15]
+  minimum_vehicle_count_values: [2, 3]
+  minimum_cluster_size_values: [3, 5, 10]
+  cluster_mean_score_threshold_values: [0.55, 0.60, 0.65, 0.70, 0.75, 0.80]
+  cluster_cohesion_threshold_values: [0.90, 0.93, 0.95, 0.97]
+  strong_support_threshold_values: [0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80]
+
+research:
+  graph_viz_max_nodes: 800
+  autoencoder_epochs_report: 15
+

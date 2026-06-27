@@ -79,12 +79,22 @@ Thumbs.db
 # External datasets (clone locally)
 Dataset/
 
-# CTT cross-dataset experiment large artifacts
-new_experiments/can_train_and_test_cross_dataset_validation/normalized/
-new_experiments/can_train_and_test_cross_dataset_validation/windows/
-new_experiments/can_train_and_test_cross_dataset_validation/local_models/
-new_experiments/can_train_and_test_cross_dataset_validation/scalers/
-new_experiments/can_train_and_test_cross_dataset_validation/scenarios/
-new_experiments/can_train_and_test_cross_dataset_validation/manifests/window_manifest.csv
-new_experiments/can_train_and_test_cross_dataset_validation/manifests/window_manifest_pilot.csv
-new_experiments/can_train_and_test_cross_dataset_validation/logs/
+# Models and checkpoints
+outputs/models/
+outputs/checkpoints/
+*.joblib
+*.pkl
+*.pt
+!data/processed/.gitkeep
+
+# Experimental large intermediates (regenerate locally)
+new_experiments/**/normalized/
+new_experiments/**/windows/
+new_experiments/**/local_models/
+new_experiments/**/scalers/
+new_experiments/**/scenarios/
+new_experiments/**/logs/
+
+# Cache
+.cache/
+*.parquet

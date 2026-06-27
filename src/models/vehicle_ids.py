@@ -6,10 +6,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
+import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import IsolationForest, RandomForestClassifier
+from sklearn.ensemble import IsolationForest
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.model_selection import train_test_split
@@ -24,8 +25,10 @@ logger = get_logger(__name__)
 
 TASK_BINARY = "binary_classification"
 TASK_ANOMALY = "anomaly_detection"
+SELF_SUPERVISED_IDS_MODEL = "isolation_forest"
 
 VEHICLE_MODELS = ("Hyundai", "Kia", "Chevrolet")
+NORMAL_ATTACK_TYPES = {"normal", "attack_free", "benign", "none", "no_attack"}
 
 
 @dataclass
@@ -78,11 +81,41 @@ class ModelResult:
 
 def load_feature_dataset(path: Path | str) -> pd.DataFrame:
     df = pd.read_csv(path)
+    if "vehicle_model" not in df.columns:
+        raise ValueError("Feature dataset must include a 'vehicle_model' column.")
     if "label" not in df.columns:
-        raise ValueError("Feature dataset must include a 'label' column.")
+        df["label"] = infer_true_labels(df)
     df = df.dropna(subset=["label", "vehicle_model"])
     df["label"] = df["label"].astype(int)
     return df
+
+
+def infer_true_labels(df: pd.DataFrame) -> pd.Series:
+    """Infer labels for evaluation only; labels are not used for IDS training."""
+    if "label" in df.columns:
+        return pd.to_numeric(df["label"], errors="coerce").fillna(0).astype(int)
+    if "raw_label" in df.columns:
+        return df["raw_label"].astype(str).str.upper().ne("R").astype(int)
+    if "attack_type" in df.columns:
+        return ~df["attack_type"].astype(str).str.lower().isin(NORMAL_ATTACK_TYPES)
+    return pd.Series(np.zeros(len(df), dtype=int), index=df.index)
+
+
+def benign_training_mask(df: pd.DataFrame) -> pd.Series:
+    """
+    Select benign windows for self-supervised IDS training.
+
+    The proposed vehicle-level IDS is self-supervised and trained only on benign
+    CAN windows. Attack labels are used only for evaluation, not training.
+    """
+    mask = pd.Series(False, index=df.index)
+    if "label" in df.columns:
+        mask |= pd.to_numeric(df["label"], errors="coerce").fillna(1).astype(int).eq(0)
+    if "attack_type" in df.columns:
+        mask |= df["attack_type"].astype(str).str.lower().isin(NORMAL_ATTACK_TYPES)
+    if "raw_label" in df.columns:
+        mask |= df["raw_label"].astype(str).str.upper().eq("R")
+    return mask
 
 
 def prepare_vehicle_split(
@@ -162,33 +195,6 @@ def _train_test_indices(
     return train_idx, test_idx
 
 
-def predict_random_forest(
-    X_train: np.ndarray,
-    y_train: np.ndarray,
-    X_all: np.ndarray,
-    *,
-    random_state: int = 42,
-) -> tuple[np.ndarray, np.ndarray]:
-    clf = RandomForestClassifier(
-        n_estimators=200,
-        class_weight="balanced",
-        random_state=random_state,
-        n_jobs=-1,
-    )
-    clf.fit(X_train, y_train)
-    return clf.predict(X_all), clf.predict_proba(X_all)[:, 1]
-
-
-def train_random_forest(split: VehicleSplit, *, random_state: int = 42) -> ModelResult:
-    """Supervised binary classifier."""
-    y_pred, y_score = predict_random_forest(
-        split.X_train, split.y_train, split.X_test, random_state=random_state
-    )
-    return _result_from_predictions(
-        split.vehicle_model, "random_forest", TASK_BINARY, split.y_test, y_pred, y_score
-    )
-
-
 def predict_logistic_regression(
     X_train: np.ndarray,
     y_train: np.ndarray,
@@ -225,6 +231,57 @@ def train_logistic_regression(split: VehicleSplit, *, random_state: int = 42) ->
 
 def _anomaly_threshold_from_benign(train_scores: np.ndarray, percentile: float = 95.0) -> float:
     return float(np.percentile(train_scores, percentile))
+
+
+def _normalised_anomaly_percentile(
+    raw_scores: np.ndarray,
+    benign_raw_scores: np.ndarray,
+) -> np.ndarray:
+    """
+    Convert Isolation Forest raw anomaly scores into [0, 1].
+
+    0 means more normal-like than benign training windows; 1 means more anomalous
+    than the benign reference distribution. The reference distribution uses only
+    benign windows, preserving the self-supervised IDS methodology.
+    """
+    reference = np.sort(np.asarray(benign_raw_scores, dtype=np.float64))
+    if reference.size == 0:
+        return np.zeros_like(raw_scores, dtype=np.float64)
+    ranks = np.searchsorted(reference, raw_scores, side="right")
+    return np.clip(ranks / reference.size, 0.0, 1.0)
+
+
+def _feature_matrix(df: pd.DataFrame) -> np.ndarray:
+    return df[BEHAVIOURAL_FEATURE_COLUMNS].fillna(0.0).to_numpy(dtype=np.float32)
+
+
+def fit_self_supervised_isolation_forest(
+    X_benign: np.ndarray,
+    *,
+    random_state: int = 42,
+    n_estimators: int = 200,
+) -> IsolationForest:
+    """Fit the proposed benign-only vehicle-level IDS."""
+    model = IsolationForest(
+        n_estimators=n_estimators,
+        contamination="auto",
+        random_state=random_state,
+        n_jobs=-1,
+    )
+    model.fit(X_benign)
+    return model
+
+
+def score_self_supervised_isolation_forest(
+    model: IsolationForest,
+    X_all: np.ndarray,
+    X_benign_reference: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return local anomaly labels placeholder and normalised anomaly scores."""
+    benign_raw_scores = -model.decision_function(X_benign_reference)
+    raw_scores = -model.decision_function(X_all)
+    anomaly_scores = _normalised_anomaly_percentile(raw_scores, benign_raw_scores)
+    return np.zeros(len(X_all), dtype=int), anomaly_scores.astype(float)
 
 
 def predict_isolation_forest(
@@ -378,7 +435,6 @@ def train_autoencoder(
 
 
 MODEL_TRAINERS: dict[str, tuple[str, Callable[..., ModelResult]]] = {
-    "random_forest": (TASK_BINARY, train_random_forest),
     "logistic_regression": (TASK_BINARY, train_logistic_regression),
     "isolation_forest": (TASK_ANOMALY, train_isolation_forest),
     "autoencoder": (TASK_ANOMALY, train_autoencoder),
@@ -424,12 +480,11 @@ def generate_window_predictions(
     """
     Fit IDS models per vehicle (train split) and predict on **all** windows.
 
-    Returns long-format predictions: window_id, vehicle_model, model,
+    Returns long-format predictions: window_id, vehicle metadata, model,
     predicted_label, anomaly_score.
     """
     rows: list[pd.DataFrame] = []
     model_fns: list[tuple[str, Callable[..., tuple[np.ndarray, np.ndarray]]]] = [
-        ("random_forest", predict_random_forest),
         ("logistic_regression", predict_logistic_regression),
         ("isolation_forest", predict_isolation_forest),
     ]
@@ -447,7 +502,14 @@ def generate_window_predictions(
         X_train, y_train = X[train_idx], y[train_idx]
         X_train_benign = X_train[y_train == 0]
 
-        meta = subset[["window_id", "vehicle_model"]].copy()
+        meta_cols = [
+            "window_id",
+            "vehicle_model",
+            "source_file",
+            "attack_type",
+            "label",
+        ]
+        meta = subset[[c for c in meta_cols if c in subset.columns]].copy()
 
         for model_name, predict_fn in model_fns:
             logger.info("Predicting %s for %s (%d windows)", model_name, vehicle, len(subset))
@@ -473,6 +535,181 @@ def generate_window_predictions(
     return pd.concat(rows, ignore_index=True)
 
 
+def generate_vehicle_anomaly_predictions(
+    features: pd.DataFrame,
+    *,
+    primary_model: str = SELF_SUPERVISED_IDS_MODEL,
+    test_size: float = 0.2,
+    random_state: int = 42,
+    include_autoencoder: bool = True,
+    strong_threshold: float = 0.80,
+    weak_threshold: float = 0.55,
+    n_estimators: int = 200,
+    model_path: Path | str | None = None,
+) -> pd.DataFrame:
+    """
+    Generate the canonical self-supervised vehicle IDS output.
+
+    The proposed vehicle-level IDS is self-supervised and trained only on benign
+    CAN windows. Attack labels are used only for evaluation, not training.
+    """
+    if weak_threshold >= strong_threshold:
+        raise ValueError("weak_threshold must be lower than strong_threshold")
+    if primary_model not in {SELF_SUPERVISED_IDS_MODEL, "isolation_forest"}:
+        logger.warning(
+            "Ignoring primary_model=%s for proposed IDS; using self-supervised Isolation Forest.",
+            primary_model,
+        )
+
+    df = features.copy()
+    if "label" not in df.columns:
+        df["label"] = infer_true_labels(df)
+    if df.empty:
+        return pd.DataFrame(
+            columns=[
+                "window_id",
+                "vehicle_model",
+                "source_file",
+                "attack_type",
+                "true_label",
+                "anomaly_score",
+                "local_alert",
+                "weak_signal",
+                "evidence_level",
+            ]
+        )
+
+    all_predictions: list[pd.DataFrame] = []
+    model_bundle: dict[str, Any] = {
+        "model_type": SELF_SUPERVISED_IDS_MODEL,
+        "training_mode": "self_supervised_benign_only",
+        "feature_columns": BEHAVIOURAL_FEATURE_COLUMNS,
+        "strong_threshold": strong_threshold,
+        "weak_threshold": weak_threshold,
+        "models": {},
+        "benign_reference_scores": {},
+    }
+
+    for vehicle, subset in df.groupby("vehicle_model", sort=True):
+        subset = subset.copy()
+        benign_subset = subset[benign_training_mask(subset)].copy()
+        if benign_subset.empty:
+            logger.warning("Skipping %s: no benign windows available for self-supervised training", vehicle)
+            continue
+
+        X_benign = _feature_matrix(benign_subset)
+        X_all = _feature_matrix(subset)
+        model = fit_self_supervised_isolation_forest(
+            X_benign,
+            random_state=random_state,
+            n_estimators=n_estimators,
+        )
+        _, anomaly_scores = score_self_supervised_isolation_forest(model, X_all, X_benign)
+
+        meta_cols = ["window_id", "vehicle_model", "source_file", "attack_type", "label"]
+        part = subset[[c for c in meta_cols if c in subset.columns]].copy()
+        part["true_label"] = subset["label"].astype(int)
+        part["anomaly_score"] = anomaly_scores
+        all_predictions.append(part)
+
+        model_bundle["models"][vehicle] = model
+        model_bundle["benign_reference_scores"][vehicle] = -model.decision_function(X_benign)
+        logger.info(
+            "Trained self-supervised Isolation Forest for %s on %d benign windows; scored %d windows",
+            vehicle,
+            len(benign_subset),
+            len(subset),
+        )
+
+    if not all_predictions:
+        raise ValueError("No self-supervised Isolation Forest models were trained.")
+
+    out = pd.concat(all_predictions, ignore_index=True)
+    out["anomaly_score"] = out["anomaly_score"].fillna(0.0).clip(0.0, 1.0).astype(float)
+    out["local_alert"] = (out["anomaly_score"] >= strong_threshold).astype(int)
+    out["weak_signal"] = (
+        (out["anomaly_score"] >= weak_threshold) & (out["anomaly_score"] < strong_threshold)
+    ).astype(int)
+    out["evidence_level"] = np.select(
+        [out["local_alert"].eq(1), out["weak_signal"].eq(1)],
+        ["strong_local_anomaly", "weak_suspicious_signal"],
+        default="normal",
+    )
+    if model_path is not None:
+        save_vehicle_ids_model(model_bundle, model_path)
+    return out[
+        [
+            "window_id",
+            "vehicle_model",
+            "source_file",
+            "attack_type",
+            "true_label",
+            "anomaly_score",
+            "local_alert",
+            "weak_signal",
+            "evidence_level",
+        ]
+    ]
+
+
+def evaluate_vehicle_anomaly_predictions(predictions: pd.DataFrame) -> pd.DataFrame:
+    """Evaluate predictions against true labels after inference only."""
+    rows: list[dict[str, Any]] = []
+    for vehicle, group in predictions.groupby("vehicle_model", sort=True):
+        y_true = group["true_label"].astype(int).to_numpy()
+        y_pred = group["local_alert"].astype(int).to_numpy()
+        y_score = group["anomaly_score"].astype(float).to_numpy()
+        result = _result_from_predictions(
+            vehicle,
+            SELF_SUPERVISED_IDS_MODEL,
+            "self_supervised_anomaly_detection",
+            y_true,
+            y_pred,
+            y_score,
+        ).to_dict()
+        result["f1_score"] = result["f1"]
+        result["training_data"] = "benign_windows_only"
+        result["evaluated_windows"] = int(len(group))
+        result["local_alerts"] = int(group["local_alert"].sum())
+        result["weak_signals"] = int(group["weak_signal"].sum())
+        rows.append(result)
+
+    y_true_all = predictions["true_label"].astype(int).to_numpy()
+    y_pred_all = predictions["local_alert"].astype(int).to_numpy()
+    y_score_all = predictions["anomaly_score"].astype(float).to_numpy()
+    total = _result_from_predictions(
+        "ALL",
+        SELF_SUPERVISED_IDS_MODEL,
+        "self_supervised_anomaly_detection",
+        y_true_all,
+        y_pred_all,
+        y_score_all,
+    ).to_dict()
+    total["f1_score"] = total["f1"]
+    total["training_data"] = "benign_windows_only"
+    total["evaluated_windows"] = int(len(predictions))
+    total["local_alerts"] = int(predictions["local_alert"].sum())
+    total["weak_signals"] = int(predictions["weak_signal"].sum())
+    rows.append(total)
+    return pd.DataFrame(rows)
+
+
+def save_vehicle_ids_model(model_bundle: dict[str, Any], path: Path | str) -> Path:
+    out = Path(path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    joblib.dump(model_bundle, out)
+    logger.info("Saved self-supervised vehicle IDS model to %s", out)
+    return out
+
+
+def save_vehicle_anomaly_predictions(predictions: pd.DataFrame, path: Path | str) -> Path:
+    out = Path(path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    predictions.to_csv(out, index=False)
+    logger.info("Saved vehicle anomaly predictions to %s", out)
+    return out
+
+
 def save_window_predictions(predictions: pd.DataFrame, path: Path | str) -> Path:
     out = Path(path)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -492,33 +729,36 @@ def run_vehicle_level_training(
     test_size: float = 0.2,
     random_state: int = 42,
     include_autoencoder: bool = True,
+    strong_threshold: float = 0.80,
+    weak_threshold: float = 0.55,
+    model_path: Path | str | None = None,
 ) -> pd.DataFrame:
-    """Train all models for each vehicle and return results table."""
+    """
+    Train/evaluate the proposed self-supervised vehicle IDS.
+
+    The Isolation Forest is trained only on benign CAN windows. Ground-truth
+    attack labels are used only after inference to calculate evaluation metrics.
+    """
     df = load_feature_dataset(features_path)
-    all_results: list[ModelResult] = []
-
-    for vehicle in vehicles:
-        if vehicle not in df["vehicle_model"].unique():
+    if vehicles:
+        present = set(df["vehicle_model"].dropna().unique())
+        selected = [v for v in vehicles if v in present]
+        missing = sorted(set(vehicles) - present)
+        for vehicle in missing:
             logger.warning("Skipping missing vehicle: %s", vehicle)
-            continue
-        split = prepare_vehicle_split(
-            df, vehicle, test_size=test_size, random_state=random_state
-        )
-        logger.info(
-            "%s: train=%d (benign=%d) test=%d",
-            vehicle,
-            len(split.y_train),
-            len(split.X_train_benign),
-            len(split.y_test),
-        )
-        all_results.extend(
-            train_all_models_for_vehicle(
-                split, random_state=random_state, include_autoencoder=include_autoencoder
-            )
-        )
-
-    return pd.DataFrame([r.to_dict() for r in all_results])
-
+        if selected:
+            df = df[df["vehicle_model"].isin(selected)].copy()
+    predictions = generate_vehicle_anomaly_predictions(
+        df,
+        primary_model=SELF_SUPERVISED_IDS_MODEL,
+        test_size=test_size,
+        random_state=random_state,
+        include_autoencoder=include_autoencoder,
+        strong_threshold=strong_threshold,
+        weak_threshold=weak_threshold,
+        model_path=model_path,
+    )
+    return evaluate_vehicle_anomaly_predictions(predictions)
 
 def save_results(results: pd.DataFrame, path: Path | str) -> Path:
     out = Path(path)
@@ -542,13 +782,15 @@ def plot_vehicle_confusion_matrices(
     vehicles = sorted(results["vehicle_model"].unique())
     models = [
         m
-        for m in ["random_forest", "logistic_regression", "isolation_forest", "autoencoder"]
+        for m in ["logistic_regression", "isolation_forest", "autoencoder"]
         if m in results["model"].values
     ]
+    if not models:
+        logger.warning("No supported model columns available for confusion matrix plot.")
+        return Path(output_path)
 
     nrows, ncols = len(vehicles), len(models)
-    fig, axes = plt.subplots(nrows, ncols, figsize=figsize)
-    axes = np.atleast_2d(axes)
+    fig, axes = plt.subplots(nrows, ncols, figsize=figsize, squeeze=False)
 
     for i, vehicle in enumerate(vehicles):
         for j, model in enumerate(models):

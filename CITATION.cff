@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+title: "FLEET-GUARD: Fleet-Level Graph-Based Anomaly Reasoning for Coordinated CAN Attack Detection"
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Atieh
+    given-names: Iyad
+repository-code: "https://github.com/iyadsec/fleet-can-ids"
+license: MIT
+keywords:
+  - CAN bus
+  - intrusion detection
+  - fleet security
+  - graph neural networks
+  - coordinated attacks
+preferred-citation:
+  type: article
+  title: "FLEET-GUARD: Fleet-Level Graph-Based Anomaly Reasoning for Coordinated CAN Attack Detection"
+  authors:
+    - family-names: Atieh
+      given-names: Iyad
+  year: 2026
+  notes: "Update with journal name, volume, pages, and DOI when the paper is accepted."
