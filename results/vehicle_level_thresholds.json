@@ -1,0 +1,20 @@
+{
+  "model": "isolation_forest",
+  "training": "benign_train_only",
+  "selected_threshold_method": "FPR<=5%",
+  "selected_pooled_threshold": 0.955824863174355,
+  "used_fpr_10_fallback": false,
+  "per_vehicle_threshold_fpr_le_5pct": {
+    "Chevrolet": 0.957089672603878,
+    "Hyundai": 0.9604656595741344,
+    "Kia": 0.9504185447520928
+  },
+  "pooled_thresholds_by_method": {
+    "F1-optimal": 0.05962127819640629,
+    "FPR<=1%": 0.9895900407812835,
+    "FPR<=5%": 0.955824863174355,
+    "FPR<=10%": 0.8982117491528001,
+    "validation benign 95th percentile": 0.9540673964370037,
+    "validation benign 99th percentile": 0.9889578729894857
+  }
+}
