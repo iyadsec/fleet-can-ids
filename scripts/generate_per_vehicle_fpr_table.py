@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate FPR-controlled vehicle-level Isolation Forest metrics for Table I."""
+"""Generate per-vehicle FPR-controlled Table I outputs (OCSLab final protocol)."""
 
 from __future__ import annotations
 
@@ -17,12 +17,12 @@ from src.utils import get_logger, load_config
 from src.utils.config import get_nested
 from src.utils.paths import ProjectPaths
 
-logger = get_logger("scripts.run_vehicle_level_fpr_controlled")
+logger = get_logger("scripts.generate_per_vehicle_fpr_table")
 
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
-        description="FPR-controlled OCSLab vehicle-level Isolation Forest evaluation (Table I)"
+        description="Per-vehicle FPR-controlled Isolation Forest evaluation (Table I)"
     )
     p.add_argument("--config", default="configs/default.yaml")
     p.add_argument("--features", default=None, help="Path to window_features.csv")
@@ -41,12 +41,14 @@ def main() -> int:
     if not features_path.exists():
         logger.error(
             "Missing %s.\n"
-            "Run the OCSLab preprocessing pipeline first:\n"
+            "Place the OCSLab dataset and run:\n"
+            "  export OCSLAB_DATASET_DIR=/path/to/In-Vehicle\\ Network\\ Intrusion\\ Detection\\ Challenge\n"
             "  python experiments/01_load_dataset.py --config %s\n"
             "  python experiments/02_generate_windows.py --config %s\n"
             "  python experiments/03_extract_features.py\n"
-            "Set OCSLAB_DATASET_DIR if your dataset is not under Dataset/ocslab/",
+            "  python scripts/generate_per_vehicle_fpr_table.py --config %s",
             features_path,
+            args.config,
             args.config,
             args.config,
         )
@@ -77,10 +79,13 @@ def main() -> int:
     print("\n=== Table I: Per-vehicle FPR-controlled LaTeX ===\n")
     print(tex_path.read_text(encoding="utf-8"))
 
-    logger.info("Wrote:")
-    for key, path in written.items():
-        if "per_vehicle" in key or "fpr_controlled" in key or "validation_report" in key:
-            logger.info("  %s: %s", key, path)
+    for key in (
+        "vehicle_level_metrics_per_vehicle_fpr_controlled",
+        "per_vehicle_validation_report",
+        "vehicle_level_scored_splits",
+    ):
+        if key in written:
+            logger.info("%s → %s", key, written[key])
     return 0
 
 

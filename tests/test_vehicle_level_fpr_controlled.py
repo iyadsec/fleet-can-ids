@@ -64,5 +64,6 @@ def test_fpr_controlled_vehicle_level_outputs(tmp_path: Path):
     assert set(metrics["vehicle_model"]) >= {"Chevrolet", "Hyundai", "Kia", "pooled"}
     pooled = metrics[metrics["vehicle_model"] == "pooled"].iloc[0]
     assert pooled["false_positive_rate"] <= 0.10
-    assert (tmp_path / "results" / "vehicle_level_validation_report.md").exists()
-    assert (tmp_path / "tables" / "table_vehicle_level_ids_fpr_controlled.tex").exists()
+    assert (tmp_path / "results" / "vehicle_level_metrics_per_vehicle_fpr_controlled.csv").exists()
+    assert (tmp_path / "tables" / "table_vehicle_level_per_vehicle_fpr_controlled.tex").exists()
+    assert (tmp_path / "results" / "per_vehicle_validation_report.md").exists()
