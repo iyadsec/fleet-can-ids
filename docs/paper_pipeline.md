@@ -29,7 +29,9 @@ This table maps paper experiments to runnable scripts and canonical output locat
 
 | Paper result | Script | Output file / folder |
 |--------------|--------|-------------------|
-| Vehicle-level anomaly detection (Table P4) | `experiments/04_train_vehicle_ids.py` or balanced publication run | `experimental-2026-06-23/01_primary_ocslab_balanced/tables/table_P4_vehicle_level_results.csv` |
+| Vehicle-level anomaly detection (Table P4, balanced fleet run) | `experiments/04_train_vehicle_ids.py` or balanced publication run | `experimental-2026-06-23/01_primary_ocslab_balanced/tables/table_P4_vehicle_level_results.csv` |
+| Vehicle-level anomaly detection (Table I, FPR≤5%) | `scripts/run_vehicle_level_fpr_controlled.py` | `results/vehicle_level_threshold_comparison.csv`, `tables/table_vehicle_level_ids.tex` |
+| Per-vehicle Table I (Chevrolet, Hyundai, Kia, pooled) | `scripts/generate_per_vehicle_fpr_table.py` | `results/per_vehicle_validation_report.md` |
 | Descriptor compactness (Table P5) | `experiments/05_generate_descriptors.py` + privacy evidence | `.../table_P5_descriptor_compactness_and_privacy.csv` |
 | Non-campaign scenarios (Table P6) | Fleet scenario evaluation | `.../table_P6_benign_isolated_unrelated_results.csv` |
 | Strong campaign detection (Table P7) | Campaign scenarios + DBSCAN | `.../table_P7_strong_campaign_results.csv` |
