@@ -1,0 +1,2 @@
+vehicle_model,roc_auc,pr_auc,precision,recall,f1,false_positive_rate,threshold,threshold_method,detection_latency_ms,test_windows,status
+pooled,0.7855,0.9273,0.9724,0.4597,0.6243,0.0402,0.955825,FPR<=5%,74.82,,verified_from_threshold_comparison

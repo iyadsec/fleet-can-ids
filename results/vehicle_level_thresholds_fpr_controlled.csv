@@ -1,0 +1,5 @@
+vehicle_model,threshold_method,threshold_value,validation_fpr_cap
+Chevrolet,FPR<=5%,0.95709,0.05
+Hyundai,FPR<=5%,0.960466,0.05
+Kia,FPR<=5%,0.950419,0.05
+pooled,FPR<=5%,0.955825,0.05
