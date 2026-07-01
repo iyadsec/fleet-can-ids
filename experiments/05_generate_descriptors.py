@@ -51,7 +51,7 @@ def parse_args() -> argparse.Namespace:
         "--primary-model",
         type=str,
         default="isolation_forest",
-        help="Self-supervised IDS model providing the reported anomaly_score",
+        help="Benign-trained unsupervised IDS model providing the reported anomaly_score",
     )
     parser.add_argument("--test-size", type=float, default=0.2)
     parser.add_argument("--strong-threshold", type=float, default=None)

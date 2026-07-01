@@ -88,7 +88,7 @@ def aggregate_predictions(
     Collapse long-format model predictions to one row per window.
 
     ``predicted_label``: attack if **any** model flags the window.
-    ``anomaly_score``: score from the proposed self-supervised IDS.
+    ``anomaly_score``: score from the benign-trained unsupervised vehicle IDS.
     ``ids_model``: model used for the reported score.
     """
     if predictions.empty:

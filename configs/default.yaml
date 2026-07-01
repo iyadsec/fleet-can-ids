@@ -36,7 +36,7 @@ pipeline:
     clean_can_data: data/processed/clean_can_data.csv
     window_metadata: data/processed/window_metadata.csv
     window_features: data/processed/window_features.csv
-    vehicle_results: outputs/metrics/vehicle_level_self_supervised_results.csv
+    vehicle_results: outputs/metrics/vehicle_level_self_supervised_results.csv  # legacy filename; unsupervised IF metrics
     vehicle_ids_model: outputs/models/vehicle_isolation_forest.joblib
     vehicle_anomaly_predictions: data/processed/vehicle_anomaly_predictions.csv
     anomaly_descriptors: data/processed/anomaly_descriptors.csv

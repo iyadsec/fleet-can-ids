@@ -120,7 +120,7 @@ def main() -> int:
     save_vehicle_anomaly_predictions(predictions, predictions_path)
     plot_vehicle_confusion_matrices(results, confusion_path)
     print_results_summary(results)
-    print("Vehicle-level IDS updated to self-supervised Isolation Forest and aligned with paper methodology.")
+    print("Vehicle-level IDS uses benign-trained unsupervised Isolation Forest (aligned with paper methodology).")
     return 0
 
 

@@ -52,7 +52,7 @@ def build_pyg_data(desc_df: pd.DataFrame, edge_df: pd.DataFrame) -> Data:
 
 
 def train_graphsage(data: Data, epochs: int = 50, lr: float = 1e-3) -> FleetGraphSAGE:
-    """Self-supervised: reconstruct node features from embeddings."""
+    """Graph-level node-feature reconstruction (no attack labels; not vehicle-level IF)."""
     model = FleetGraphSAGE(data.x.size(1))
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     decoder = nn.Linear(32, data.x.size(1))

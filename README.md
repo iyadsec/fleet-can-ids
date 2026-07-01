@@ -15,7 +15,7 @@ FLEET-GUARD correlates **weak, distributed CAN anomaly evidence across vehicles*
 | Layer | Method | Paper role |
 |-------|--------|------------|
 | Windowing | 100-frame CAN windows (50-frame stride default) | Local temporal context |
-| Vehicle IDS | Isolation Forest (benign-only training) | Anomaly scores, strong alerts, weak descriptors |
+| Vehicle IDS | Isolation Forest (benign-trained unsupervised) | Anomaly scores, strong alerts, weak descriptors |
 | Descriptors | Compact behaviour-based vectors | Cross-vehicle comparison, reduced raw CAN exposure |
 | Fleet graph | Cosine similarity + neighbour caps | Behavioural relationships between descriptors |
 | Fleet model | GraphSAGE | Fleet correlation embeddings |
@@ -201,7 +201,7 @@ Canonical archived results: `experimental-2026-06-23/`
 
 | Stage | Key outputs |
 |-------|-------------|
-| Vehicle IDS | `outputs/metrics/vehicle_level_self_supervised_results.csv`, `results/vehicle_level_threshold_comparison.csv` |
+| Vehicle IDS | `outputs/metrics/vehicle_level_self_supervised_results.csv` (legacy filename; unsupervised IF), `results/vehicle_level_threshold_comparison.csv` |
 | Descriptors | `data/processed/anomaly_descriptors.csv` |
 | Fleet graph | `data/processed/fleet_graph.pt`, `outputs/metrics/graph_statistics.csv` |
 | GraphSAGE | `data/processed/node_embeddings.csv` |
@@ -212,7 +212,7 @@ Canonical archived results: `experimental-2026-06-23/`
 ## Reproducibility
 
 - Default random seed: `42` (`configs/default.yaml`)
-- Vehicle IDS: benign-only **Isolation Forest**; Table I uses validation FPR≤5% threshold selection
+- Vehicle IDS: benign-trained **unsupervised** Isolation Forest (one-class, no attack labels during fitting); Table I uses validation FPR≤5% threshold selection
 - Fleet pipeline (P4–P10): fixed strong/weak alert thresholds from balanced publication run (see bundle README)
 - Graph: cosine similarity; fleet model: GraphSAGE; clustering: DBSCAN
 - Attack labels are used for **evaluation and scenario assignment only**, not as model inputs

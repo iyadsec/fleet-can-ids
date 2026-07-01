@@ -265,7 +265,7 @@ class FullPipelineRunner:
             results, self.paths.figures_dir / "confusion_matrix_vehicle.png"
         )
         print_results_summary(results)
-        print("Vehicle-level IDS updated to self-supervised Isolation Forest and aligned with paper methodology.")
+        print("Vehicle-level IDS uses benign-trained unsupervised Isolation Forest (aligned with paper methodology).")
         return 0
 
     def _step_classify_evidence(self) -> int:

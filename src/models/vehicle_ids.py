@@ -25,7 +25,11 @@ logger = get_logger(__name__)
 
 TASK_BINARY = "binary_classification"
 TASK_ANOMALY = "anomaly_detection"
+# Legacy identifier kept for config keys and saved artifacts. The vehicle-level
+# detector is benign-trained unsupervised (one-class) Isolation Forest anomaly
+# detection — not self-supervised learning (no pretext task on CAN windows).
 SELF_SUPERVISED_IDS_MODEL = "isolation_forest"
+UNSUPERVISED_IDS_MODEL = SELF_SUPERVISED_IDS_MODEL
 
 VEHICLE_MODELS = ("Hyundai", "Kia", "Chevrolet")
 NORMAL_ATTACK_TYPES = {"normal", "attack_free", "benign", "none", "no_attack"}
@@ -103,10 +107,11 @@ def infer_true_labels(df: pd.DataFrame) -> pd.Series:
 
 def benign_training_mask(df: pd.DataFrame) -> pd.Series:
     """
-    Select benign windows for self-supervised IDS training.
+    Select benign windows for unsupervised IDS training.
 
-    The proposed vehicle-level IDS is self-supervised and trained only on benign
-    CAN windows. Attack labels are used only for evaluation, not training.
+    The vehicle-level IDS is benign-trained unsupervised anomaly detection:
+    Isolation Forest fits on benign CAN windows only. Attack labels are used
+    only for evaluation, not during model fitting.
     """
     mask = pd.Series(False, index=df.index)
     if "label" in df.columns:
@@ -242,7 +247,7 @@ def _normalised_anomaly_percentile(
 
     0 means more normal-like than benign training windows; 1 means more anomalous
     than the benign reference distribution. The reference distribution uses only
-    benign windows, preserving the self-supervised IDS methodology.
+    benign windows, preserving the benign-trained unsupervised IDS methodology.
     """
     reference = np.sort(np.asarray(benign_raw_scores, dtype=np.float64))
     if reference.size == 0:
@@ -261,7 +266,12 @@ def fit_self_supervised_isolation_forest(
     random_state: int = 42,
     n_estimators: int = 200,
 ) -> IsolationForest:
-    """Fit the proposed benign-only vehicle-level IDS."""
+    """
+    Fit benign-trained unsupervised Isolation Forest (legacy function name).
+
+    Trains on benign windows only; no attack labels and no self-supervised
+    pretext objective are used during fitting.
+    """
     model = IsolationForest(
         n_estimators=n_estimators,
         contamination="auto",
@@ -277,11 +287,20 @@ def score_self_supervised_isolation_forest(
     X_all: np.ndarray,
     X_benign_reference: np.ndarray,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Return local anomaly labels placeholder and normalised anomaly scores."""
+    """
+    Score windows with a benign-trained unsupervised Isolation Forest (legacy name).
+
+    Returns a local-alert placeholder and normalised anomaly scores.
+    """
     benign_raw_scores = -model.decision_function(X_benign_reference)
     raw_scores = -model.decision_function(X_all)
     anomaly_scores = _normalised_anomaly_percentile(raw_scores, benign_raw_scores)
     return np.zeros(len(X_all), dtype=int), anomaly_scores.astype(float)
+
+
+# Preferred aliases (legacy names retained for backward compatibility).
+fit_unsupervised_isolation_forest = fit_self_supervised_isolation_forest
+score_unsupervised_isolation_forest = score_self_supervised_isolation_forest
 
 
 def predict_isolation_forest(
@@ -548,16 +567,16 @@ def generate_vehicle_anomaly_predictions(
     model_path: Path | str | None = None,
 ) -> pd.DataFrame:
     """
-    Generate the canonical self-supervised vehicle IDS output.
+    Generate the canonical benign-trained unsupervised vehicle IDS output.
 
-    The proposed vehicle-level IDS is self-supervised and trained only on benign
-    CAN windows. Attack labels are used only for evaluation, not training.
+    Isolation Forest is trained only on benign CAN windows (one-class anomaly
+    detection). Attack labels are used only for evaluation, not model fitting.
     """
     if weak_threshold >= strong_threshold:
         raise ValueError("weak_threshold must be lower than strong_threshold")
-    if primary_model not in {SELF_SUPERVISED_IDS_MODEL, "isolation_forest"}:
+    if primary_model not in {SELF_SUPERVISED_IDS_MODEL, UNSUPERVISED_IDS_MODEL, "isolation_forest"}:
         logger.warning(
-            "Ignoring primary_model=%s for proposed IDS; using self-supervised Isolation Forest.",
+            "Ignoring primary_model=%s for proposed IDS; using benign-trained unsupervised Isolation Forest.",
             primary_model,
         )
 
@@ -582,7 +601,7 @@ def generate_vehicle_anomaly_predictions(
     all_predictions: list[pd.DataFrame] = []
     model_bundle: dict[str, Any] = {
         "model_type": SELF_SUPERVISED_IDS_MODEL,
-        "training_mode": "self_supervised_benign_only",
+        "training_mode": "unsupervised_benign_only",
         "feature_columns": BEHAVIOURAL_FEATURE_COLUMNS,
         "strong_threshold": strong_threshold,
         "weak_threshold": weak_threshold,
@@ -594,7 +613,7 @@ def generate_vehicle_anomaly_predictions(
         subset = subset.copy()
         benign_subset = subset[benign_training_mask(subset)].copy()
         if benign_subset.empty:
-            logger.warning("Skipping %s: no benign windows available for self-supervised training", vehicle)
+            logger.warning("Skipping %s: no benign windows available for unsupervised training", vehicle)
             continue
 
         X_benign = _feature_matrix(benign_subset)
@@ -615,14 +634,14 @@ def generate_vehicle_anomaly_predictions(
         model_bundle["models"][vehicle] = model
         model_bundle["benign_reference_scores"][vehicle] = -model.decision_function(X_benign)
         logger.info(
-            "Trained self-supervised Isolation Forest for %s on %d benign windows; scored %d windows",
+            "Trained benign-only unsupervised Isolation Forest for %s on %d benign windows; scored %d windows",
             vehicle,
             len(benign_subset),
             len(subset),
         )
 
     if not all_predictions:
-        raise ValueError("No self-supervised Isolation Forest models were trained.")
+        raise ValueError("No unsupervised Isolation Forest models were trained.")
 
     out = pd.concat(all_predictions, ignore_index=True)
     out["anomaly_score"] = out["anomaly_score"].fillna(0.0).clip(0.0, 1.0).astype(float)
@@ -662,7 +681,7 @@ def evaluate_vehicle_anomaly_predictions(predictions: pd.DataFrame) -> pd.DataFr
         result = _result_from_predictions(
             vehicle,
             SELF_SUPERVISED_IDS_MODEL,
-            "self_supervised_anomaly_detection",
+            "unsupervised_anomaly_detection",
             y_true,
             y_pred,
             y_score,
@@ -680,7 +699,7 @@ def evaluate_vehicle_anomaly_predictions(predictions: pd.DataFrame) -> pd.DataFr
     total = _result_from_predictions(
         "ALL",
         SELF_SUPERVISED_IDS_MODEL,
-        "self_supervised_anomaly_detection",
+        "unsupervised_anomaly_detection",
         y_true_all,
         y_pred_all,
         y_score_all,
@@ -698,7 +717,7 @@ def save_vehicle_ids_model(model_bundle: dict[str, Any], path: Path | str) -> Pa
     out = Path(path)
     out.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(model_bundle, out)
-    logger.info("Saved self-supervised vehicle IDS model to %s", out)
+    logger.info("Saved unsupervised vehicle IDS model to %s", out)
     return out
 
 
@@ -734,10 +753,10 @@ def run_vehicle_level_training(
     model_path: Path | str | None = None,
 ) -> pd.DataFrame:
     """
-    Train/evaluate the proposed self-supervised vehicle IDS.
+    Train/evaluate the benign-trained unsupervised vehicle IDS.
 
-    The Isolation Forest is trained only on benign CAN windows. Ground-truth
-    attack labels are used only after inference to calculate evaluation metrics.
+    Isolation Forest is trained only on benign CAN windows. Ground-truth attack
+    labels are used only after inference to calculate evaluation metrics.
     """
     df = load_feature_dataset(features_path)
     if vehicles:

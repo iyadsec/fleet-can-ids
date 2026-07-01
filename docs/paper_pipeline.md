@@ -10,7 +10,7 @@ This table maps paper experiments to runnable scripts and canonical output locat
 | 2 | Parse and clean frames | `src/data/dataset_loader.py` | (merged into clean CSV) |
 | 3 | Segment into 100-frame windows | `experiments/02_generate_windows.py` | `data/processed/window_metadata.csv` |
 | 4 | Behavioural window features | `experiments/03_extract_features.py` | `data/processed/window_features.csv` |
-| 5 | Benign-only Isolation Forest | `experiments/04_train_vehicle_ids.py` | `outputs/metrics/vehicle_level_self_supervised_results.csv` |
+| 5 | Benign-only Isolation Forest (unsupervised) | `experiments/04_train_vehicle_ids.py` | `outputs/metrics/vehicle_level_self_supervised_results.csv` (legacy path) |
 | 6 | Anomaly scores | `src/models/vehicle_ids.py` | `data/processed/vehicle_anomaly_predictions.csv` |
 | 7 | Strong local alerts | `experiments/04_train_vehicle_ids.py` (strong threshold) | `local_alert` column |
 | 8 | Weak anomaly descriptors | `experiments/05_generate_descriptors.py` | `data/processed/anomaly_descriptors.csv` |

@@ -1,4 +1,4 @@
-"""Vehicle-level self-supervised IDS evaluation for paper Table 1 and Figures 1–4."""
+"""Vehicle-level benign-trained unsupervised IDS evaluation for paper Table 1 and Figures 1–4."""
 
 from __future__ import annotations
 
@@ -832,7 +832,7 @@ def run_vehicle_level_evaluation(
     table1 = pd.DataFrame(
         [
             {
-                "Model": "Isolation Forest (self-supervised)",
+                "Model": "Isolation Forest (unsupervised)",
                 "ROC-AUC": round(metrics["roc_auc"], 4),
                 "PR-AUC": round(metrics["pr_auc"], 4),
                 "Recall (%)": round(metrics["recall_pct"], 2),
