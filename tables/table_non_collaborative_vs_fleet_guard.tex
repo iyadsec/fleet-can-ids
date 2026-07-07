@@ -1,8 +1,14 @@
-\begin{tabular}{lllllllll}
+\begin{table}[t]
+\centering
+\caption{Non-collaborative vehicle-level IDS vs FLEET-GUARD (OCSLab publication scenarios).}
+\label{tab:non_collab_vs_fleet_guard}
+\begin{tabular}{llllllllll}
 \toprule
-Method & Fleet correlation used & Descriptor sharing used & Graph reasoning used & Strong campaign F1 & Weak campaign F1 & Benign false campaign rate & Isolated false campaign rate & Independent incident merge rate \\
+Method & Local IDS & Descriptor Sharing & Fleet Graph & GraphSAGE & DBSCAN & Campaign Reasoning & Strong Campaign F1 & Weak Campaign F1 & False Campaign Rate \\
 \midrule
-Non-collaborative local IDS & No & No & No & N/A & N/A & N/A & N/A & N/A \\
-FLEET-GUARD & Yes & Yes & Yes & 0.756 & 0.428 & 0.000 & 0.000 & 0.400 \\
+Vehicle-Level IDS & Yes & No & No & No & No & No & N/A & N/A & N/A \\
+FLEET-GUARD & Yes & Yes & Yes & Yes & Yes & Yes & 0.733 & 0.500 & 0.000 \\
 \bottomrule
 \end{tabular}
+
+\end{table}
