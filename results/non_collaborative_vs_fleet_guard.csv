@@ -1,0 +1,181 @@
+scenario_id,scenario_key,scenario_label,seed,campaign_size,method,fleet_correlation_used,descriptor_sharing_used,graph_reasoning_used,local_precision,local_recall,local_f1,local_fpr,local_alert_generated,campaign_detection_rate,campaign_precision,campaign_recall,campaign_f1,false_campaign_rate,incorrect_merge_rate,membership_precision,membership_recall,membership_f1,fragmentation,source
+S0,benign_fleet_control,Benign fleet,11,5,FLEET-GUARD,Yes,Yes,Yes,,0.0,,,False,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S0,benign_fleet_control,Benign fleet,23,5,FLEET-GUARD,Yes,Yes,Yes,,0.0,,,False,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S0,benign_fleet_control,Benign fleet,37,5,FLEET-GUARD,Yes,Yes,Yes,,0.0,,,False,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S0,benign_fleet_control,Benign fleet,41,5,FLEET-GUARD,Yes,Yes,Yes,,0.0,,,False,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S0,benign_fleet_control,Benign fleet,53,5,FLEET-GUARD,Yes,Yes,Yes,,0.0,,,False,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S0,benign_fleet_control,Benign fleet,67,5,FLEET-GUARD,Yes,Yes,Yes,,0.0,,,False,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S0,benign_fleet_control,Benign fleet,71,5,FLEET-GUARD,Yes,Yes,Yes,,0.0,,,False,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S0,benign_fleet_control,Benign fleet,83,5,FLEET-GUARD,Yes,Yes,Yes,,0.0,,,False,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S0,benign_fleet_control,Benign fleet,97,5,FLEET-GUARD,Yes,Yes,Yes,,0.0,,,False,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S0,benign_fleet_control,Benign fleet,101,5,FLEET-GUARD,Yes,Yes,Yes,,0.0,,,False,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S1,isolated_attack,Isolated single-vehicle attack,11,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S1,isolated_attack,Isolated single-vehicle attack,23,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S1,isolated_attack,Isolated single-vehicle attack,37,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S1,isolated_attack,Isolated single-vehicle attack,41,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S1,isolated_attack,Isolated single-vehicle attack,53,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S1,isolated_attack,Isolated single-vehicle attack,67,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S1,isolated_attack,Isolated single-vehicle attack,71,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S1,isolated_attack,Isolated single-vehicle attack,83,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S1,isolated_attack,Isolated single-vehicle attack,97,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S1,isolated_attack,Isolated single-vehicle attack,101,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S2,independent_multi_vehicle_attacks,Independent multi-vehicle attacks,11,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S2,independent_multi_vehicle_attacks,Independent multi-vehicle attacks,23,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,0.0,1.0,1.0,0.6,0.7499999999999999,0.0,campaign_metrics.csv
+S2,independent_multi_vehicle_attacks,Independent multi-vehicle attacks,37,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S2,independent_multi_vehicle_attacks,Independent multi-vehicle attacks,41,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,0.0,1.0,1.0,0.8,0.888888888888889,0.0,campaign_metrics.csv
+S2,independent_multi_vehicle_attacks,Independent multi-vehicle attacks,53,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S2,independent_multi_vehicle_attacks,Independent multi-vehicle attacks,67,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S2,independent_multi_vehicle_attacks,Independent multi-vehicle attacks,71,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,1.0,0.0,campaign_metrics.csv
+S2,independent_multi_vehicle_attacks,Independent multi-vehicle attacks,83,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S2,independent_multi_vehicle_attacks,Independent multi-vehicle attacks,97,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,0.0,1.0,1.0,0.8,0.888888888888889,0.0,campaign_metrics.csv
+S2,independent_multi_vehicle_attacks,Independent multi-vehicle attacks,101,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,11,2,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,1.0,1.0,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,11,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,1.0,1.0,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,11,10,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,0.9,0.9473684210526316,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,23,2,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,23,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,23,10,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,0.5,0.6666666666666666,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,37,2,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,1.0,1.0,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,37,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,1.0,1.0,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,37,10,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,0.9,0.9473684210526316,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,41,2,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,41,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,0.8333333333333334,1.0,0.9090909090909092,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,41,10,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,1.0,1.0,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,53,2,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,1.0,1.0,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,53,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,0.5,1.0,0.6666666666666666,,0.0,0.4166666666666667,1.0,0.5882352941176471,1.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,53,10,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,1.0,1.0,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,67,2,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,0.5,1.0,0.6666666666666666,,0.0,0.4,1.0,0.5714285714285715,1.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,67,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,0.6,0.7499999999999999,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,67,10,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,0.7,0.8235294117647058,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,71,2,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,71,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,1.0,1.0,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,71,10,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,1.0,1.0,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,83,2,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,1.0,1.0,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,83,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,1.0,1.0,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,83,10,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,0.9,0.9473684210526316,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,97,2,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,0.5,1.0,0.6666666666666666,,0.0,0.2,1.0,0.3333333333333333,1.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,97,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,97,10,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,1.0,1.0,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,101,2,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,101,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,0.5,1.0,0.6666666666666666,,0.0,1.0,1.0,1.0,1.0,campaign_metrics.csv
+S3,strong_coordinated_campaign,Strong coordinated campaign,101,10,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,0.9,0.9473684210526316,0.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,11,2,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,11,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,1.0,1.0,0.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,11,10,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,0.3333333333333333,1.0,0.5,,0.0,1.0,1.0,1.0,1.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,23,2,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,23,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,23,10,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,0.6,0.7499999999999999,0.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,37,2,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,37,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,37,10,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,0.8,0.888888888888889,0.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,41,2,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,41,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,1.0,1.0,0.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,41,10,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,0.5,1.0,0.6666666666666666,,0.0,1.0,1.0,1.0,1.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,53,2,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,53,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,0.5,1.0,0.6666666666666666,,0.0,1.0,1.0,1.0,1.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,53,10,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,0.5,1.0,0.6666666666666666,,0.0,1.0,1.0,1.0,1.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,67,2,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,67,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,0.5,1.0,0.6666666666666666,,0.0,1.0,0.8,0.888888888888889,1.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,67,10,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,0.5,1.0,0.6666666666666666,,0.0,1.0,0.9,0.9473684210526316,1.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,71,2,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,71,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,0.6,0.7499999999999999,0.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,71,10,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,0.5,1.0,0.6666666666666666,,0.0,1.0,0.9,0.9473684210526316,1.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,83,2,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,0.5,1.0,0.6666666666666666,,0.0,0.4,1.0,0.5714285714285715,1.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,83,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,83,10,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,97,2,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,97,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,97,10,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,0.8,0.888888888888889,0.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,101,2,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,0.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,101,5,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,0.5,1.0,0.6666666666666666,,0.0,1.0,1.0,1.0,1.0,campaign_metrics.csv
+S4,weak_coordinated_campaign,Weak coordinated campaign,101,10,FLEET-GUARD,Yes,Yes,Yes,,1.0,,,True,1.0,1.0,1.0,1.0,,0.0,1.0,0.7,0.8235294117647058,0.0,campaign_metrics.csv
+S0,benign_fleet_control,Benign fleet,11,5,Non-collaborative local IDS,No,No,No,0.0,0.0,0.0,1.0,False,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S0,benign_fleet_control,Benign fleet,23,5,Non-collaborative local IDS,No,No,No,0.0,0.0,0.0,1.0,False,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S0,benign_fleet_control,Benign fleet,37,5,Non-collaborative local IDS,No,No,No,0.0,0.0,0.0,1.0,False,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S0,benign_fleet_control,Benign fleet,41,5,Non-collaborative local IDS,No,No,No,0.0,0.0,0.0,1.0,False,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S0,benign_fleet_control,Benign fleet,53,5,Non-collaborative local IDS,No,No,No,0.0,0.0,0.0,1.0,False,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S0,benign_fleet_control,Benign fleet,67,5,Non-collaborative local IDS,No,No,No,0.0,0.0,0.0,1.0,False,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S0,benign_fleet_control,Benign fleet,71,5,Non-collaborative local IDS,No,No,No,0.0,0.0,0.0,1.0,False,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S0,benign_fleet_control,Benign fleet,83,5,Non-collaborative local IDS,No,No,No,0.0,0.0,0.0,1.0,False,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S0,benign_fleet_control,Benign fleet,97,5,Non-collaborative local IDS,No,No,No,0.0,0.0,0.0,1.0,False,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S0,benign_fleet_control,Benign fleet,101,5,Non-collaborative local IDS,No,No,No,0.0,0.0,0.0,1.0,False,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S1,isolated_attack,Isolated single-vehicle attack,11,5,Non-collaborative local IDS,No,No,No,0.5,1.0,0.6666666666666666,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S1,isolated_attack,Isolated single-vehicle attack,23,5,Non-collaborative local IDS,No,No,No,0.5,1.0,0.6666666666666666,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S1,isolated_attack,Isolated single-vehicle attack,37,5,Non-collaborative local IDS,No,No,No,0.5,1.0,0.6666666666666666,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S1,isolated_attack,Isolated single-vehicle attack,41,5,Non-collaborative local IDS,No,No,No,0.5,1.0,0.6666666666666666,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S1,isolated_attack,Isolated single-vehicle attack,53,5,Non-collaborative local IDS,No,No,No,0.5,1.0,0.6666666666666666,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S1,isolated_attack,Isolated single-vehicle attack,67,5,Non-collaborative local IDS,No,No,No,0.5,1.0,0.6666666666666666,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S1,isolated_attack,Isolated single-vehicle attack,71,5,Non-collaborative local IDS,No,No,No,0.5,1.0,0.6666666666666666,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S1,isolated_attack,Isolated single-vehicle attack,83,5,Non-collaborative local IDS,No,No,No,0.5,1.0,0.6666666666666666,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S1,isolated_attack,Isolated single-vehicle attack,97,5,Non-collaborative local IDS,No,No,No,0.5,1.0,0.6666666666666666,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S1,isolated_attack,Isolated single-vehicle attack,101,5,Non-collaborative local IDS,No,No,No,0.5,1.0,0.6666666666666666,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S2,independent_multi_vehicle_attacks,Independent multi-vehicle attacks,11,5,Non-collaborative local IDS,No,No,No,0.165,1.0,0.2832618025751073,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S2,independent_multi_vehicle_attacks,Independent multi-vehicle attacks,23,5,Non-collaborative local IDS,No,No,No,0.19,1.0,0.319327731092437,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S2,independent_multi_vehicle_attacks,Independent multi-vehicle attacks,37,5,Non-collaborative local IDS,No,No,No,0.165,1.0,0.2832618025751073,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S2,independent_multi_vehicle_attacks,Independent multi-vehicle attacks,41,5,Non-collaborative local IDS,No,No,No,0.225,1.0,0.36734693877551017,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S2,independent_multi_vehicle_attacks,Independent multi-vehicle attacks,53,5,Non-collaborative local IDS,No,No,No,0.17,1.0,0.2905982905982906,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S2,independent_multi_vehicle_attacks,Independent multi-vehicle attacks,67,5,Non-collaborative local IDS,No,No,No,0.17,1.0,0.2905982905982906,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S2,independent_multi_vehicle_attacks,Independent multi-vehicle attacks,71,5,Non-collaborative local IDS,No,No,No,0.165,1.0,0.2832618025751073,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S2,independent_multi_vehicle_attacks,Independent multi-vehicle attacks,83,5,Non-collaborative local IDS,No,No,No,0.165,1.0,0.2832618025751073,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S2,independent_multi_vehicle_attacks,Independent multi-vehicle attacks,97,5,Non-collaborative local IDS,No,No,No,0.185,1.0,0.3122362869198312,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S2,independent_multi_vehicle_attacks,Independent multi-vehicle attacks,101,5,Non-collaborative local IDS,No,No,No,0.205,1.0,0.3402489626556016,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,11,2,Non-collaborative local IDS,No,No,No,0.05,1.0,0.09523809523809523,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,11,5,Non-collaborative local IDS,No,No,No,0.125,1.0,0.2222222222222222,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,11,10,Non-collaborative local IDS,No,No,No,0.25,1.0,0.4,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,23,2,Non-collaborative local IDS,No,No,No,0.05,1.0,0.09523809523809523,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,23,5,Non-collaborative local IDS,No,No,No,0.125,1.0,0.2222222222222222,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,23,10,Non-collaborative local IDS,No,No,No,0.25,1.0,0.4,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,37,2,Non-collaborative local IDS,No,No,No,0.05,1.0,0.09523809523809523,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,37,5,Non-collaborative local IDS,No,No,No,0.125,1.0,0.2222222222222222,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,37,10,Non-collaborative local IDS,No,No,No,0.25,1.0,0.4,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,41,2,Non-collaborative local IDS,No,No,No,0.05,1.0,0.09523809523809523,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,41,5,Non-collaborative local IDS,No,No,No,0.125,1.0,0.2222222222222222,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,41,10,Non-collaborative local IDS,No,No,No,0.25,1.0,0.4,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,53,2,Non-collaborative local IDS,No,No,No,0.05,1.0,0.09523809523809523,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,53,5,Non-collaborative local IDS,No,No,No,0.125,1.0,0.2222222222222222,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,53,10,Non-collaborative local IDS,No,No,No,0.25,1.0,0.4,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,67,2,Non-collaborative local IDS,No,No,No,0.05,1.0,0.09523809523809523,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,67,5,Non-collaborative local IDS,No,No,No,0.125,1.0,0.2222222222222222,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,67,10,Non-collaborative local IDS,No,No,No,0.25,1.0,0.4,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,71,2,Non-collaborative local IDS,No,No,No,0.05,1.0,0.09523809523809523,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,71,5,Non-collaborative local IDS,No,No,No,0.125,1.0,0.2222222222222222,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,71,10,Non-collaborative local IDS,No,No,No,0.25,1.0,0.4,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,83,2,Non-collaborative local IDS,No,No,No,0.05,1.0,0.09523809523809523,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,83,5,Non-collaborative local IDS,No,No,No,0.125,1.0,0.2222222222222222,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,83,10,Non-collaborative local IDS,No,No,No,0.25,1.0,0.4,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,97,2,Non-collaborative local IDS,No,No,No,0.05,1.0,0.09523809523809523,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,97,5,Non-collaborative local IDS,No,No,No,0.125,1.0,0.2222222222222222,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,97,10,Non-collaborative local IDS,No,No,No,0.25,1.0,0.4,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,101,2,Non-collaborative local IDS,No,No,No,0.05,1.0,0.09523809523809523,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,101,5,Non-collaborative local IDS,No,No,No,0.125,1.0,0.2222222222222222,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S3,strong_coordinated_campaign,Strong coordinated campaign,101,10,Non-collaborative local IDS,No,No,No,0.25,1.0,0.4,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,11,2,Non-collaborative local IDS,No,No,No,0.04040404040404041,0.8,0.07692307692307693,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,11,5,Non-collaborative local IDS,No,No,No,0.1116751269035533,0.88,0.1981981981981982,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,11,10,Non-collaborative local IDS,No,No,No,0.21875,0.84,0.347107438016529,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,23,2,Non-collaborative local IDS,No,No,No,0.04040404040404041,0.8,0.07692307692307693,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,23,5,Non-collaborative local IDS,No,No,No,0.09326424870466321,0.72,0.1651376146788991,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,23,10,Non-collaborative local IDS,No,No,No,0.1935483870967742,0.72,0.30508474576271183,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,37,2,Non-collaborative local IDS,No,No,No,0.04522613065326633,0.9,0.0861244019138756,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,37,5,Non-collaborative local IDS,No,No,No,0.10714285714285714,0.84,0.1900452488687783,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,37,10,Non-collaborative local IDS,No,No,No,0.21875,0.84,0.347107438016529,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,41,2,Non-collaborative local IDS,No,No,No,0.04522613065326633,0.9,0.0861244019138756,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,41,5,Non-collaborative local IDS,No,No,No,0.11616161616161616,0.92,0.20627802690582958,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,41,10,Non-collaborative local IDS,No,No,No,0.23469387755102042,0.92,0.37398373983739835,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,53,2,Non-collaborative local IDS,No,No,No,0.030612244897959183,0.6,0.058252427184466014,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,53,5,Non-collaborative local IDS,No,No,No,0.10714285714285714,0.84,0.1900452488687783,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,53,10,Non-collaborative local IDS,No,No,No,0.21465968586387435,0.82,0.3402489626556016,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,67,2,Non-collaborative local IDS,No,No,No,0.03553299492385787,0.7,0.0676328502415459,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,67,5,Non-collaborative local IDS,No,No,No,0.0979381443298969,0.76,0.17351598173515984,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,67,10,Non-collaborative local IDS,No,No,No,0.20634920634920634,0.78,0.3263598326359833,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,71,2,Non-collaborative local IDS,No,No,No,0.05,1.0,0.09523809523809523,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,71,5,Non-collaborative local IDS,No,No,No,0.11616161616161616,0.92,0.20627802690582958,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,71,10,Non-collaborative local IDS,No,No,No,0.23076923076923078,0.9,0.3673469387755102,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,83,2,Non-collaborative local IDS,No,No,No,0.030612244897959183,0.6,0.058252427184466014,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,83,5,Non-collaborative local IDS,No,No,No,0.10714285714285714,0.84,0.1900452488687783,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,83,10,Non-collaborative local IDS,No,No,No,0.23076923076923078,0.9,0.3673469387755102,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,97,2,Non-collaborative local IDS,No,No,No,0.04040404040404041,0.8,0.07692307692307693,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,97,5,Non-collaborative local IDS,No,No,No,0.1116751269035533,0.88,0.1981981981981982,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,97,10,Non-collaborative local IDS,No,No,No,0.21052631578947367,0.8,0.3333333333333333,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,101,2,Non-collaborative local IDS,No,No,No,0.03553299492385787,0.7,0.0676328502415459,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,101,5,Non-collaborative local IDS,No,No,No,0.09326424870466321,0.72,0.1651376146788991,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
+S4,weak_coordinated_campaign,Weak coordinated campaign,101,10,Non-collaborative local IDS,No,No,No,0.21052631578947367,0.8,0.3333333333333333,1.0,True,,,,,,,,,,,campaign_metrics.csv (reused local strong-threshold scores)
