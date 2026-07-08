@@ -1,16 +1,17 @@
-\begin{tabular}{lllllllrrrrllllllllllr}
+\begin{table}[t]
+\centering
+\caption{Scenario-level local IDS vs fleet campaign outcomes (S0--S4).}
+\label{tab:scenario_level_comparison}
+\begin{tabular}{llll}
 \toprule
-scenario_id & scenario_key & scenario_label & method & fleet_correlation_used & descriptor_sharing_used & graph_reasoning_used & local_precision & local_recall & local_f1 & local_fpr & campaign_detection_rate & campaign_precision & campaign_recall & campaign_f1 & false_campaign_rate & incorrect_merge_rate & membership_precision & membership_recall & membership_f1 & fragmentation & local_alert_generated_rate \\
+Scenario & Vehicle-Level IDS local result & Vehicle-Level IDS campaign result & FLEET-GUARD campaign result \\
 \midrule
-S0 & benign_fleet_control & Benign fleet & FLEET-GUARD & Yes & Yes & Yes & NaN & 0.000000 & NaN & NaN & 1.000000 & 1.000000 & 1.000000 & 1.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 \\
-S0 & benign_fleet_control & Benign fleet & Non-collaborative local IDS & No & No & No & 0.000000 & 0.000000 & 0.000000 & 1.000000 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & 0.000000 \\
-S1 & isolated_attack & Isolated single-vehicle attack & FLEET-GUARD & Yes & Yes & Yes & NaN & 1.000000 & NaN & NaN & 1.000000 & 1.000000 & 1.000000 & 1.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 1.000000 \\
-S1 & isolated_attack & Isolated single-vehicle attack & Non-collaborative local IDS & No & No & No & 0.500000 & 1.000000 & 0.666667 & 1.000000 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & 1.000000 \\
-S2 & independent_multi_vehicle_attacks & Independent multi-vehicle attacks & FLEET-GUARD & Yes & Yes & Yes & NaN & 1.000000 & NaN & NaN & 0.400000 & 0.400000 & 0.400000 & 0.400000 & 0.000000 & 0.400000 & 0.400000 & 0.320000 & 0.352778 & 0.000000 & 1.000000 \\
-S2 & independent_multi_vehicle_attacks & Independent multi-vehicle attacks & Non-collaborative local IDS & No & No & No & 0.180500 & 1.000000 & 0.305340 & 1.000000 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & 1.000000 \\
-S3 & strong_coordinated_campaign & Strong coordinated campaign & FLEET-GUARD & Yes & Yes & Yes & NaN & 1.000000 & NaN & NaN & 0.800000 & 0.733333 & 0.800000 & 0.755556 & NaN & 0.000000 & 0.728333 & 0.746667 & 0.714392 & 0.133333 & 1.000000 \\
-S3 & strong_coordinated_campaign & Strong coordinated campaign & Non-collaborative local IDS & No & No & No & 0.141667 & 1.000000 & 0.239153 & 1.000000 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & 1.000000 \\
-S4 & weak_coordinated_campaign & Weak coordinated campaign & FLEET-GUARD & Yes & Yes & Yes & NaN & 1.000000 & NaN & NaN & 0.533333 & 0.377778 & 0.533333 & 0.427778 & NaN & 0.000000 & 0.513333 & 0.470000 & 0.481879 & 0.300000 & 1.000000 \\
-S4 & weak_coordinated_campaign & Weak coordinated campaign & Non-collaborative local IDS & No & No & No & 0.120829 & 0.814667 & 0.202472 & 1.000000 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & 1.000000 \\
+Benign fleet (S0) & FPR=0.000 & N/A & F1=1.000 \\
+Isolated attack (S1) & P=1.000, R=1.000, F1=1.000, FPR=0.000 & N/A & F1=1.000 \\
+Independent multi-vehicle attacks (S2) & P=1.000, R=1.000, F1=1.000, FPR=0.000 & N/A & F1=0.400 \\
+Strong coordinated campaign (S3, size=5) & P=0.552, R=1.000, F1=0.711, FPR=0.117 & N/A & F1=0.733 \\
+Weak coordinated campaign (S4, size=5) & P=1.000, R=0.832, F1=0.907, FPR=0.000 & N/A & F1=0.500 \\
 \bottomrule
 \end{tabular}
+
+\end{table}
