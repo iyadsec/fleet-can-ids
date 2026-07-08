@@ -1,0 +1,17 @@
+\begin{table}[t]
+\centering
+\caption{Scenario-level local IDS vs fleet campaign outcomes (S0--S4).}
+\label{tab:scenario_level_comparison}
+\begin{tabular}{llll}
+\toprule
+Scenario & Vehicle-Level IDS local result & Vehicle-Level IDS campaign result & FLEET-GUARD campaign result \\
+\midrule
+Benign fleet (S0) & FPR=0.000 & N/A & F1=1.000 \\
+Isolated attack (S1) & P=1.000, R=1.000, F1=1.000, FPR=0.000 & N/A & F1=1.000 \\
+Independent multi-vehicle attacks (S2) & P=1.000, R=1.000, F1=1.000, FPR=0.000 & N/A & F1=0.400 \\
+Strong coordinated campaign (S3, size=5) & P=0.552, R=1.000, F1=0.711, FPR=0.117 & N/A & F1=0.733 \\
+Weak coordinated campaign (S4, size=5) & P=1.000, R=0.832, F1=0.907, FPR=0.000 & N/A & F1=0.500 \\
+\bottomrule
+\end{tabular}
+
+\end{table}

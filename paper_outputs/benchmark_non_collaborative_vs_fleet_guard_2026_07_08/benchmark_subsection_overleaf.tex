@@ -1,0 +1,17 @@
+\subsection{Baseline Comparison with Non-Collaborative Vehicle-Level IDS}
+\label{subsec:non_collaborative_baseline}
+
+A controlled benchmark is required to isolate the contribution of fleet-level collaboration beyond per-vehicle anomaly detection.
+We therefore compare FLEET-GUARD against a \emph{Vehicle-Level IDS} baseline that represents a non-collaborative deployment: each vehicle runs the same local detector independently, with no descriptor sharing, fleet graph, GraphSAGE correlation, DBSCAN clustering, or campaign-level reasoning.
+
+The \textbf{Vehicle-Level IDS baseline} applies Isolation Forest anomaly scores to each CAN traffic window and raises a local alert when the score exceeds the strong threshold ($\theta_{\mathrm{strong}}$).
+It reports window-level precision, recall, F1, and false-positive rate from these per-window local alerts only.
+Because the baseline does not implement campaign reasoning, all campaign-level metrics are reported as N/A rather than zero.
+
+\textbf{FLEET-GUARD} extends the same local detector with descriptor abstraction, a behavioral similarity graph, GraphSAGE embeddings, DBSCAN campaign clustering, and campaign-level decision logic.
+Both methods are evaluated on the same OCSLab publication scenarios (S0--S4), with identical seeds, scenario definitions, and local Isolation Forest thresholds, ensuring that observed differences arise from fleet-level collaboration rather than from detector or evaluation setup changes.
+
+Table~\ref{tab:benchmark_capability_comparison} summarizes architectural capabilities.
+Table~\ref{tab:benchmark_results_summary} reports headline benchmark metrics, and Table~\ref{tab:benchmark_scenario_level} provides scenario-level qualitative outcomes.
+FLEET-GUARD achieves campaign-level F1-scores of 0.733 and 0.500 for strong and weak coordinated campaigns, respectively, while the baseline cannot produce campaign metrics.
+This benchmark therefore isolates the value added by fleet-level collaboration: local alerts alone are insufficient to distinguish coordinated campaigns from independent incidents, whereas FLEET-GUARD enables cross-vehicle reasoning and coordinated campaign detection.

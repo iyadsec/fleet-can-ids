@@ -1,0 +1,11 @@
+scenario_id,scenario_key,scenario_label,method,local_ids,descriptor_sharing,fleet_graph,graphsage,dbscan,campaign_reasoning,local_precision,local_recall,local_f1,local_fpr,campaign_detection_rate,campaign_precision,campaign_recall,campaign_f1,false_campaign_rate,incorrect_merge_rate,membership_precision,membership_recall,membership_f1,fragmentation,local_alert_generated_rate
+S0,benign_fleet_control,Benign fleet,FLEET-GUARD,Yes,Yes,Yes,Yes,Yes,Yes,,0.0,,,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+S0,benign_fleet_control,Benign fleet,Vehicle-Level IDS,Yes,No,No,No,No,No,,,,0.0,,,,,,,,,,,0.0
+S1,isolated_attack,Isolated single-vehicle attack,FLEET-GUARD,Yes,Yes,Yes,Yes,Yes,Yes,,1.0,,,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0
+S1,isolated_attack,Isolated single-vehicle attack,Vehicle-Level IDS,Yes,No,No,No,No,No,1.0,1.0,1.0,0.0,,,,,,,,,,,1.0
+S2,independent_multi_vehicle_attacks,Independent multi-vehicle attacks,FLEET-GUARD,Yes,Yes,Yes,Yes,Yes,Yes,,1.0,,,0.4,0.4,0.4,0.4,0.0,0.4,0.4,0.32,0.35277777777777775,0.0,1.0
+S2,independent_multi_vehicle_attacks,Independent multi-vehicle attacks,Vehicle-Level IDS,Yes,No,No,No,No,No,1.0,1.0,1.0,0.0,,,,,,,,,,,1.0
+S3,strong_coordinated_campaign,Strong coordinated campaign,FLEET-GUARD,Yes,Yes,Yes,Yes,Yes,Yes,,1.0,,,0.8,0.7333333333333333,0.8,0.7555555555555556,,0.0,0.7283333333333334,0.7466666666666666,0.7143919290204119,0.13333333333333333,1.0
+S3,strong_coordinated_campaign,Strong coordinated campaign,Vehicle-Level IDS,Yes,No,No,No,No,No,0.5466350711409728,1.0,0.7059011588857357,0.1484043441938179,,,,,,,,,,,1.0
+S4,weak_coordinated_campaign,Weak coordinated campaign,FLEET-GUARD,Yes,Yes,Yes,Yes,Yes,Yes,,1.0,,,0.5333333333333333,0.3777777777777778,0.5333333333333333,0.42777777777777776,,0.0,0.5133333333333333,0.47,0.4818787163988402,0.3,1.0
+S4,weak_coordinated_campaign,Weak coordinated campaign,Vehicle-Level IDS,Yes,No,No,No,No,No,1.0,0.8146666666666668,0.8948767478371559,0.0,,,,,,,,,,,1.0

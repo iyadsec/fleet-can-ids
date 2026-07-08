@@ -1,0 +1,19 @@
+flowchart LR
+    subgraph baseline["Vehicle-Level IDS (non-collaborative)"]
+        VA["Vehicle A"] --> LA["Local Alert"]
+        VB["Vehicle B"] --> LB["Local Alert"]
+        VC["Vehicle C"] --> LC["Local Alert"]
+        LA --> NR["No campaign reasoning"]
+        LB --> NR
+        LC --> NR
+    end
+
+    subgraph fleetguard["FLEET-GUARD (collaborative)"]
+        V1["Vehicle A"] --> D["Descriptors"]
+        V2["Vehicle B"] --> D
+        V3["Vehicle C"] --> D
+        D --> FG["Fleet Graph"]
+        FG --> GS["GraphSAGE"]
+        GS --> DB["DBSCAN"]
+        DB --> CD["Campaign Decision"]
+    end

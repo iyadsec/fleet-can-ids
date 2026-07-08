@@ -1,0 +1,16 @@
+\begin{table}[t]
+\centering
+\caption{Scenario-level comparison across S0--S4 publication scenarios.}
+\label{tab:benchmark_scenario_level}
+\begin{tabular}{lll}
+\toprule
+Scenario & Vehicle-Level IDS & FLEET-GUARD \\
+\midrule
+S0 Benign Fleet & No local campaign reasoning & No false campaign detected \\
+S1 Isolated Attack & Detects local attack only & Correctly treated as isolated \\
+S2 Independent Multi-Vehicle Attacks & Detects local anomalies only & Evaluates cross-vehicle relationship \\
+S3 Strong Coordinated Campaign & Cannot infer coordinated campaign & Campaign F1 = 0.733 \\
+S4 Weak Coordinated Campaign & Weak evidence remains local & Campaign F1 = 0.500 \\
+\bottomrule
+\end{tabular}
+\end{table}
