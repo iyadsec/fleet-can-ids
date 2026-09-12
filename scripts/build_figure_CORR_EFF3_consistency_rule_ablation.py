@@ -67,7 +67,7 @@ def build_figure(row: dict) -> plt.Figure:
     ax.set_xticklabels(labels, ha="center")
     ax.set_ylabel("Rate / F1 score")
     ax.set_ylim(0, 1.12)
-    ax.set_title("Fleet correlation outcomes (CTT cross-dataset)")
+    ax.set_title("Fleet correlation outcomes")
     ax.grid(axis="y", alpha=0.35, linestyle="--", linewidth=0.8)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
