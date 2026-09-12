@@ -1,0 +1,9 @@
+# CTT_CORR7_corrected_edge_sensitivity
+
+ threshold  k  mutual_kNN  cap_cross_vehicle_edges  seed  edge_count  cross_vehicle_edge_percentage  benign_false_campaign  isolated_false_campaign  unrelated_incorrect_merge_rate  strong_campaign_f1  weak_campaign_f1  mean_campaign_f1  fragmentation_rate
+      0.85 10        True                        3 101.0     1060.70                       0.547285                    0.0                      0.0                             0.0                 1.0               1.0               1.0            0.397250
+      0.85 10        True                        5 101.0     1064.35                       0.888291                    0.0                      0.0                             0.0                 1.0               1.0               1.0            0.397500
+      0.88 10        True                        3 101.0     1059.60                       0.547862                    0.0                      0.0                             0.0                 1.0               1.0               1.0            0.397750
+      0.88 10        True                        5 101.0     1063.20                       0.884366                    0.0                      0.0                             0.0                 1.0               1.0               1.0            0.444417
+      0.90 10        True                        3 101.0     1058.15                       0.548589                    0.0                      0.0                             0.0                 1.0               1.0               1.0            0.397500
+      0.90 10        True                        5 101.0     1061.75                       0.885533                    0.0                      0.0                             0.0                 1.0               1.0               1.0            0.444417

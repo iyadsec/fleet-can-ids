@@ -1,0 +1,5 @@
+# LOCAL_COMP1_pooled_ocslab_vs_ctt
+
+                 Dataset             Evaluation role                        Threshold policy  PR-AUC  Precision  Recall     F1    FPR                                                                                                                                                                                      Notes
+                  OCSLab  Primary evaluation dataset                                 FPR<=5%  0.9273     0.9728  0.4596 0.6243 0.0395          Curated paper export (table_01_vehicle_level_ids.csv); Isolation Forest self-supervised; vehicle-level pooled headline metric. Comparable with caveat vs CTT external validation.
+can-train-and-test (CTT) External validation dataset FPR <= 5% (corrected eval ground truth)  0.9386     0.9465  0.2272 0.3543 0.0497 Corrected eval_attack = (label==1) OR (attack_type!='benign'); FPR<=5% threshold; pooled mean across four sets and available subsets. Comparable with caveat vs OCSLab primary evaluation.

@@ -1,0 +1,5 @@
+Subset,Description,PR-AUC,Precision,Recall,F1,FPR,Support attacks,Support benign,Notes
+test_01_known_vehicle_known_attack,test_01 known vehicle / known attack,0.9396,0.9475,0.2453,0.375,0.0496,95234.0,69583.0,Corrected eval_attack; FPR<=5%; mean across four CTT sets.
+test_02_unknown_vehicle_known_attack,test_02 unknown vehicle / known attack,,,,,,,,Not reported in corrected publication export (known-vehicle-only local policy per set). Requires per-set unknown-vehicle evaluation — not rerun here.
+test_03_known_vehicle_unknown_attack,test_03 known vehicle / unknown attack,0.9376,0.9456,0.2091,0.3336,0.0498,82190.0,69563.0,Corrected eval_attack; FPR<=5%; mean across four CTT sets.
+test_04_unknown_vehicle_unknown_attack,test_04 unknown vehicle / unknown attack,,,,,,,,Not reported in corrected publication export (known-vehicle-only local policy per set). Requires per-set unknown-vehicle evaluation — not rerun here.
