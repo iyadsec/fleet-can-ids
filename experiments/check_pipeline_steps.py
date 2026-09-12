@@ -71,7 +71,7 @@ CSV_COLUMN_CHECKS: dict[str, list[str]] = {
     "fleet_cluster_results": ["event_id", "window_id", "vehicle_model", "cluster_id", "num_unique_vehicles", "mean_cluster_similarity"],
     "final_detection_outcomes": ["event_id", "final_outcome", "was_upgraded_by_fleet"],
     "raw_vs_descriptor_size": ["total_raw_windows", "total_anomaly_descriptors", "estimated_raw_bytes", "estimated_descriptor_bytes", "compression_ratio", "percentage_reduction"],
-    "graph_statistics": ["num_nodes", "num_edges", "similarity_threshold", "max_neighbours_per_node", "num_cross_vehicle_edges", "graph_density", "average_degree", "connected_components"],
+    "graph_statistics": ["num_nodes", "num_edges", "similarity_threshold", "max_same_vehicle_neighbors", "max_cross_vehicle_neighbors", "num_cross_vehicle_edges", "graph_density", "average_degree", "connected_components"],
     "fleet_value_summary": ["total_events", "total_strong_local_anomalies", "total_weak_suspicious_signals", "total_fleet_level_patterns", "percentage_weak_signals_upgraded"],
     "weak_signal_upgrade_summary": ["total_weak_suspicious_signals", "weak_signals_not_alerted_locally", "weak_signals_upgraded_by_fleet", "upgrade_percentage"],
     "cross_vehicle_cluster_summary": ["cluster_id", "cluster_size", "num_unique_vehicles", "vehicles_in_cluster", "dominant_attack_type", "mean_cluster_similarity"],
