@@ -54,12 +54,12 @@ from src.features.window_generator import (
     save_window_metadata,
 )
 from src.graph.fleet_graph_builder import (
-    build_fleet_anomaly_graph,
     load_anomaly_descriptors,
     print_graph_statistics,
     save_fleet_graph,
     save_graph_tables,
 )
+from src.graph.scenario_graph import build_scenario_graph
 from src.models.vehicle_ids import (
     SELF_SUPERVISED_IDS_MODEL,
     evaluate_vehicle_anomaly_predictions,
@@ -391,44 +391,61 @@ class FullPipelineRunner:
             logger.info("Skipping build_fleet_graph — output exists: %s", pt_out)
             return 0
 
-        graph_cfg = self.config.get("graph", {})
         desc_path = self.artifact("anomaly_descriptors", "data/processed/anomaly_descriptors.csv")
         feat_path = self.artifact("window_features", "data/processed/window_features.csv")
         descriptors = load_anomaly_descriptors(
             desc_path, features_path=feat_path if feat_path.exists() else None
         )
-        max_nodes = graph_cfg.get("max_nodes")
-        max_neighbors = graph_cfg.get("max_neighbors", graph_cfg.get("max_neighbours_per_node"))
-        use_gt = bool(self.config.get("gnn", {}).get("use_ground_truth_labels", True))
-        G, pyg_data, stats, _ = build_fleet_anomaly_graph(
+        result = build_scenario_graph(
             descriptors,
-            metric=graph_cfg.get("similarity_metric", "cosine"),  # type: ignore[arg-type]
-            threshold=float(graph_cfg.get("similarity_threshold", 0.85)),
-            max_nodes=int(max_nodes) if max_nodes else None,
-            max_neighbors=int(max_neighbors) if max_neighbors else None,
+            config=self.config,
             seed=self.seed,
-            prefer_ground_truth_labels=use_gt,
+            build_pyg=True,
         )
+        row = result.stats.iloc[0].to_dict() if len(result.stats) else {}
+        stats = {
+            "num_nodes": float(row.get("nodes", 0)),
+            "num_edges": float(row.get("unique_undirected_edges", 0)),
+            "average_degree": float(row.get("average_degree", 0.0)),
+            "graph_density": float(row.get("graph_density", 0.0)),
+            "num_cross_vehicle_edges": float(row.get("cross_vehicle_edges", 0)),
+            "connected_components": float(row.get("connected_components", 0)),
+            "similarity_threshold": float(row.get("similarity_threshold", 0.0)),
+            "max_same_vehicle_neighbors": float(row.get("max_same_vehicle_neighbors", 0)),
+            "max_cross_vehicle_neighbors": float(row.get("max_cross_vehicle_neighbors", 0)),
+            "similarity_metric": row.get("similarity_metric", "cosine"),
+        }
         graphml = self.artifact("fleet_graph_graphml", "outputs/fleet_graph.graphml")
-        save_fleet_graph(G, pyg_data, stats, pt_path=pt_out, graphml_path=graphml)
+        save_fleet_graph(
+            result.graph,
+            result.pyg_data,
+            stats,
+            pt_path=pt_out,
+            graphml_path=graphml,
+        )
         save_graph_tables(
-            G,
+            result.graph,
             nodes_path=self.artifact("fleet_nodes", "data/processed/fleet_nodes.csv"),
             edges_path=self.artifact("fleet_edges", "data/processed/fleet_edges.csv"),
         )
         stats_path = self.artifact("graph_statistics", "outputs/metrics/graph_statistics.csv")
         stats_path.parent.mkdir(parents=True, exist_ok=True)
-        pd_stats = {
-            "num_nodes": int(stats.get("num_nodes", 0)),
-            "num_edges": int(stats.get("num_edges", 0)),
-            "similarity_threshold": float(stats.get("similarity_threshold", 0.0)),
-            "max_neighbours_per_node": int(stats.get("max_neighbors", 0)),
-            "num_cross_vehicle_edges": int(stats.get("num_cross_vehicle_edges", 0)),
-            "graph_density": float(stats.get("graph_density", 0.0)),
-            "average_degree": float(stats.get("average_degree", 0.0)),
-            "connected_components": int(stats.get("connected_components", 0)),
-        }
-        pd.DataFrame([pd_stats]).to_csv(stats_path, index=False)
+        pd.DataFrame(
+            [
+                {
+                    "num_nodes": int(stats["num_nodes"]),
+                    "num_edges": int(stats["num_edges"]),
+                    "similarity_threshold": float(stats["similarity_threshold"]),
+                    "max_same_vehicle_neighbors": int(stats["max_same_vehicle_neighbors"]),
+                    "max_cross_vehicle_neighbors": int(stats["max_cross_vehicle_neighbors"]),
+                    "num_cross_vehicle_edges": int(stats["num_cross_vehicle_edges"]),
+                    "num_same_vehicle_edges": int(row.get("same_vehicle_edges", 0)),
+                    "graph_density": float(stats["graph_density"]),
+                    "average_degree": float(stats["average_degree"]),
+                    "connected_components": int(stats["connected_components"]),
+                }
+            ]
+        ).to_csv(stats_path, index=False)
         print_graph_statistics(stats)
         return 0
 

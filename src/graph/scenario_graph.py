@@ -30,14 +30,14 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 
-from src.graph.fleet_graph_builder import (
+from ..utils.logging import get_logger
+from .fleet_graph_builder import (
     build_cross_vehicle_constrained_knn_edges,
     build_networkx_graph,
     build_pyg_data,
     graph_to_tables,
     resolve_fleet_similarity_matrix,
 )
-from src.utils.logging import get_logger
 
 logger = get_logger(__name__)
 

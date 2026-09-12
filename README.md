@@ -17,7 +17,7 @@ FLEET-GUARD correlates **weak, distributed CAN anomaly evidence across vehicles*
 | Windowing | 100-frame CAN windows (50-frame stride default) | Local temporal context |
 | Vehicle IDS | Isolation Forest (benign-trained unsupervised) | Anomaly scores, strong alerts, weak descriptors |
 | Descriptors | Compact behaviour-based vectors | Cross-vehicle comparison, reduced raw CAN exposure |
-| Fleet graph | Cosine similarity + neighbour caps | Behavioural relationships between descriptors |
+| Fleet graph | Cosine constrained k-NN (τ=0.95, same-k=2, cross-k=5) | Behavioural relationships between descriptors |
 | Fleet model | GraphSAGE | Fleet correlation embeddings |
 | Clustering | DBSCAN | Group related anomaly descriptors |
 | Decision | Campaign logic | Distinguish isolated vs coordinated attacks |
@@ -107,7 +107,7 @@ export CTT_DATASET_ROOT=/path/to/can-train-and-test
 | `configs/default.yaml` | Full OCSLab pipeline: windowing, Isolation Forest, graph, GraphSAGE, DBSCAN, campaign logic |
 | `configs/fleet_ids.yaml` | Fleet IDS and scenario evaluation settings |
 
-Key settings in `configs/default.yaml`: random seed (`42`), 100-frame windows, benign-only Isolation Forest, cosine graph similarity, GraphSAGE embedding dimension, DBSCAN parameters. All paths are relative to the repository root or overridable via environment variables.
+Key settings in `configs/default.yaml`: random seed (`42`), 100-frame windows, benign-only Isolation Forest, publication constrained-kNN graph (`similarity_threshold: 0.95`, `max_same_vehicle_neighbors: 2`, `max_cross_vehicle_neighbors: 5`), GraphSAGE embedding dimension, DBSCAN parameters. All paths are relative to the repository root or overridable via environment variables.
 
 ## Running experiments
 

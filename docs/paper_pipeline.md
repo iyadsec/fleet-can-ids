@@ -14,7 +14,7 @@ This table maps paper experiments to runnable scripts and canonical output locat
 | 6 | Anomaly scores | `src/models/vehicle_ids.py` | `data/processed/vehicle_anomaly_predictions.csv` |
 | 7 | Strong local alerts | `experiments/04_train_vehicle_ids.py` (strong threshold) | `local_alert` column |
 | 8 | Weak anomaly descriptors | `experiments/05_generate_descriptors.py` | `data/processed/anomaly_descriptors.csv` |
-| 9 | Fleet behavioural graph | `experiments/06_build_graph.py` | `data/processed/fleet_graph.pt` |
+| 9 | Fleet behavioural graph (constrained k-NN; τ=0.95, same=2, cross=5) | `experiments/06_build_graph.py` → `src/graph/scenario_graph.py` | `data/processed/fleet_graph.pt` |
 | 10 | GraphSAGE fleet correlation | `experiments/07_train_gnn.py` | `data/processed/node_embeddings.csv` |
 | 11 | Graph embeddings | `src/models/gnn_models.py` | `outputs/metrics/gnn_training_metrics.csv` |
 | 12 | DBSCAN clustering | `experiments/08_cluster_campaigns.py` | `data/processed/fleet_cluster_results.csv` |
