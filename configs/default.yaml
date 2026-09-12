@@ -109,8 +109,14 @@ gnn:
 
 graph:
   similarity_metric: cosine
-  similarity_threshold: 0.85
+  # Publication graph parameters (authoritative constrained-kNN path).
+  similarity_threshold: 0.95
+  max_same_vehicle_neighbors: 2
+  max_cross_vehicle_neighbors: 5
+  # Sensitivity experiments may override max_cross_vehicle_neighbors (e.g. 3).
+  similarity_feature_view: full_descriptor
   max_nodes: null
+  # LEGACY (pending deletion after verification): generic neighbor cap.
   max_neighbors: 50
   max_neighbours_per_node: 50
 
