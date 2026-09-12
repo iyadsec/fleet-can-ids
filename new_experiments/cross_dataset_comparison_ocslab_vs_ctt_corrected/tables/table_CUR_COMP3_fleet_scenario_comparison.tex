@@ -1,0 +1,11 @@
+\begin{tabular}{lllll}
+\toprule
+Scenario & Expected behaviour & OCSLab result & can-train-and-test corrected result & Interpretation \\
+\midrule
+Benign-Fleet Control & Benign-Fleet Control & false_campaign=0.0; fleet_campaign=0; campaign_F1=0.000 & false_campaign=0.000; fleet_campaign=0.000; campaign_F1=0.000; incorrect_merge=0.000 & Corrected CTT: eval labels + 200-node OCSLab-aligned graphs + consistency rule. \\
+Isolated Single-Vehicle Attack & Isolated Single-Vehicle Attack & fleet_campaign=0; campaign_F1=0.000 & false_campaign=0.000; fleet_campaign=0.000; campaign_F1=0.000; incorrect_merge=0.000 & Corrected CTT: eval labels + 200-node OCSLab-aligned graphs + consistency rule. \\
+Unrelated Multi-Vehicle Incidents & Unrelated Multi-Vehicle Incidents & fleet_campaign=0; campaign_F1=0.000; incorrect_merge=0.333 & false_campaign=0.000; fleet_campaign=0.000; campaign_F1=0.000; incorrect_merge=0.000 & OCSLab unrelated merge ~0.33; corrected CTT incorrect_merge=0.000. \\
+Strong Behaviourally Related Campaign & Strong Behaviourally Related Campaign & fleet_campaign=0.8125; campaign_F1=0.694; membership_purity=0.672 & false_campaign=0.000; fleet_campaign=1.000; campaign_F1=1.000; incorrect_merge=0.000 & Corrected CTT: eval labels + 200-node OCSLab-aligned graphs + consistency rule. \\
+Weak Behaviourally Related Campaign & Weak Behaviourally Related Campaign & fleet_campaign=0.71875; campaign_F1=0.667; membership_purity=0.651 & false_campaign=0.000; fleet_campaign=1.000; campaign_F1=1.000; incorrect_merge=0.000 & Corrected CTT: eval labels + 200-node OCSLab-aligned graphs + consistency rule. \\
+\bottomrule
+\end{tabular}

@@ -1,0 +1,5 @@
+# FLEET_CORR2_consistency_rule_ablation
+
+              rule_state                                      interpretation                                             graph_config  mutual_knn  cosine_threshold  k  cross_vehicle_edge_cap  benign_false_campaign  isolated_false_campaign  unrelated_incorrect_merge_rate  strong_campaign_f1  weak_campaign_f1  mean_campaign_f1
+without consistency rule   Unrelated over-merge before post-clustering rule. τ=0.88, k=10, mutual kNN, cross-vehicle cap=3 (200-node)        True              0.88 10                       3                  0.075                      1.0                             1.0                 1.0               1.0               1.0
+   with consistency rule Unrelated merge 1.0→0.0; strong/weak F1 remain 1.0. τ=0.88, k=10, mutual kNN, cross-vehicle cap=3 (200-node)        True              0.88 10                       3                  0.000                      0.0                             0.0                 1.0               1.0               1.0

@@ -1,0 +1,14 @@
+\begin{tabular}{llll}
+\toprule
+Metric & OCSLab curated paper result & can-train-and-test full validation result & Interpretation \\
+\midrule
+dataset role & Primary OCSLab / DataChallenge 2019 evaluation & Independent cross-dataset external validation & OCSLab primary; CTT validates generalization. \\
+vehicles & 3 (Hyundai, Kia, Chevrolet) & 4 (Chevrolet ×3, Subaru Forester) & CTT adds manufacturer/vehicle diversity. \\
+manufacturers & 3 & 2 (Chevrolet, Subaru) & Different OEM mix. \\
+attack families & 4 (flooding, fuzzy, malfunction, replay) & 9 CAN-train-and-test families & Different attack taxonomies. \\
+real synchronized campaigns available & No & No & Both use controlled scenario simulation. \\
+controlled fleet scenarios used & Yes (S0–S4 final scenario package) & Yes (five v3 scenarios) & Descriptive cross-dataset comparison. \\
+train/test design & OCSLab publication split + IF benign training & Four-set CTT protocol (train_01 benign-only; test_01–04 grid) & Protocols differ by design. \\
+purpose in paper & Primary end-to-end fleet-aware IDS evaluation & External validation across vehicles/manufacturers/attacks & Complementary evidence, not equivalent benchmarks. \\
+\bottomrule
+\end{tabular}

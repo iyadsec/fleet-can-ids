@@ -1,0 +1,5 @@
+# CTT_CORR2_local_by_subset
+
+                              subset  precision   recall       f1      fpr  roc_auc   pr_auc  threshold
+  test_01_known_vehicle_known_attack   0.832199 0.272698 0.383979 0.048228 0.816255 0.813771   0.010732
+test_03_known_vehicle_unknown_attack   0.800752 0.220667 0.324527 0.047370 0.800187 0.793357   0.012365
