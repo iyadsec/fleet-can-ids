@@ -1,0 +1,2 @@
+scaler_id,vehicle_scope,feature_names,fit_split,fit_row_count,benign_only,test_overlap_count
+fleet_benign_f4569e5242cc,global_fleet,anomaly_score|frame_count|message_rate|burstiness|mean_inter_arrival_time|std_inter_arrival_time|can_id_entropy|most_common_can_id_ratio|payload_entropy,train,11423,True,0
