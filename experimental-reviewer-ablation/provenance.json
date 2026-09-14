@@ -1,0 +1,10 @@
+{
+  "timestamp_utc": "2026-09-14T21:57:53.115681+00:00",
+  "python": "3.12.3",
+  "numpy": "2.4.4",
+  "pandas": "3.0.5",
+  "sklearn": "1.9.1",
+  "torch": "2.14.0+cu130",
+  "torch_geometric": "2.8.0.post1",
+  "git_commit": "9961b31a8ade9c5191f25f21f12c4f3cf30ef2a0"
+}

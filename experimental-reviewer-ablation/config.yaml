@@ -1,0 +1,66 @@
+# Controlled Reviewer-A ablation (NEW experiment).
+# Absolute metrics are NOT claimed identical to frozen historical publication tables.
+
+experiment:
+  name: experimental-reviewer-ablation
+  purpose: Controlled component ablation for Reviewer A Sec 4.5.2
+
+seeds: [11, 23, 37, 41, 53, 67, 71, 83, 97, 101]
+
+fleet:
+  n_vehicles: 20
+  windows_per_vehicle: 10
+  total_nodes: 200
+  campaign_size: 5
+
+scenarios:
+  - strong_campaign
+  - weak_campaign
+  - unrelated_incidents
+
+windowing_documented:
+  window_frames: 100
+  stride: 50
+  note: Synthetic descriptors emulate the FLEET-GUARD 100/50 window protocol.
+
+descriptor:
+  feature_names:
+    - anomaly_score
+    - frame_count
+    - message_rate
+    - burstiness
+    - mean_inter_arrival_time
+    - std_inter_arrival_time
+    - can_id_entropy
+    - most_common_can_id_ratio
+    - payload_entropy
+  input_dim: 9
+
+graph:
+  similarity_threshold: 0.95
+  max_same_vehicle_neighbors: 2
+  max_cross_vehicle_neighbors: 5
+
+gnn:
+  hidden_channels: 64
+  embedding_dim: 32
+  epochs: 30
+  learning_rate: 0.01
+  weight_decay: 0.0005
+  campaign_loss_weight: 0.25
+  supervision: structure
+
+clustering:
+  pca_components: 8
+  eps: 0.5
+  min_samples: 2
+
+campaign_gate:
+  min_vehicles: 2
+  min_cross_vehicle_support: 1
+  cohesion_threshold: 0.85
+  fragment_merge_threshold: 0.85
+
+local_ids:
+  strong_threshold: 0.80
+  weak_threshold: 0.55
