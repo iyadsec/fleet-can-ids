@@ -1,0 +1,66 @@
+{
+  "timestamp_utc": "2026-09-14T22:38:00.552143+00:00",
+  "python": "3.12.3",
+  "numpy": "2.4.4",
+  "pandas": "3.0.5",
+  "sklearn": "1.9.1",
+  "torch": "2.14.0+cu130",
+  "torch_geometric": "2.8.0.post1",
+  "git_commit": "d4ea295b2c9262cd61cfe19b04f495ec6fcafe14",
+  "descriptor_source": "real_ocslab_test_window_pool",
+  "synthetic_descriptors": false,
+  "pool_inventory": {
+    "n_test": 7647,
+    "physical_vehicles": [
+      "Challenge_D",
+      "Challenge_S",
+      "OCSLab_Car"
+    ],
+    "source_traces": [
+      "DoS_dataset.csv",
+      "Fuzzy_dataset.csv",
+      "Pre_train_D_0.csv",
+      "Pre_train_D_1.csv",
+      "Pre_train_D_2.csv",
+      "Pre_train_S_0.csv",
+      "Pre_train_S_1.csv",
+      "Pre_train_S_2.csv",
+      "RPM_dataset.csv",
+      "gear_dataset.csv",
+      "normal_run_data.txt"
+    ],
+    "n_strong_malicious": 2787,
+    "n_weak_malicious": 342,
+    "n_suspicious_benign": 1997,
+    "strong_by_attack": {
+      "flooding": 1184,
+      "malfunction_rpm": 431,
+      "malfunction_gear": 406,
+      "fuzzy": 326,
+      "spoofing": 309,
+      "replay": 131
+    },
+    "weak_by_attack": {
+      "spoofing": 242,
+      "replay": 96,
+      "flooding": 3,
+      "fuzzy": 1
+    },
+    "strong_by_vehicle": {
+      "OCSLab_Car": 1446,
+      "Challenge_S": 776,
+      "Challenge_D": 565
+    },
+    "weak_by_vehicle": {
+      "Challenge_D": 179,
+      "Challenge_S": 160,
+      "OCSLab_Car": 3
+    }
+  },
+  "campaign_gate": {
+    "min_vehicles": 2,
+    "min_cross_vehicle_support": 1,
+    "cohesion_threshold": 0.5,
+    "fragment_merge_threshold": 0.85
+  }
+}

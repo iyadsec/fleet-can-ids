@@ -1,0 +1,79 @@
+# Controlled Reviewer-A ablation on REAL OCSLab held-out TEST windows.
+# Reuses M1–M4 harness from experimental-reviewer-ablation (PR #21).
+# Absolute metrics are NOT claimed identical to frozen historical publication tables.
+# Synthetic descriptors are forbidden.
+
+experiment:
+  name: experimental-reviewer-ablation-real-ocslab
+  purpose: Controlled component ablation for Reviewer A Sec 4.5.2 using real OCSLab
+
+seeds: [11, 23, 37, 41, 53, 67, 71, 83, 97, 101]
+
+fleet:
+  n_vehicles: 20
+  windows_per_vehicle: 10
+  total_nodes: 200
+  campaign_size: 5
+  note: >
+    Fleet nodes are virtual instances sampled from held-out TEST windows of
+    ≤3 physical OCSLab platforms (OCSLab_Car, Challenge_D, Challenge_S).
+    They are NOT 20 independently recorded physical vehicles.
+
+scenarios:
+  - strong_campaign
+  - weak_campaign
+  - unrelated_incidents
+
+windowing:
+  window_frames: 100
+  stride: 50
+
+descriptor:
+  feature_names:
+    - anomaly_score
+    - frame_count
+    - message_rate
+    - burstiness
+    - mean_inter_arrival_time
+    - std_inter_arrival_time
+    - can_id_entropy
+    - most_common_can_id_ratio
+    - payload_entropy
+  input_dim: 9
+  source: real_ocslab_test_window_pool
+
+graph:
+  similarity_threshold: 0.95
+  max_same_vehicle_neighbors: 2
+  max_cross_vehicle_neighbors: 5
+
+gnn:
+  hidden_channels: 64
+  embedding_dim: 32
+  epochs: 30
+  learning_rate: 0.01
+  weight_decay: 0.0005
+  campaign_loss_weight: 0.25
+  supervision: structure
+
+clustering:
+  pca_components: 8
+  eps: 0.5
+  min_samples: 2
+
+campaign_gate:
+  min_vehicles: 2
+  min_cross_vehicle_support: 1
+  # minimum campaign cohesion beta (publication config)
+  cohesion_threshold: 0.5
+  # fragment centroid / merge similarity threshold
+  fragment_merge_threshold: 0.85
+
+local_ids:
+  strong_threshold: 0.80
+  weak_threshold: 0.55
+
+data:
+  pool_csv: artifacts/test_window_pool.csv
+  pool_summary: artifacts/pool_summary.json
+  synthetic_descriptors: false
