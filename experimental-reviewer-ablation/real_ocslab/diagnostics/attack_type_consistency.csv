@@ -1,0 +1,21 @@
+seed,scenario,gt_campaign_id,n_members,n_attack_types,attack_types,n_source_traces,source_traces,n_platforms,platforms,mixes_attack_types
+11,strong_campaign,0,50,1,"[""spoofing""]",4,"[""Pre_train_D_1.csv"", ""Pre_train_D_2.csv"", ""Pre_train_S_1.csv"", ""Pre_train_S_2.csv""]",2,"[""Challenge_D"", ""Challenge_S""]",False
+11,weak_campaign,0,50,1,"[""spoofing""]",4,"[""Pre_train_D_1.csv"", ""Pre_train_D_2.csv"", ""Pre_train_S_1.csv"", ""Pre_train_S_2.csv""]",2,"[""Challenge_D"", ""Challenge_S""]",False
+23,strong_campaign,0,50,1,"[""flooding""]",5,"[""DoS_dataset.csv"", ""Pre_train_D_1.csv"", ""Pre_train_D_2.csv"", ""Pre_train_S_1.csv"", ""Pre_train_S_2.csv""]",3,"[""Challenge_D"", ""Challenge_S"", ""OCSLab_Car""]",False
+23,weak_campaign,0,50,1,"[""replay""]",2,"[""Pre_train_D_1.csv"", ""Pre_train_S_1.csv""]",2,"[""Challenge_D"", ""Challenge_S""]",False
+37,strong_campaign,0,50,1,"[""flooding""]",5,"[""DoS_dataset.csv"", ""Pre_train_D_1.csv"", ""Pre_train_D_2.csv"", ""Pre_train_S_1.csv"", ""Pre_train_S_2.csv""]",3,"[""Challenge_D"", ""Challenge_S"", ""OCSLab_Car""]",False
+37,weak_campaign,0,50,1,"[""spoofing""]",4,"[""Pre_train_D_1.csv"", ""Pre_train_D_2.csv"", ""Pre_train_S_1.csv"", ""Pre_train_S_2.csv""]",2,"[""Challenge_D"", ""Challenge_S""]",False
+41,strong_campaign,0,50,1,"[""fuzzy""]",1,"[""Fuzzy_dataset.csv""]",1,"[""OCSLab_Car""]",False
+41,weak_campaign,0,50,1,"[""spoofing""]",4,"[""Pre_train_D_1.csv"", ""Pre_train_D_2.csv"", ""Pre_train_S_1.csv"", ""Pre_train_S_2.csv""]",2,"[""Challenge_D"", ""Challenge_S""]",False
+53,strong_campaign,0,50,1,"[""malfunction_rpm""]",1,"[""RPM_dataset.csv""]",1,"[""OCSLab_Car""]",False
+53,weak_campaign,0,50,1,"[""replay""]",2,"[""Pre_train_D_1.csv"", ""Pre_train_S_1.csv""]",2,"[""Challenge_D"", ""Challenge_S""]",False
+67,strong_campaign,0,50,1,"[""spoofing""]",4,"[""Pre_train_D_1.csv"", ""Pre_train_D_2.csv"", ""Pre_train_S_1.csv"", ""Pre_train_S_2.csv""]",2,"[""Challenge_D"", ""Challenge_S""]",False
+67,weak_campaign,0,50,1,"[""replay""]",2,"[""Pre_train_D_1.csv"", ""Pre_train_S_1.csv""]",2,"[""Challenge_D"", ""Challenge_S""]",False
+71,strong_campaign,0,50,1,"[""spoofing""]",4,"[""Pre_train_D_1.csv"", ""Pre_train_D_2.csv"", ""Pre_train_S_1.csv"", ""Pre_train_S_2.csv""]",2,"[""Challenge_D"", ""Challenge_S""]",False
+71,weak_campaign,0,50,1,"[""spoofing""]",4,"[""Pre_train_D_1.csv"", ""Pre_train_D_2.csv"", ""Pre_train_S_1.csv"", ""Pre_train_S_2.csv""]",2,"[""Challenge_D"", ""Challenge_S""]",False
+83,strong_campaign,0,50,1,"[""spoofing""]",4,"[""Pre_train_D_1.csv"", ""Pre_train_D_2.csv"", ""Pre_train_S_1.csv"", ""Pre_train_S_2.csv""]",2,"[""Challenge_D"", ""Challenge_S""]",False
+83,weak_campaign,0,50,1,"[""spoofing""]",4,"[""Pre_train_D_1.csv"", ""Pre_train_D_2.csv"", ""Pre_train_S_1.csv"", ""Pre_train_S_2.csv""]",2,"[""Challenge_D"", ""Challenge_S""]",False
+97,strong_campaign,0,50,1,"[""fuzzy""]",1,"[""Fuzzy_dataset.csv""]",1,"[""OCSLab_Car""]",False
+97,weak_campaign,0,50,1,"[""replay""]",2,"[""Pre_train_D_1.csv"", ""Pre_train_S_1.csv""]",2,"[""Challenge_D"", ""Challenge_S""]",False
+101,strong_campaign,0,50,1,"[""replay""]",2,"[""Pre_train_D_1.csv"", ""Pre_train_S_1.csv""]",2,"[""Challenge_D"", ""Challenge_S""]",False
+101,weak_campaign,0,50,1,"[""spoofing""]",4,"[""Pre_train_D_1.csv"", ""Pre_train_D_2.csv"", ""Pre_train_S_1.csv"", ""Pre_train_S_2.csv""]",2,"[""Challenge_D"", ""Challenge_S""]",False

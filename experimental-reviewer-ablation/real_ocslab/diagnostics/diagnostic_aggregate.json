@@ -1,0 +1,903 @@
+{
+  "dataset_identity": {
+    "OCSLab_Car": {
+      "original_dataset": "OCSLab classic Car-Hacking (HCRL)",
+      "physical_vehicle_platform": "Loader tag OCSLab_Car (OEM not asserted in this loader)",
+      "original_trace_files": [
+        "/workspace/Dataset/ocslab_classic_only/normal_run_data/normal_run_data.txt",
+        "/workspace/Dataset/ocslab_classic_only/DoS_dataset/DoS_dataset.csv",
+        "/workspace/Dataset/ocslab_classic_only/Fuzzy_dataset/Fuzzy_dataset.csv",
+        "/workspace/Dataset/ocslab_classic_only/gear_dataset/gear_dataset.csv",
+        "/workspace/Dataset/ocslab_classic_only/RPM_dataset/RPM_dataset.csv"
+      ],
+      "attack_types": [
+        "attack_free",
+        "flooding",
+        "fuzzy",
+        "malfunction_gear",
+        "malfunction_rpm"
+      ],
+      "labels": "Classic CSV R=benign / T=attack; normal_txt all benign",
+      "maps_to_paper_Sonata_Soul_Spark": false
+    },
+    "Challenge_D": {
+      "original_dataset": "Car Hacking Challenge Preliminary Training (track D)",
+      "physical_vehicle_platform": "Loader tag Challenge_D (OEM not asserted)",
+      "original_trace_files": [
+        "/workspace/Dataset/ocslab/0_Preliminary/0_Training/Pre_train_D_0.csv",
+        "/workspace/Dataset/ocslab/0_Preliminary/0_Training/Pre_train_D_1.csv",
+        "/workspace/Dataset/ocslab/0_Preliminary/0_Training/Pre_train_D_2.csv"
+      ],
+      "attack_types": "Subclass flooding/fuzzing/replay/spoofing",
+      "labels": "Class Normal vs Attack*",
+      "maps_to_paper_Sonata_Soul_Spark": false
+    },
+    "Challenge_S": {
+      "original_dataset": "Car Hacking Challenge Preliminary Training (track S)",
+      "physical_vehicle_platform": "Loader tag Challenge_S (OEM not asserted)",
+      "original_trace_files": [
+        "/workspace/Dataset/ocslab/0_Preliminary/0_Training/Pre_train_S_0.csv",
+        "/workspace/Dataset/ocslab/0_Preliminary/0_Training/Pre_train_S_1.csv",
+        "/workspace/Dataset/ocslab/0_Preliminary/0_Training/Pre_train_S_2.csv"
+      ],
+      "attack_types": "Subclass flooding/fuzzing/replay/spoofing",
+      "labels": "Class Normal vs Attack*",
+      "maps_to_paper_Sonata_Soul_Spark": false
+    },
+    "paper_platforms_elsewhere": {
+      "Hyundai_Sonata": "Attack_free_HY_Sonata_* in recovered_publication_pipeline manifests",
+      "Kia_Soul": "Attack_free_KIA_Soul_* / Replay_dataset_KIA_Soul_*",
+      "Chevrolet_Spark": "Attack_free_CHEVROLET_Spark_*",
+      "note": "OEM-tagged files are NOT sources in real_ocslab/build_scored_pool.py"
+    },
+    "pool_physical_vehicles": [
+      "Challenge_D",
+      "Challenge_S",
+      "OCSLab_Car"
+    ],
+    "pool_attack_type_counts_test": {
+      "attack_free": 3993,
+      "flooding": 1190,
+      "spoofing": 980,
+      "malfunction_rpm": 431,
+      "malfunction_gear": 407,
+      "fuzzy": 328,
+      "replay": 318
+    }
+  },
+  "campaign_construction_rule": {
+    "strong_weak": "Pick one attack_type with enough windows in score band; for each of 5 fleet vehicles sample 10 windows from that attack_type \u00d7 score-band pool. Score band + attack_type label only.",
+    "behavioral_similarity_required": false,
+    "same_platform_required": false,
+    "same_trace_required": false,
+    "prototype_blend": false,
+    "code": "scenario_builder_real.py build_scenario_from_pool"
+  },
+  "seed11": {
+    "strong_campaign": {
+      "n_campaign_members": 50,
+      "attack_types": [
+        "spoofing"
+      ],
+      "platforms": {
+        "Challenge_S": 26,
+        "Challenge_D": 24
+      },
+      "traces": {
+        "Pre_train_S_2.csv": 23,
+        "Pre_train_D_2.csv": 16,
+        "Pre_train_D_1.csv": 8,
+        "Pre_train_S_1.csv": 3
+      },
+      "per_vehicle_platforms": {
+        "veh_00": [
+          "Challenge_D",
+          "Challenge_S"
+        ],
+        "veh_01": [
+          "Challenge_D",
+          "Challenge_S"
+        ],
+        "veh_02": [
+          "Challenge_D",
+          "Challenge_S"
+        ],
+        "veh_03": [
+          "Challenge_D",
+          "Challenge_S"
+        ],
+        "veh_04": [
+          "Challenge_D",
+          "Challenge_S"
+        ]
+      },
+      "coherence_within": {
+        "n_pairs": 1225,
+        "mean": 0.9999953401704732,
+        "median": 0.9999968612945117,
+        "min": 0.9999780767259021,
+        "max": 0.9999999859205332,
+        "pct_ge_0_95": 100.0,
+        "pct_ge_tau": 100.0
+      },
+      "coherence_vs_benign": {
+        "n_pairs": 7500,
+        "mean": 0.9999865749806648,
+        "median": 0.9999873798881663,
+        "min": 0.9999405713471401,
+        "max": 0.9999999486208916,
+        "pct_ge_0_95": 100.0,
+        "pct_ge_tau": 100.0
+      },
+      "coherence_vs_unrelated_mal": {
+        "n_pairs": 2500,
+        "mean": 0.9999542992383335,
+        "median": 0.9999564514469372,
+        "min": 0.9997847489291941,
+        "max": 1.0,
+        "pct_ge_0_95": 100.0,
+        "pct_ge_tau": 100.0
+      },
+      "connectivity": {
+        "campaign_nodes": 50,
+        "edges_between_campaign_nodes": 170,
+        "cross_vehicle_campaign_edges": 103,
+        "n_connected_components": 1,
+        "largest_connected_campaign_component": 50,
+        "mean_campaign_node_degree": 6.8,
+        "pct_campaign_nodes_isolated": 0.0
+      },
+      "selection_rule": "Same attack_type label + anomaly score band; NO prototype blend; NO same-platform/same-trace constraint; NO cosine similarity requirement among members.",
+      "m2_pregate_summary": {
+        "n_dbscan_non_noise": 27,
+        "n_noise": 123,
+        "n_gated": 1,
+        "matched": {},
+        "unmatched_gt": [
+          0
+        ],
+        "unmatched_pred": [
+          0
+        ]
+      },
+      "m2_clusters": [
+        {
+          "dbscan_id": 0,
+          "size": 4,
+          "n_vehicles": 3,
+          "gt_composition": {
+            "0": 4
+          },
+          "cohesion": 0.9999998001820353,
+          "cross_vehicle": true,
+          "gate_passed_pre_merge": true,
+          "gate_fail_reasons": [],
+          "best_jaccard_vs_gt": 0.08,
+          "best_gt_id": 0,
+          "in_final_gated": true,
+          "vehicles": [
+            "veh_00",
+            "veh_03",
+            "veh_04"
+          ]
+        },
+        {
+          "dbscan_id": 1,
+          "size": 3,
+          "n_vehicles": 3,
+          "gt_composition": {
+            "0": 3
+          },
+          "cohesion": 0.9999995807897637,
+          "cross_vehicle": true,
+          "gate_passed_pre_merge": true,
+          "gate_fail_reasons": [],
+          "best_jaccard_vs_gt": 0.06,
+          "best_gt_id": 0,
+          "in_final_gated": true,
+          "vehicles": [
+            "veh_00",
+            "veh_01",
+            "veh_04"
+          ]
+        },
+        {
+          "dbscan_id": 2,
+          "size": 2,
+          "n_vehicles": 1,
+          "gt_composition": {
+            "0": 2
+          },
+          "cohesion": 0.9999999859205332,
+          "cross_vehicle": false,
+          "gate_passed_pre_merge": false,
+          "gate_fail_reasons": [
+            "min_vehicles<2 (have 1)"
+          ],
+          "best_jaccard_vs_gt": 0.04,
+          "best_gt_id": 0,
+          "in_final_gated": false,
+          "vehicles": [
+            "veh_00"
+          ]
+        },
+        {
+          "dbscan_id": 3,
+          "size": 3,
+          "n_vehicles": 3,
+          "gt_composition": {
+            "0": 1,
+            "-1": 2
+          },
+          "cohesion": 0.9999996811779096,
+          "cross_vehicle": true,
+          "gate_passed_pre_merge": true,
+          "gate_fail_reasons": [],
+          "best_jaccard_vs_gt": 0.019230769230769232,
+          "best_gt_id": 0,
+          "in_final_gated": true,
+          "vehicles": [
+            "veh_01",
+            "veh_06",
+            "veh_16"
+          ]
+        },
+        {
+          "dbscan_id": 4,
+          "size": 2,
+          "n_vehicles": 2,
+          "gt_composition": {
+            "0": 2
+          },
+          "cohesion": 0.9999998866876991,
+          "cross_vehicle": true,
+          "gate_passed_pre_merge": true,
+          "gate_fail_reasons": [],
+          "best_jaccard_vs_gt": 0.04,
+          "best_gt_id": 0,
+          "in_final_gated": true,
+          "vehicles": [
+            "veh_02",
+            "veh_04"
+          ]
+        },
+        {
+          "dbscan_id": 5,
+          "size": 3,
+          "n_vehicles": 3,
+          "gt_composition": {
+            "0": 3
+          },
+          "cohesion": 0.9999999490105544,
+          "cross_vehicle": true,
+          "gate_passed_pre_merge": true,
+          "gate_fail_reasons": [],
+          "best_jaccard_vs_gt": 0.06,
+          "best_gt_id": 0,
+          "in_final_gated": true,
+          "vehicles": [
+            "veh_02",
+            "veh_03",
+            "veh_04"
+          ]
+        },
+        {
+          "dbscan_id": 6,
+          "size": 2,
+          "n_vehicles": 2,
+          "gt_composition": {
+            "0": 2
+          },
+          "cohesion": 0.9999998287135075,
+          "cross_vehicle": true,
+          "gate_passed_pre_merge": true,
+          "gate_fail_reasons": [],
+          "best_jaccard_vs_gt": 0.04,
+          "best_gt_id": 0,
+          "in_final_gated": true,
+          "vehicles": [
+            "veh_02",
+            "veh_04"
+          ]
+        },
+        {
+          "dbscan_id": 7,
+          "size": 2,
+          "n_vehicles": 1,
+          "gt_composition": {
+            "0": 2
+          },
+          "cohesion": 0.9999996327751642,
+          "cross_vehicle": false,
+          "gate_passed_pre_merge": false,
+          "gate_fail_reasons": [
+            "min_vehicles<2 (have 1)"
+          ],
+          "best_jaccard_vs_gt": 0.04,
+          "best_gt_id": 0,
+          "in_final_gated": false,
+          "vehicles": [
+            "veh_03"
+          ]
+        },
+        {
+          "dbscan_id": 8,
+          "size": 2,
+          "n_vehicles": 1,
+          "gt_composition": {
+            "0": 2
+          },
+          "cohesion": 0.9999999415003127,
+          "cross_vehicle": false,
+          "gate_passed_pre_merge": false,
+          "gate_fail_reasons": [
+            "min_vehicles<2 (have 1)"
+          ],
+          "best_jaccard_vs_gt": 0.04,
+          "best_gt_id": 0,
+          "in_final_gated": false,
+          "vehicles": [
+            "veh_04"
+          ]
+        },
+        {
+          "dbscan_id": 9,
+          "size": 3,
+          "n_vehicles": 3,
+          "gt_composition": {
+            "-1": 3
+          },
+          "cohesion": 0.9999998368643851,
+          "cross_vehicle": true,
+          "gate_passed_pre_merge": true,
+          "gate_fail_reasons": [],
+          "best_jaccard_vs_gt": 0.0,
+          "best_gt_id": -1,
+          "in_final_gated": true,
+          "vehicles": [
+            "veh_05",
+            "veh_12",
+            "veh_14"
+          ]
+        },
+        {
+          "dbscan_id": 10,
+          "size": 5,
+          "n_vehicles": 5,
+          "gt_composition": {
+            "-1": 5
+          },
+          "cohesion": 0.9999997356479773,
+          "cross_vehicle": true,
+          "gate_passed_pre_merge": true,
+          "gate_fail_reasons": [],
+          "best_jaccard_vs_gt": 0.0,
+          "best_gt_id": -1,
+          "in_final_gated": true,
+          "vehicles": [
+            "veh_05",
+            "veh_10",
+            "veh_11",
+            "veh_13",
+            "veh_15"
+          ]
+        },
+        {
+          "dbscan_id": 11,
+          "size": 3,
+          "n_vehicles": 3,
+          "gt_composition": {
+            "-1": 3
+          },
+          "cohesion": 0.9999998280006451,
+          "cross_vehicle": true,
+          "gate_passed_pre_merge": true,
+          "gate_fail_reasons": [],
+          "best_jaccard_vs_gt": 0.0,
+          "best_gt_id": -1,
+          "in_final_gated": true,
+          "vehicles": [
+            "veh_05",
+            "veh_10",
+            "veh_18"
+          ]
+        }
+      ]
+    },
+    "weak_campaign": {
+      "n_campaign_members": 50,
+      "attack_types": [
+        "spoofing"
+      ],
+      "platforms": {
+        "Challenge_S": 25,
+        "Challenge_D": 25
+      },
+      "traces": {
+        "Pre_train_S_2.csv": 17,
+        "Pre_train_D_2.csv": 13,
+        "Pre_train_D_1.csv": 12,
+        "Pre_train_S_1.csv": 8
+      },
+      "per_vehicle_platforms": {
+        "veh_00": [
+          "Challenge_D",
+          "Challenge_S"
+        ],
+        "veh_01": [
+          "Challenge_D",
+          "Challenge_S"
+        ],
+        "veh_02": [
+          "Challenge_D",
+          "Challenge_S"
+        ],
+        "veh_03": [
+          "Challenge_D",
+          "Challenge_S"
+        ],
+        "veh_04": [
+          "Challenge_D",
+          "Challenge_S"
+        ]
+      },
+      "coherence_within": {
+        "n_pairs": 1225,
+        "mean": 0.9999957048838951,
+        "median": 0.9999972558486836,
+        "min": 0.9999762326113287,
+        "max": 0.9999999980153024,
+        "pct_ge_0_95": 100.0,
+        "pct_ge_tau": 100.0
+      },
+      "coherence_vs_benign": {
+        "n_pairs": 7500,
+        "mean": 0.999986003752128,
+        "median": 0.9999857646690323,
+        "min": 0.9999331850328066,
+        "max": 0.9999999644557829,
+        "pct_ge_0_95": 100.0,
+        "pct_ge_tau": 100.0
+      },
+      "coherence_vs_unrelated_mal": {
+        "n_pairs": 2500,
+        "mean": 0.9999519356801966,
+        "median": 0.9999532372686988,
+        "min": 0.999784992262928,
+        "max": 0.9999999381426037,
+        "pct_ge_0_95": 100.0,
+        "pct_ge_tau": 100.0
+      },
+      "connectivity": {
+        "campaign_nodes": 50,
+        "edges_between_campaign_nodes": 180,
+        "cross_vehicle_campaign_edges": 114,
+        "n_connected_components": 1,
+        "largest_connected_campaign_component": 50,
+        "mean_campaign_node_degree": 7.2,
+        "pct_campaign_nodes_isolated": 0.0
+      },
+      "selection_rule": "Same attack_type label + anomaly score band; NO prototype blend; NO same-platform/same-trace constraint; NO cosine similarity requirement among members.",
+      "m2_pregate_summary": {
+        "n_dbscan_non_noise": 27,
+        "n_noise": 121,
+        "n_gated": 1,
+        "matched": {},
+        "unmatched_gt": [
+          0
+        ],
+        "unmatched_pred": [
+          0
+        ]
+      },
+      "m2_clusters": [
+        {
+          "dbscan_id": 0,
+          "size": 4,
+          "n_vehicles": 2,
+          "gt_composition": {
+            "0": 4
+          },
+          "cohesion": 0.9999999525459011,
+          "cross_vehicle": true,
+          "gate_passed_pre_merge": true,
+          "gate_fail_reasons": [],
+          "best_jaccard_vs_gt": 0.08,
+          "best_gt_id": 0,
+          "in_final_gated": true,
+          "vehicles": [
+            "veh_00",
+            "veh_04"
+          ]
+        },
+        {
+          "dbscan_id": 1,
+          "size": 2,
+          "n_vehicles": 2,
+          "gt_composition": {
+            "0": 2
+          },
+          "cohesion": 0.9999996355611083,
+          "cross_vehicle": true,
+          "gate_passed_pre_merge": true,
+          "gate_fail_reasons": [],
+          "best_jaccard_vs_gt": 0.04,
+          "best_gt_id": 0,
+          "in_final_gated": true,
+          "vehicles": [
+            "veh_00",
+            "veh_03"
+          ]
+        },
+        {
+          "dbscan_id": 2,
+          "size": 2,
+          "n_vehicles": 2,
+          "gt_composition": {
+            "0": 2
+          },
+          "cohesion": 0.999999679553547,
+          "cross_vehicle": true,
+          "gate_passed_pre_merge": true,
+          "gate_fail_reasons": [],
+          "best_jaccard_vs_gt": 0.04,
+          "best_gt_id": 0,
+          "in_final_gated": true,
+          "vehicles": [
+            "veh_00",
+            "veh_02"
+          ]
+        },
+        {
+          "dbscan_id": 3,
+          "size": 2,
+          "n_vehicles": 2,
+          "gt_composition": {
+            "0": 2
+          },
+          "cohesion": 0.9999998206904415,
+          "cross_vehicle": true,
+          "gate_passed_pre_merge": true,
+          "gate_fail_reasons": [],
+          "best_jaccard_vs_gt": 0.04,
+          "best_gt_id": 0,
+          "in_final_gated": true,
+          "vehicles": [
+            "veh_00",
+            "veh_03"
+          ]
+        },
+        {
+          "dbscan_id": 4,
+          "size": 9,
+          "n_vehicles": 7,
+          "gt_composition": {
+            "0": 5,
+            "-1": 4
+          },
+          "cohesion": 0.9999998547594063,
+          "cross_vehicle": true,
+          "gate_passed_pre_merge": true,
+          "gate_fail_reasons": [],
+          "best_jaccard_vs_gt": 0.09259259259259259,
+          "best_gt_id": 0,
+          "in_final_gated": true,
+          "vehicles": [
+            "veh_00",
+            "veh_01",
+            "veh_03",
+            "veh_04",
+            "veh_15",
+            "veh_18",
+            "veh_19"
+          ]
+        },
+        {
+          "dbscan_id": 5,
+          "size": 2,
+          "n_vehicles": 2,
+          "gt_composition": {
+            "0": 1,
+            "-1": 1
+          },
+          "cohesion": 0.9999997735713623,
+          "cross_vehicle": true,
+          "gate_passed_pre_merge": true,
+          "gate_fail_reasons": [],
+          "best_jaccard_vs_gt": 0.0196078431372549,
+          "best_gt_id": 0,
+          "in_final_gated": true,
+          "vehicles": [
+            "veh_01",
+            "veh_05"
+          ]
+        },
+        {
+          "dbscan_id": 6,
+          "size": 2,
+          "n_vehicles": 2,
+          "gt_composition": {
+            "0": 1,
+            "-1": 1
+          },
+          "cohesion": 0.9999999245501373,
+          "cross_vehicle": true,
+          "gate_passed_pre_merge": true,
+          "gate_fail_reasons": [],
+          "best_jaccard_vs_gt": 0.0196078431372549,
+          "best_gt_id": 0,
+          "in_final_gated": true,
+          "vehicles": [
+            "veh_01",
+            "veh_07"
+          ]
+        },
+        {
+          "dbscan_id": 7,
+          "size": 2,
+          "n_vehicles": 2,
+          "gt_composition": {
+            "0": 2
+          },
+          "cohesion": 0.9999999669450944,
+          "cross_vehicle": true,
+          "gate_passed_pre_merge": true,
+          "gate_fail_reasons": [],
+          "best_jaccard_vs_gt": 0.04,
+          "best_gt_id": 0,
+          "in_final_gated": true,
+          "vehicles": [
+            "veh_02",
+            "veh_04"
+          ]
+        },
+        {
+          "dbscan_id": 8,
+          "size": 2,
+          "n_vehicles": 2,
+          "gt_composition": {
+            "0": 2
+          },
+          "cohesion": 0.9999998002249514,
+          "cross_vehicle": true,
+          "gate_passed_pre_merge": true,
+          "gate_fail_reasons": [],
+          "best_jaccard_vs_gt": 0.04,
+          "best_gt_id": 0,
+          "in_final_gated": true,
+          "vehicles": [
+            "veh_02",
+            "veh_03"
+          ]
+        },
+        {
+          "dbscan_id": 9,
+          "size": 7,
+          "n_vehicles": 6,
+          "gt_composition": {
+            "-1": 7
+          },
+          "cohesion": 0.9999996926130389,
+          "cross_vehicle": true,
+          "gate_passed_pre_merge": true,
+          "gate_fail_reasons": [],
+          "best_jaccard_vs_gt": 0.0,
+          "best_gt_id": -1,
+          "in_final_gated": true,
+          "vehicles": [
+            "veh_05",
+            "veh_06",
+            "veh_11",
+            "veh_14",
+            "veh_17",
+            "veh_18"
+          ]
+        },
+        {
+          "dbscan_id": 10,
+          "size": 8,
+          "n_vehicles": 7,
+          "gt_composition": {
+            "-1": 8
+          },
+          "cohesion": 0.9999996627425032,
+          "cross_vehicle": true,
+          "gate_passed_pre_merge": true,
+          "gate_fail_reasons": [],
+          "best_jaccard_vs_gt": 0.0,
+          "best_gt_id": -1,
+          "in_final_gated": true,
+          "vehicles": [
+            "veh_05",
+            "veh_06",
+            "veh_10",
+            "veh_11",
+            "veh_12",
+            "veh_13",
+            "veh_18"
+          ]
+        },
+        {
+          "dbscan_id": 11,
+          "size": 2,
+          "n_vehicles": 2,
+          "gt_composition": {
+            "-1": 2
+          },
+          "cohesion": 0.9999998394964672,
+          "cross_vehicle": true,
+          "gate_passed_pre_merge": true,
+          "gate_fail_reasons": [],
+          "best_jaccard_vs_gt": 0.0,
+          "best_gt_id": -1,
+          "in_final_gated": true,
+          "vehicles": [
+            "veh_06",
+            "veh_07"
+          ]
+        }
+      ]
+    }
+  },
+  "attack_consistency_aggregate": {
+    "n_gt_campaigns_strong_weak": 20,
+    "pct_with_exactly_1_attack_type": 100.0,
+    "pct_with_multiple_platforms": 85.0,
+    "pct_with_multiple_traces": 85.0,
+    "pct_mixing_attack_types": 0.0,
+    "mean_n_platforms": 1.95,
+    "mean_n_traces": 3.15
+  },
+  "coherence_aggregate": {
+    "strong_campaign": {
+      "within_mean_mean": 0.9999877587159267,
+      "within_median_mean": 0.9999954185530985,
+      "within_min_mean": 0.9999354087850738,
+      "within_max_mean": 0.9999999942061122,
+      "within_pct_ge_0_95_mean": 100.0,
+      "vs_benign_mean_mean": 0.9999712989375187,
+      "vs_benign_pct_ge_0_95_mean": 100.0,
+      "vs_unrelated_mal_mean_mean": 0.9999487053395579,
+      "vs_unrelated_mal_pct_ge_0_95_mean": 100.0
+    },
+    "weak_campaign": {
+      "within_mean_mean": 0.9999970787196111,
+      "within_median_mean": 0.9999979895359461,
+      "within_min_mean": 0.9999837759266569,
+      "within_max_mean": 0.9999999839005225,
+      "within_pct_ge_0_95_mean": 100.0,
+      "vs_benign_mean_mean": 0.9999862388566534,
+      "vs_benign_pct_ge_0_95_mean": 100.0,
+      "vs_unrelated_mal_mean_mean": 0.9999532633705774,
+      "vs_unrelated_mal_pct_ge_0_95_mean": 100.0
+    }
+  },
+  "connectivity_aggregate": {
+    "strong_campaign": {
+      "mean_edges_between_campaign_nodes": 199.3,
+      "mean_cross_vehicle_campaign_edges": 133.7,
+      "mean_n_components": 1.0,
+      "mean_largest_component": 50.0,
+      "mean_pct_isolated": 0.0,
+      "mean_degree": 7.972000000000001
+    },
+    "weak_campaign": {
+      "mean_edges_between_campaign_nodes": 178.5,
+      "mean_cross_vehicle_campaign_edges": 110.4,
+      "mean_n_components": 1.0,
+      "mean_largest_component": 50.0,
+      "mean_pct_isolated": 0.0,
+      "mean_degree": 7.139999999999999
+    }
+  },
+  "tau_diagnostic_aggregate": {
+    "strong_campaign": {
+      "mean_campaign_pairs_pct_ge_0_95": 100.0,
+      "mean_benign_pairs_pct_ge_0_95": 100.0,
+      "mean_camp_vs_benign_pct_ge_0_95": 100.0,
+      "mean_unrelated_mal_cross_pct_ge_0_95": 100.0
+    },
+    "weak_campaign": {
+      "mean_campaign_pairs_pct_ge_0_95": 100.0,
+      "mean_benign_pairs_pct_ge_0_95": 100.0,
+      "mean_camp_vs_benign_pct_ge_0_95": 100.0,
+      "mean_unrelated_mal_cross_pct_ge_0_95": 100.0
+    }
+  },
+  "failure_mode_counts": {
+    "M2|strong_campaign": {
+      "B_dbscan_fragmentation": 6,
+      "C_dbscan_over_merging": 10,
+      "E_jaccard_lt_0_5": 10,
+      "matching_failure_no_pair_ge_0_5": 10
+    },
+    "M2|weak_campaign": {
+      "B_dbscan_fragmentation": 6,
+      "C_dbscan_over_merging": 10,
+      "E_jaccard_lt_0_5": 10,
+      "matching_failure_no_pair_ge_0_5": 10
+    },
+    "M3|strong_campaign": {
+      "C_dbscan_over_merging": 10,
+      "E_jaccard_lt_0_5": 10,
+      "matching_failure_no_pair_ge_0_5": 10
+    },
+    "M3|weak_campaign": {
+      "C_dbscan_over_merging": 10,
+      "E_jaccard_lt_0_5": 10,
+      "matching_failure_no_pair_ge_0_5": 10
+    },
+    "M4|strong_campaign": {
+      "C_dbscan_over_merging": 10,
+      "E_jaccard_lt_0_5": 10,
+      "matching_failure_no_pair_ge_0_5": 10,
+      "B_dbscan_fragmentation": 4
+    },
+    "M4|weak_campaign": {
+      "B_dbscan_fragmentation": 8,
+      "C_dbscan_over_merging": 10,
+      "E_jaccard_lt_0_5": 10,
+      "matching_failure_no_pair_ge_0_5": 10
+    }
+  },
+  "publication_campaign_logic": {
+    "sources": [
+      "recovered_publication_pipeline/src/experiments/coordination_strength.py",
+      "recovered_publication_pipeline/src/experiments/model_diversity_final_tuned/validation_scenarios.py",
+      "recovered_publication_pipeline/src/experiments/model_diversity_corrected/compositions.py"
+    ],
+    "selects": [
+      "same attack_type (defaults malfunction for strong/weak)",
+      "distinct OEM vehicle instances (Hyundai/Kia/Chevrolet catalog)",
+      "score strength band",
+      "CRITICAL: apply_coordination_strength blends features toward shared attack-family prototype"
+    ],
+    "composition_label": "controlled_same_attack",
+    "vs_real_ocslab": "real_ocslab keeps attack_type label + score band but does NOT apply prototype blend; does NOT bind fleet vehicle to one physical instance/trace; samples windows independently so behavioural coherence is not enforced."
+  },
+  "feature_scale_diagnostic_seed11_strong": {
+    "note": "Diagnostic only; no retuning performed.",
+    "raw_feature_means": {
+      "anomaly_score": 0.8316,
+      "frame_count": 100.0,
+      "message_rate": 100.0,
+      "burstiness": 1.3418,
+      "mean_inter_arrival_time": 0.000467,
+      "std_inter_arrival_time": 0.000633,
+      "can_id_entropy": 4.7885,
+      "most_common_can_id_ratio": 0.0589,
+      "payload_entropy": 2.0489
+    },
+    "constant_features": [
+      "frame_count",
+      "message_rate"
+    ],
+    "raw_cosine": {
+      "within_campaign_mean": 0.999995,
+      "vs_benign_mean": 0.999987,
+      "within_pct_ge_0_95": 100.0,
+      "vs_benign_pct_ge_0_95": 100.0
+    },
+    "zscored_cosine_same_scenario": {
+      "within_campaign_mean": 0.5461,
+      "within_campaign_min": -0.3249,
+      "within_pct_ge_0_95": 8.24,
+      "vs_benign_mean": -0.2139,
+      "vs_benign_pct_ge_0_95": 0.2
+    },
+    "implication": "Raw 9-D cosine is non-discriminative because of constant/high-magnitude dimensions. After z-scoring, campaign vs benign separates \u2014 evidence of feature/preprocessing mismatch relative to a scale-normalized behavioural similarity view."
+  },
+  "primary_diagnosis": {
+    "labels": [
+      "1_gt_campaign_construction_lacks_behavioral_coherence_enforcement",
+      "7_feature_preprocessing_mismatch_raw_cosine_collapse",
+      "4_dbscan_over_merging",
+      "6_jaccard_matching_failure"
+    ],
+    "not_primary": [
+      "2_tau_insufficient_connectivity_FALSE_opposite_is_true",
+      "5_gate_rejection_FALSE_gate_accepts_polluted_clusters",
+      "3_gnn_failure_not_necessary_M2_already_fails"
+    ]
+  }
+}

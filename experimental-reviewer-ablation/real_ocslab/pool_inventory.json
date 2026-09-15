@@ -1,0 +1,48 @@
+{
+  "n_test": 7647,
+  "physical_vehicles": [
+    "Challenge_D",
+    "Challenge_S",
+    "OCSLab_Car"
+  ],
+  "source_traces": [
+    "DoS_dataset.csv",
+    "Fuzzy_dataset.csv",
+    "Pre_train_D_0.csv",
+    "Pre_train_D_1.csv",
+    "Pre_train_D_2.csv",
+    "Pre_train_S_0.csv",
+    "Pre_train_S_1.csv",
+    "Pre_train_S_2.csv",
+    "RPM_dataset.csv",
+    "gear_dataset.csv",
+    "normal_run_data.txt"
+  ],
+  "n_strong_malicious": 2787,
+  "n_weak_malicious": 342,
+  "n_suspicious_benign": 1997,
+  "strong_by_attack": {
+    "flooding": 1184,
+    "malfunction_rpm": 431,
+    "malfunction_gear": 406,
+    "fuzzy": 326,
+    "spoofing": 309,
+    "replay": 131
+  },
+  "weak_by_attack": {
+    "spoofing": 242,
+    "replay": 96,
+    "flooding": 3,
+    "fuzzy": 1
+  },
+  "strong_by_vehicle": {
+    "OCSLab_Car": 1446,
+    "Challenge_S": 776,
+    "Challenge_D": 565
+  },
+  "weak_by_vehicle": {
+    "Challenge_D": 179,
+    "Challenge_S": 160,
+    "OCSLab_Car": 3
+  }
+}
