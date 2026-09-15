@@ -1,0 +1,62 @@
+{
+  "platforms": {
+    "Hyundai": {
+      "dir": "/workspace/Dataset/ocslab_pipeline/Hyundai",
+      "n_files": 0,
+      "files": [],
+      "oem_token_hits": []
+    },
+    "Kia": {
+      "dir": "/workspace/Dataset/ocslab_pipeline/Kia",
+      "n_files": 0,
+      "files": [],
+      "oem_token_hits": []
+    },
+    "Chevrolet": {
+      "dir": "/workspace/Dataset/ocslab_pipeline/Chevrolet",
+      "n_files": 5,
+      "files": [
+        "attack_free_run.txt",
+        "flooding_DoS_dataset.csv",
+        "fuzzy_dataset.csv",
+        "malfunction_RPM_dataset.csv",
+        "malfunction_gear_dataset.csv"
+      ],
+      "oem_token_hits": []
+    }
+  },
+  "errors": [
+    "Hyundai: directory empty or missing",
+    "Kia: directory empty or missing",
+    "Chevrolet: files present but none match car_track tokens ('spark', 'chevrolet'); got ['attack_free_run.txt', 'flooding_DoS_dataset.csv', 'fuzzy_dataset.csv', 'malfunction_RPM_dataset.csv', 'malfunction_gear_dataset.csv']",
+    "Chevrolet/attack_free_run.txt is classic Car-Hacking (matches Dataset/ocslab/normal_run_data), not Spark car_track",
+    "Missing 21/21 publication car_track basenames"
+  ],
+  "chevrolet_classic_identity": true,
+  "publication_basenames_required": 21,
+  "publication_basenames_missing": 21,
+  "publication_basenames_missing_list": [
+    "Attack_free_CHEVROLET_Spark_train.csv",
+    "Attack_free_HYUNDAI_Sonata_train.csv",
+    "Attack_free_HY_Sonata_train.csv",
+    "Attack_free_KIA_Soul_train.csv",
+    "Flooding_CHEVROLET_Spark_train.csv",
+    "Flooding_HYUNDAI_Sonata_train.csv",
+    "Flooding_KIA_Soul_train.csv",
+    "Fuzzy_CHEVROLET_Spark_train.csv",
+    "Fuzzy_HYUNDAI_Sonata_train.csv",
+    "Fuzzy_KIA_Soul_train.csv",
+    "Fuzzy_dataset_HY_Sonata_train.csv",
+    "Fuzzy_dataset_KIA_Soul_train.csv",
+    "Malfunction_1st_dataset_HY_Sonata_train.csv",
+    "Malfunction_1st_dataset_KIA_Soul_train.csv",
+    "Malfunction_2nd_HY_Sonata_train.csv",
+    "Malfunction_2nd_KIA_Soul_train.csv",
+    "Malfunction_CHEVROLET_Spark_train.csv",
+    "Malfunction_HYUNDAI_Sonata_train.csv",
+    "Malfunction_KIA_Soul_train.csv",
+    "Replay_dataset_HY_Sonata_train.csv",
+    "Replay_dataset_KIA_Soul_train.csv"
+  ],
+  "passed": false
+}

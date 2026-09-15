@@ -1,0 +1,32 @@
+verification_report.txt — real_ocslab_corrected
+================================================
+
+Timestamp: written at package creation (experiment not executed)
+
+GATE RESULTS
+------------
+[PASS] CAMPAIGN_SEMANTICS_AUDIT.md: publication prototype-blend semantics recoverable
+[PASS] fleet_benign_scaler.json feature names == FEATURE_NAMES (9-D exact order)
+[PASS] PR #22 real_ocslab/ left untouched (diagnostic provenance)
+[FAIL] Dataset/ocslab_pipeline/Hyundai has usable car_track files (EMPTY)
+[FAIL] Dataset/ocslab_pipeline/Kia has usable car_track files (EMPTY)
+[FAIL] Dataset/ocslab_pipeline/Chevrolet is manuscript Spark car_track
+       (present files are classic Car-Hacking; md5 matches normal_run_data)
+[FAIL] Publication car_track basenames present locally (0/21)
+[SKIP] Source-trace train/val/test split manifest
+[SKIP] 24-D + IF TEST pool construction
+[SKIP] Seed-11 cosine validation (non-collapse gate)
+[SKIP] Shared M2/M3/M4 scenario assertions
+[SKIP] Ten-seed M1–M4 ablation
+
+HARD STOP
+---------
+No scored pool, scenarios, or Campaign F1 numbers were produced.
+Do not use PR #22 zero Campaign F1 in the paper.
+Do not substitute OCSLab_Car / Challenge_D / Challenge_S for this corrected run.
+
+NEXT ACTION
+-----------
+Provide In-Vehicle Network Intrusion Detection Challenge car_track CSVs for
+Hyundai Sonata / Kia Soul / Chevrolet Spark under Dataset/ocslab_pipeline/,
+then re-run check_dataset_gate.py and run_corrected_ablation.py.

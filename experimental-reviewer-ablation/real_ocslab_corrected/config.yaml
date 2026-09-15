@@ -1,0 +1,112 @@
+# Corrected Reviewer-A ablation on manuscript-aligned OCSLab OEM pipeline.
+# PR #22 real_ocslab results are preserved separately and must not be used in the paper.
+# Absolute metrics are NOT claimed identical to frozen historical publication tables.
+# Synthetic descriptors are forbidden.
+# Status: STOPPED until car_track Sonata/Soul/Spark traces are present.
+
+experiment:
+  name: experimental-reviewer-ablation-real-ocslab-corrected
+  purpose: >
+    Controlled component ablation for Reviewer A Sec 4.5.2 using recoverable
+    FLEET-GUARD methodology (fleet scaler before cosine; prototype-blend campaigns;
+    Hyundai/Kia/Chevrolet car_track inputs).
+
+seeds: [11, 23, 37, 41, 53, 67, 71, 83, 97, 101]
+pilot_seed: 11
+
+fleet:
+  n_vehicles: 20
+  windows_per_vehicle: 10
+  total_nodes: 200
+  campaign_size: 5
+  malicious_per_attacked: 5
+  benign_per_attacked: 5
+  benign_per_benign: 10
+  note: >
+    Simulated fleet instances constructed from three recorded OEM platforms,
+    NOT 20 independently recorded physical vehicles.
+
+scenarios:
+  - strong_campaign
+  - weak_campaign
+  - unrelated_incidents
+
+windowing:
+  window_frames: 100
+  stride: 50
+
+split:
+  train_fraction: 0.70
+  validation_fraction: 0.15
+  test_fraction: 0.15
+  unit: source_trace_contiguous_segment
+  forbid_overlapping_window_leakage: true
+
+descriptor:
+  behavioural_24d: true
+  feature_names:
+    - anomaly_score
+    - frame_count
+    - message_rate
+    - burstiness
+    - mean_inter_arrival_time
+    - std_inter_arrival_time
+    - can_id_entropy
+    - most_common_can_id_ratio
+    - payload_entropy
+  input_dim: 9
+  source: ocslab_pipeline_hyundai_kia_chevrolet_test_windows
+
+campaign_semantics:
+  method: prototype_blend_with_bounded_noise
+  coordination_strength: 1.0
+  primary_attack_default: malfunction
+  chevrolet_strong_attack: fuzzy
+  strong_composition: {Hyundai: 2, Kia: 2, Chevrolet: 1}
+  weak_composition: {Hyundai: 3, Kia: 2, Chevrolet: 0}
+  forbid_score_only_grouping: true
+
+similarity:
+  representation: publication_scaled_9d_gi
+  scaler_path: >
+    recovered_publication_pipeline/new_experiments/final_end_to_end_publication_run_balanced/scalers/fleet_benign_scaler.json
+  apply_scaler_before_cosine: true
+  forbid_raw_unscaled_cosine: true
+  fit_scaler_on_test: false
+
+graph:
+  similarity_threshold: 0.95
+  max_same_vehicle_neighbors: 2
+  max_cross_vehicle_neighbors: 5
+  metric: cosine
+
+gnn:
+  hidden_channels: 64
+  embedding_dim: 32
+  epochs: 30
+  learning_rate: 0.01
+  weight_decay: 0.0005
+  campaign_loss_weight: 0.25
+  supervision: structure
+
+clustering:
+  pca_components: 8
+  eps: 0.5
+  min_samples: 2
+
+campaign_gate:
+  min_vehicles: 2
+  min_cross_vehicle_support: 1
+  cohesion_threshold: 0.5
+  fragment_merge_threshold: 0.85
+
+local_ids:
+  strong_threshold: 0.80
+  weak_threshold: 0.55
+
+data:
+  pipeline_root: Dataset/ocslab_pipeline
+  platforms: [Hyundai, Kia, Chevrolet]
+  forbid_platforms: [OCSLab_Car, Challenge_D, Challenge_S]
+  synthetic_descriptors: false
+  require_car_track_tokens: true
