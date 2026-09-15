@@ -1,0 +1,7 @@
+scenario,representation,n_nodes,candidate_undirected_pairs,pct_all_pairs_ge_0_95,camp_camp_pairs__n_pairs,camp_camp_pairs__n_ge_0_95,camp_camp_pairs__pct_ge_0_95,camp_benign_pairs__n_pairs,camp_benign_pairs__n_ge_0_95,camp_benign_pairs__pct_ge_0_95,camp_unrelated_pairs__n_pairs,camp_unrelated_pairs__n_ge_0_95,camp_unrelated_pairs__pct_ge_0_95,retained_undirected_edges,same_vehicle_edges,cross_vehicle_edges,campaign_to_campaign_edges,campaign_to_benign_edges,campaign_to_unrelated_edges,campaign_connected_components,largest_campaign_component,full_graph_components,largest_full_component
+strong_campaign,R0_raw_9d,200,19900,100.0,1225,1225,100.0,7500,7500,100.0,0,0,,899,256,643,170,122,0,1,50,1,200
+strong_campaign,R1_train_benign_standardscaler_9d,200,19900,4.1457286432160805,1225,274,22.36734693877551,7500,13,0.17333333333333334,0,0,,521,76,445,165,12,0,8,39,28,88
+strong_campaign,R2_historical_fleet_benign_scaler_9d,200,19900,3.708542713567839,1225,403,32.89795918367347,7500,51,0.6799999999999999,0,0,,472,68,404,191,38,0,5,39,31,55
+weak_campaign,R0_raw_9d,200,19900,100.0,1225,1225,100.0,7500,7500,100.0,0,0,,920,260,660,180,128,0,1,50,1,200
+weak_campaign,R1_train_benign_standardscaler_9d,200,19900,3.1557788944723617,1225,159,12.979591836734695,7500,13,0.17333333333333334,0,0,,468,54,414,123,13,0,11,22,33,82
+weak_campaign,R2_historical_fleet_benign_scaler_9d,200,19900,2.959798994974874,1225,244,19.918367346938776,7500,98,1.3066666666666666,0,0,,445,57,388,165,59,0,5,31,29,63
