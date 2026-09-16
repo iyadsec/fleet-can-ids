@@ -1,0 +1,39 @@
+\subsubsection{\textbf{Ablation Study}}
+\label{sec:ablation-reviewer}
+
+To isolate the contribution of each pipeline stage, we conducted a controlled
+component ablation under a \emph{common} configuration (identical fleet scenarios,
+descriptor node sets, seeds, graph settings where applicable, clustering, campaign
+gate, and metrics). Absolute metric values from this study are not claimed to be
+identical to the frozen historical publication tables; the goal is relative
+component attribution. We compare four variants: local Isolation Forest only (M1);
+direct behavioural-descriptor clustering (M2); a standard 2-layer GCN on the same
+similarity graph (M3); and the full GraphSAGE fleet-correlation stack (M4).
+
+Across ten seeds, descriptor clustering already recovers strong coordinated campaigns
+reliably (Campaign F1 $1.000\pm0.000$) but fails on weak campaigns
+($0.000\pm0.000$). GraphSAGE improves weak-campaign detection
+($0.500\pm0.527$) without increasing incorrect merging of unrelated incidents
+(merge rate $0.000$), whereas the GCN baseline collapses campaign recovery
+($0.000$) and merges unrelated attacks (merge rate $1.000$). Gains from GraphSAGE
+over descriptor clustering are therefore scenario-dependent and clearest for weak
+coordination; GraphSAGE does \emph{not} dominate descriptor clustering on strong
+campaigns in this controlled setting.
+
+\begin{table}[t]
+\centering
+\caption{Controlled component ablation (mean $\pm$ std over 10 seeds).
+Campaign metrics for M1 are N/A (no campaign reconstruction).}
+\label{tab:reviewer-ablation}
+\scriptsize
+\begin{tabular}{lccccc}
+\toprule
+Method & Strong F1 & Weak F1 & Strong Mem.\ F1 & Weak Mem.\ F1 & Indep.\ merge \\
+\midrule
+M1 Local IF & N/A & N/A & N/A & N/A & N/A \\
+M2 Desc.\ cluster & $1.000\pm0.000$ & $0.000\pm0.000$ & $0.981\pm0.015$ & $0.000\pm0.000$ & $0.000\pm0.000$ \\
+M3 GCN & $0.000\pm0.000$ & $0.000\pm0.000$ & $0.000\pm0.000$ & $0.000\pm0.000$ & $1.000\pm0.000$ \\
+M4 GraphSAGE & $0.600\pm0.516$ & $0.500\pm0.527$ & $0.543\pm0.474$ & $0.425\pm0.454$ & $0.000\pm0.000$ \\
+\bottomrule
+\end{tabular}
+\end{table}

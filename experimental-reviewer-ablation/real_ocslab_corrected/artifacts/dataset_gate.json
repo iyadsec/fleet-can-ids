@@ -1,0 +1,77 @@
+{
+  "platforms": {
+    "Hyundai": {
+      "dir": "/workspace/Dataset/ocslab_pipeline/Hyundai",
+      "n_files": 9,
+      "files": [
+        "car_track_final_1st_train__Attack_free_HY_Sonata_train.csv",
+        "car_track_final_1st_train__Fuzzy_dataset_HY_Sonata_train.csv",
+        "car_track_final_1st_train__Malfunction_1st_dataset_HY_Sonata_train.csv",
+        "car_track_final_2nd_train__Malfunction_2nd_HY_Sonata_train.csv",
+        "car_track_final_2nd_train__Replay_dataset_HY_Sonata_train.csv",
+        "car_track_preliminary_train__Attack_free_HYUNDAI_Sonata_train.csv",
+        "car_track_preliminary_train__Flooding_HYUNDAI_Sonata_train.csv",
+        "car_track_preliminary_train__Fuzzy_HYUNDAI_Sonata_train.csv",
+        "car_track_preliminary_train__Malfunction_HYUNDAI_Sonata_train.csv"
+      ],
+      "oem_token_hits": [
+        "car_track_final_1st_train__Attack_free_HY_Sonata_train.csv",
+        "car_track_final_1st_train__Fuzzy_dataset_HY_Sonata_train.csv",
+        "car_track_final_1st_train__Malfunction_1st_dataset_HY_Sonata_train.csv",
+        "car_track_final_2nd_train__Malfunction_2nd_HY_Sonata_train.csv",
+        "car_track_final_2nd_train__Replay_dataset_HY_Sonata_train.csv",
+        "car_track_preliminary_train__Attack_free_HYUNDAI_Sonata_train.csv",
+        "car_track_preliminary_train__Flooding_HYUNDAI_Sonata_train.csv",
+        "car_track_preliminary_train__Fuzzy_HYUNDAI_Sonata_train.csv",
+        "car_track_preliminary_train__Malfunction_HYUNDAI_Sonata_train.csv"
+      ]
+    },
+    "Kia": {
+      "dir": "/workspace/Dataset/ocslab_pipeline/Kia",
+      "n_files": 9,
+      "files": [
+        "car_track_final_1st_train__Attack_free_KIA_Soul_train.csv",
+        "car_track_final_1st_train__Fuzzy_dataset_KIA_Soul_train.csv",
+        "car_track_final_1st_train__Malfunction_1st_dataset_KIA_Soul_train.csv",
+        "car_track_final_2nd_train__Malfunction_2nd_KIA_Soul_train.csv",
+        "car_track_final_2nd_train__Replay_dataset_KIA_Soul_train.csv",
+        "car_track_preliminary_train__Attack_free_KIA_Soul_train.csv",
+        "car_track_preliminary_train__Flooding_KIA_Soul_train.csv",
+        "car_track_preliminary_train__Fuzzy_KIA_Soul_train.csv",
+        "car_track_preliminary_train__Malfunction_KIA_Soul_train.csv"
+      ],
+      "oem_token_hits": [
+        "car_track_final_1st_train__Attack_free_KIA_Soul_train.csv",
+        "car_track_final_1st_train__Fuzzy_dataset_KIA_Soul_train.csv",
+        "car_track_final_1st_train__Malfunction_1st_dataset_KIA_Soul_train.csv",
+        "car_track_final_2nd_train__Malfunction_2nd_KIA_Soul_train.csv",
+        "car_track_final_2nd_train__Replay_dataset_KIA_Soul_train.csv",
+        "car_track_preliminary_train__Attack_free_KIA_Soul_train.csv",
+        "car_track_preliminary_train__Flooding_KIA_Soul_train.csv",
+        "car_track_preliminary_train__Fuzzy_KIA_Soul_train.csv",
+        "car_track_preliminary_train__Malfunction_KIA_Soul_train.csv"
+      ]
+    },
+    "Chevrolet": {
+      "dir": "/workspace/Dataset/ocslab_pipeline/Chevrolet",
+      "n_files": 4,
+      "files": [
+        "car_track_preliminary_train__Attack_free_CHEVROLET_Spark_train.csv",
+        "car_track_preliminary_train__Flooding_CHEVROLET_Spark_train.csv",
+        "car_track_preliminary_train__Fuzzy_CHEVROLET_Spark_train.csv",
+        "car_track_preliminary_train__Malfunction_CHEVROLET_Spark_train.csv"
+      ],
+      "oem_token_hits": [
+        "car_track_preliminary_train__Attack_free_CHEVROLET_Spark_train.csv",
+        "car_track_preliminary_train__Flooding_CHEVROLET_Spark_train.csv",
+        "car_track_preliminary_train__Fuzzy_CHEVROLET_Spark_train.csv",
+        "car_track_preliminary_train__Malfunction_CHEVROLET_Spark_train.csv"
+      ]
+    }
+  },
+  "errors": [],
+  "publication_basenames_required": 21,
+  "publication_basenames_missing": 0,
+  "publication_basenames_missing_list": [],
+  "passed": true
+}

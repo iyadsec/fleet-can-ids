@@ -1,0 +1,5 @@
+scenario,bucket,n_pairs,mean,median,min,max,pct_ge_0_95,status,error
+strong_campaign,campaign_campaign,1225.0,0.7113201991774618,0.7786719674791018,0.10987902649675432,0.9999987747463913,28.816326530612248,ok,
+strong_campaign,campaign_benign,7500.0,-0.06439916125226658,-0.09022501391603632,-0.891282406546238,0.8112632306685785,0.0,ok,
+strong_campaign,campaign_unrelated,0.0,,,,,,ok,
+weak_campaign,,,,,,,,unsupported,"Insufficient weak malicious TEST windows in score band: have 2, need >=25 (weak_thr=0.55, strong_thr=0.8)."

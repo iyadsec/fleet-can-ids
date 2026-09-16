@@ -1,0 +1,118 @@
+{
+  "Hyundai": {
+    "n_files": 0,
+    "files": []
+  },
+  "Kia": {
+    "n_files": 0,
+    "files": []
+  },
+  "Chevrolet": {
+    "n_files": 5,
+    "files": [
+      {
+        "name": "attack_free_run.txt",
+        "size_bytes": 87371776,
+        "has_sonata_token": false,
+        "has_soul_token": false,
+        "has_spark_token": false,
+        "has_hyundai_token": false,
+        "has_kia_token": false,
+        "has_chevrolet_token": false
+      },
+      {
+        "name": "flooding_DoS_dataset.csv",
+        "size_bytes": 190058708,
+        "has_sonata_token": false,
+        "has_soul_token": false,
+        "has_spark_token": false,
+        "has_hyundai_token": false,
+        "has_kia_token": false,
+        "has_chevrolet_token": false
+      },
+      {
+        "name": "fuzzy_dataset.csv",
+        "size_bytes": 198520767,
+        "has_sonata_token": false,
+        "has_soul_token": false,
+        "has_spark_token": false,
+        "has_hyundai_token": false,
+        "has_kia_token": false,
+        "has_chevrolet_token": false
+      },
+      {
+        "name": "malfunction_RPM_dataset.csv",
+        "size_bytes": 239581936,
+        "has_sonata_token": false,
+        "has_soul_token": false,
+        "has_spark_token": false,
+        "has_hyundai_token": false,
+        "has_kia_token": false,
+        "has_chevrolet_token": false
+      },
+      {
+        "name": "malfunction_gear_dataset.csv",
+        "size_bytes": 230320414,
+        "has_sonata_token": false,
+        "has_soul_token": false,
+        "has_spark_token": false,
+        "has_hyundai_token": false,
+        "has_kia_token": false,
+        "has_chevrolet_token": false
+      }
+    ],
+    "classic_identity_check": {
+      "attack_free_vs_normal_run_size_equal": true,
+      "attack_free_vs_normal_run_md5_1mb_equal": true,
+      "conclusion": "Dataset/ocslab_pipeline/Chevrolet is classic Car-Hacking, NOT CHEVROLET_Spark car_track"
+    }
+  },
+  "required_car_track_basenames_from_publication_manifest": [
+    "Attack_free_CHEVROLET_Spark_train.csv",
+    "Attack_free_HYUNDAI_Sonata_train.csv",
+    "Attack_free_HY_Sonata_train.csv",
+    "Attack_free_KIA_Soul_train.csv",
+    "Flooding_CHEVROLET_Spark_train.csv",
+    "Flooding_HYUNDAI_Sonata_train.csv",
+    "Flooding_KIA_Soul_train.csv",
+    "Fuzzy_CHEVROLET_Spark_train.csv",
+    "Fuzzy_HYUNDAI_Sonata_train.csv",
+    "Fuzzy_KIA_Soul_train.csv",
+    "Fuzzy_dataset_HY_Sonata_train.csv",
+    "Fuzzy_dataset_KIA_Soul_train.csv",
+    "Malfunction_1st_dataset_HY_Sonata_train.csv",
+    "Malfunction_1st_dataset_KIA_Soul_train.csv",
+    "Malfunction_2nd_HY_Sonata_train.csv",
+    "Malfunction_2nd_KIA_Soul_train.csv",
+    "Malfunction_CHEVROLET_Spark_train.csv",
+    "Malfunction_HYUNDAI_Sonata_train.csv",
+    "Malfunction_KIA_Soul_train.csv",
+    "Replay_dataset_HY_Sonata_train.csv",
+    "Replay_dataset_KIA_Soul_train.csv"
+  ],
+  "required_present_locally": [],
+  "required_missing_locally": [
+    "Attack_free_CHEVROLET_Spark_train.csv",
+    "Attack_free_HYUNDAI_Sonata_train.csv",
+    "Attack_free_HY_Sonata_train.csv",
+    "Attack_free_KIA_Soul_train.csv",
+    "Flooding_CHEVROLET_Spark_train.csv",
+    "Flooding_HYUNDAI_Sonata_train.csv",
+    "Flooding_KIA_Soul_train.csv",
+    "Fuzzy_CHEVROLET_Spark_train.csv",
+    "Fuzzy_HYUNDAI_Sonata_train.csv",
+    "Fuzzy_KIA_Soul_train.csv",
+    "Fuzzy_dataset_HY_Sonata_train.csv",
+    "Fuzzy_dataset_KIA_Soul_train.csv",
+    "Malfunction_1st_dataset_HY_Sonata_train.csv",
+    "Malfunction_1st_dataset_KIA_Soul_train.csv",
+    "Malfunction_2nd_HY_Sonata_train.csv",
+    "Malfunction_2nd_KIA_Soul_train.csv",
+    "Malfunction_CHEVROLET_Spark_train.csv",
+    "Malfunction_HYUNDAI_Sonata_train.csv",
+    "Malfunction_KIA_Soul_train.csv",
+    "Replay_dataset_HY_Sonata_train.csv",
+    "Replay_dataset_KIA_Soul_train.csv"
+  ],
+  "blocker": "Hyundai and Kia ocslab_pipeline directories are empty; Chevrolet holds classic Car-Hacking files; 0/21 publication car_track basenames present locally."
+}

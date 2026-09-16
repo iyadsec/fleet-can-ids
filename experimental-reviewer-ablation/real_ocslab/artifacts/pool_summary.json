@@ -1,0 +1,186 @@
+{
+  "dataset": "OCSLab Car-Hacking (classic) + Car Hacking Challenge D/S",
+  "strong_threshold": 0.8,
+  "weak_threshold": 0.55,
+  "max_frames_per_split": 40000,
+  "window_size": 100,
+  "stride": 50,
+  "split_protocol": "interleaved_contiguous_blocks_70_15_15",
+  "n_total_scored_windows": 24326,
+  "n_test_windows": 7647,
+  "physical_vehicles": [
+    "Challenge_D",
+    "Challenge_S",
+    "OCSLab_Car"
+  ],
+  "sources": [
+    {
+      "path": "/workspace/Dataset/ocslab_classic_only/normal_run_data/normal_run_data.txt",
+      "kind": "normal_txt",
+      "vehicle_model": "OCSLab_Car",
+      "n_frames_loaded": 120000,
+      "n_attack_frames_loaded": 0,
+      "max_frames_per_split": 40000,
+      "split_protocol": "interleaved_contiguous_blocks_70_15_15"
+    },
+    {
+      "path": "/workspace/Dataset/ocslab_classic_only/DoS_dataset/DoS_dataset.csv",
+      "kind": "classic_csv",
+      "vehicle_model": "OCSLab_Car",
+      "n_frames_loaded": 119071,
+      "n_attack_frames_loaded": 24793,
+      "max_frames_per_split": 40000,
+      "split_protocol": "interleaved_contiguous_blocks_70_15_15"
+    },
+    {
+      "path": "/workspace/Dataset/ocslab_classic_only/Fuzzy_dataset/Fuzzy_dataset.csv",
+      "kind": "classic_csv",
+      "vehicle_model": "OCSLab_Car",
+      "n_frames_loaded": 113654,
+      "n_attack_frames_loaded": 16582,
+      "max_frames_per_split": 40000,
+      "split_protocol": "interleaved_contiguous_blocks_70_15_15"
+    },
+    {
+      "path": "/workspace/Dataset/ocslab_classic_only/gear_dataset/gear_dataset.csv",
+      "kind": "classic_csv",
+      "vehicle_model": "OCSLab_Car",
+      "n_frames_loaded": 118937,
+      "n_attack_frames_loaded": 20018,
+      "max_frames_per_split": 40000,
+      "split_protocol": "interleaved_contiguous_blocks_70_15_15"
+    },
+    {
+      "path": "/workspace/Dataset/ocslab_classic_only/RPM_dataset/RPM_dataset.csv",
+      "kind": "classic_csv",
+      "vehicle_model": "OCSLab_Car",
+      "n_frames_loaded": 118962,
+      "n_attack_frames_loaded": 21634,
+      "max_frames_per_split": 40000,
+      "split_protocol": "interleaved_contiguous_blocks_70_15_15"
+    },
+    {
+      "path": "/workspace/Dataset/ocslab/0_Preliminary/0_Training/Pre_train_D_0.csv",
+      "kind": "challenge_csv",
+      "vehicle_model": "Challenge_D",
+      "n_frames_loaded": 79346,
+      "n_attack_frames_loaded": 0,
+      "max_frames_per_split": 40000,
+      "split_protocol": "interleaved_contiguous_blocks_70_15_15"
+    },
+    {
+      "path": "/workspace/Dataset/ocslab/0_Preliminary/0_Training/Pre_train_D_1.csv",
+      "kind": "challenge_csv",
+      "vehicle_model": "Challenge_D",
+      "n_frames_loaded": 120000,
+      "n_attack_frames_loaded": 6441,
+      "max_frames_per_split": 40000,
+      "split_protocol": "interleaved_contiguous_blocks_70_15_15"
+    },
+    {
+      "path": "/workspace/Dataset/ocslab/0_Preliminary/0_Training/Pre_train_D_2.csv",
+      "kind": "challenge_csv",
+      "vehicle_model": "Challenge_D",
+      "n_frames_loaded": 120000,
+      "n_attack_frames_loaded": 3736,
+      "max_frames_per_split": 40000,
+      "split_protocol": "interleaved_contiguous_blocks_70_15_15"
+    },
+    {
+      "path": "/workspace/Dataset/ocslab/0_Preliminary/0_Training/Pre_train_S_0.csv",
+      "kind": "challenge_csv",
+      "vehicle_model": "Challenge_S",
+      "n_frames_loaded": 80686,
+      "n_attack_frames_loaded": 0,
+      "max_frames_per_split": 40000,
+      "split_protocol": "interleaved_contiguous_blocks_70_15_15"
+    },
+    {
+      "path": "/workspace/Dataset/ocslab/0_Preliminary/0_Training/Pre_train_S_1.csv",
+      "kind": "challenge_csv",
+      "vehicle_model": "Challenge_S",
+      "n_frames_loaded": 120000,
+      "n_attack_frames_loaded": 7085,
+      "max_frames_per_split": 40000,
+      "split_protocol": "interleaved_contiguous_blocks_70_15_15"
+    },
+    {
+      "path": "/workspace/Dataset/ocslab/0_Preliminary/0_Training/Pre_train_S_2.csv",
+      "kind": "challenge_csv",
+      "vehicle_model": "Challenge_S",
+      "n_frames_loaded": 120000,
+      "n_attack_frames_loaded": 5070,
+      "max_frames_per_split": 40000,
+      "split_protocol": "interleaved_contiguous_blocks_70_15_15"
+    }
+  ],
+  "if_stats": [
+    {
+      "vehicle": "Challenge_D",
+      "n_train_benign": 2376,
+      "n_scored": 6322,
+      "test_strong_attack": 565,
+      "test_weak_attack": 179
+    },
+    {
+      "vehicle": "Challenge_S",
+      "n_train_benign": 2376,
+      "n_scored": 6348,
+      "test_strong_attack": 776,
+      "test_weak_attack": 160
+    },
+    {
+      "vehicle": "OCSLab_Car",
+      "n_train_benign": 2463,
+      "n_scored": 11656,
+      "test_strong_attack": 1446,
+      "test_weak_attack": 3
+    }
+  ],
+  "test_label_counts": {
+    "0": 3993,
+    "1": 3654
+  },
+  "test_strong_malicious": 2787,
+  "test_weak_malicious": 342,
+  "test_suspicious_benign": 1997,
+  "graph_feature_cols": [
+    "anomaly_score",
+    "frame_count",
+    "message_rate",
+    "burstiness",
+    "mean_inter_arrival_time",
+    "std_inter_arrival_time",
+    "can_id_entropy",
+    "most_common_can_id_ratio",
+    "payload_entropy"
+  ],
+  "behavioural_feature_cols": [
+    "frame_count",
+    "unique_can_id_count",
+    "can_id_entropy",
+    "most_common_can_id_ratio",
+    "mean_inter_arrival_time",
+    "std_inter_arrival_time",
+    "mean_dlc",
+    "std_dlc",
+    "byte_mean_0",
+    "byte_mean_1",
+    "byte_mean_2",
+    "byte_mean_3",
+    "byte_mean_4",
+    "byte_mean_5",
+    "byte_mean_6",
+    "byte_mean_7",
+    "byte_std_0",
+    "byte_std_1",
+    "byte_std_2",
+    "byte_std_3",
+    "byte_std_4",
+    "byte_std_5",
+    "byte_std_6",
+    "byte_std_7"
+  ],
+  "note_virtual_fleet": "Classic OCSLab is one physical platform (OCSLab_Car). Challenge adds Challenge_D / Challenge_S. Ablation fleet nodes are virtual instances sampled from held-out TEST windows.",
+  "synthetic_descriptors": false
+}

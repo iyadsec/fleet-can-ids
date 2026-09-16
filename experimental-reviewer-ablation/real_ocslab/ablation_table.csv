@@ -1,0 +1,5 @@
+method,strong_campaign_f1,weak_campaign_f1,strong_membership_f1,weak_membership_f1,unrelated_incorrect_merge_rate,strong_local_f1
+M1_local_IF,N/A,N/A,N/A,N/A,N/A,0.559 ± 0.021
+M2_descriptor_clustering,0.000 ± 0.000,0.000 ± 0.000,0.000 ± 0.000,0.000 ± 0.000,1.000 ± 0.000,0.559 ± 0.021
+M3_GCN,0.000 ± 0.000,0.000 ± 0.000,0.000 ± 0.000,0.000 ± 0.000,1.000 ± 0.000,0.559 ± 0.021
+M4_GraphSAGE,0.000 ± 0.000,0.000 ± 0.000,0.000 ± 0.000,0.000 ± 0.000,0.700 ± 0.483,0.559 ± 0.021
