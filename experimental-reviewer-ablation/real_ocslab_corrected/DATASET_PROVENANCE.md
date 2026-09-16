@@ -1,77 +1,32 @@
-# Dataset Provenance — Hyundai / Kia / Chevrolet pipeline
+# Dataset Provenance — Hyundai Sonata / Kia Soul / Chevrolet Spark
 
-**Experiment status: STOPPED before pool construction / M1–M4.**
+**Status: RESOLVED — manuscript car_track traces installed and used.**
 
-Manuscript platforms claimed: **Hyundai Sonata**, **Kia Soul**, **Chevrolet Spark**.
+## Source
 
----
+Downloaded from HCRL In-Vehicle Network Intrusion Detection Challenge Dropbox mirror linked from  
+https://ocslab.hksecurity.net/Datasets/datachallenge2019/car  
 
-## 1. Local inventory (`Dataset/ocslab_pipeline/`)
+Archive: `In-Vehicle Network Intrusion Detection.zip` → local  
+`Dataset/ocslab_pipeline/_source_car_track/{car_track_preliminary_train,car_track_final_1st_train,car_track_final_2nd_train}/`
 
-| Directory | Files | Usable for manuscript-aligned run? |
-|-----------|------:|------------------------------------|
-| `Hyundai/` | **0** (empty) | **No** |
-| `Kia/` | **0** (empty) | **No** |
-| `Chevrolet/` | 5 files | **No** — classic Car-Hacking copies, not Spark |
+## Identity evidence
 
-### Chevrolet contents (not Spark)
+| Platform | Filenames contain | Example |
+|----------|-------------------|---------|
+| Hyundai | `HY_Sonata` / `HYUNDAI_Sonata` | `Attack_free_HY_Sonata_train.csv` |
+| Kia | `KIA_Soul` | `Attack_free_KIA_Soul_train.csv` |
+| Chevrolet | `CHEVROLET_Spark` | `Attack_free_CHEVROLET_Spark_train.csv` |
 
-| File | Size | Tokens Sonata/Soul/Spark? |
-|------|-----:|---------------------------|
-| `attack_free_run.txt` | 87,371,776 | No |
-| `flooding_DoS_dataset.csv` | 190,058,708 | No |
-| `fuzzy_dataset.csv` | 198,520,767 | No |
-| `malfunction_gear_dataset.csv` | 230,320,414 | No |
-| `malfunction_RPM_dataset.csv` | 239,581,936 | No |
+**Sonata / Soul / Spark identity: YES** (filename tokens).  
+Publication `balanced_split_manifest.csv` basenames: **21/21 present**.
 
-**Classic identity check:** `Chevrolet/attack_free_run.txt` matches `Dataset/ocslab/normal_run_data/normal_run_data.txt` in size and first-1MB MD5. These are HCRL **classic Car-Hacking** traces renamed into an OEM folder — **not** `Attack_free_CHEVROLET_Spark_train.csv`.
+## Split
 
-Machine-readable inventory: `artifacts/dataset_inventory.json`.
+Uses recovered publication segment assignments (`balanced_split_manifest.csv`).  
+See `split_manifest.csv` for local resolved paths + frame counts. Leakage check: pass.
 
----
+## Rejected
 
-## 2. Sonata / Soul / Spark identity from local evidence
-
-| Question | Answer |
-|----------|--------|
-| Do local `ocslab_pipeline` filenames contain Sonata/Soul/Spark? | **No** |
-| Can model names be asserted from directory names alone? | **No** — directories are empty or hold classic files |
-| Do recovered publication manifests name Sonata/Soul/Spark? | **Yes** |
-
-Publication split manifest basenames (examples):
-
-- `Attack_free_HY_Sonata_train.csv`, `Fuzzy_dataset_HY_Sonata_train.csv`, …
-- `Attack_free_KIA_Soul_train.csv`, …
-- `Attack_free_CHEVROLET_Spark_train.csv`, …
-
-Source paths in manifests point to author OneDrive:
-
-`.../In-Vehicle Network Intrusion Detection Challenge/car_track_{final_1st,final_2nd,preliminary}_train/`
-
-**0 / 21** required car_track basenames exist anywhere under `/workspace`.
-
----
-
-## 3. Explicitly rejected inputs (per corrected-ablation brief)
-
-Do **not** use for this corrected experiment:
-
-- `OCSLab_Car` (classic Car-Hacking)
-- `Challenge_D` / `Challenge_S` (Preliminary tracks D/S)
-- PR #22 `real_ocslab` scored pool
-
-Those remain diagnostic provenance under `experimental-reviewer-ablation/real_ocslab/` (PR #22).
-
----
-
-## 4. Decision
-
-| Item | Status |
-|------|--------|
-| Manuscript-aligned 3-OEM car_track data locally | **MISSING** |
-| Proceed with pool / IF / scenarios / M1–M4 | **STOP** |
-| Substitute classic or Challenge D/S | **Forbidden** by task brief |
-| Campaign semantics recoverable without raw data | Yes (see `CAMPAIGN_SEMANTICS_AUDIT.md`) |
-| Fleet scaler feature match for 9-D `g_i` | Yes (exact) — blocked only by missing windows |
-
-**Required user action:** place car_track CSVs under `Dataset/ocslab_pipeline/{Hyundai,Kia,Chevrolet}/` (or provide a readable path), then continue this agent.
+- Classic Car-Hacking copies previously in `Chevrolet/` (removed)
+- `OCSLab_Car` / `Challenge_D` / `Challenge_S` (PR #22 only)

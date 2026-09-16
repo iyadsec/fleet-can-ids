@@ -1,32 +1,36 @@
-verification_report.txt — real_ocslab_corrected
-================================================
-
-Timestamp: written at package creation (experiment not executed)
-
-GATE RESULTS
-------------
-[PASS] CAMPAIGN_SEMANTICS_AUDIT.md: publication prototype-blend semantics recoverable
-[PASS] fleet_benign_scaler.json feature names == FEATURE_NAMES (9-D exact order)
-[PASS] PR #22 real_ocslab/ left untouched (diagnostic provenance)
-[FAIL] Dataset/ocslab_pipeline/Hyundai has usable car_track files (EMPTY)
-[FAIL] Dataset/ocslab_pipeline/Kia has usable car_track files (EMPTY)
-[FAIL] Dataset/ocslab_pipeline/Chevrolet is manuscript Spark car_track
-       (present files are classic Car-Hacking; md5 matches normal_run_data)
-[FAIL] Publication car_track basenames present locally (0/21)
-[SKIP] Source-trace train/val/test split manifest
-[SKIP] 24-D + IF TEST pool construction
-[SKIP] Seed-11 cosine validation (non-collapse gate)
-[SKIP] Shared M2/M3/M4 scenario assertions
-[SKIP] Ten-seed M1–M4 ablation
-
-HARD STOP
----------
-No scored pool, scenarios, or Campaign F1 numbers were produced.
-Do not use PR #22 zero Campaign F1 in the paper.
-Do not substitute OCSLab_Car / Challenge_D / Challenge_S for this corrected run.
-
-NEXT ACTION
------------
-Provide In-Vehicle Network Intrusion Detection Challenge car_track CSVs for
-Hyundai Sonata / Kia Soul / Chevrolet Spark under Dataset/ocslab_pipeline/,
-then re-run check_dataset_gate.py and run_corrected_ablation.py.
+timestamp=2026-09-16T04:49:04.116853+00:00
+python=3.12.3
+scaler_before_cosine=True
+beta=0.5
+fragment=0.85
+cosine_validation=PASS
+PASS seed=11 scenario=strong_campaign nodes=200 edges=336 graph_m3==graph_m4 scaler_before_cosine=1 synthetic=0 notes=['primary_attack fallback→fuzzy (no malfunction in band)']
+SKIP seed=11 scenario=weak_campaign reason=Insufficient weak malicious TEST windows in score band: have 2, need >=25 (weak_thr=0.55, strong_thr=0.8).
+PASS seed=11 scenario=unrelated_incidents nodes=200 edges=296 graph_m3==graph_m4 scaler_before_cosine=1 synthetic=0 notes=[]
+PASS seed=23 scenario=strong_campaign nodes=200 edges=312 graph_m3==graph_m4 scaler_before_cosine=1 synthetic=0 notes=['primary_attack fallback→fuzzy (no malfunction in band)']
+SKIP seed=23 scenario=weak_campaign reason=Insufficient weak malicious TEST windows in score band: have 2, need >=25 (weak_thr=0.55, strong_thr=0.8).
+PASS seed=23 scenario=unrelated_incidents nodes=200 edges=275 graph_m3==graph_m4 scaler_before_cosine=1 synthetic=0 notes=[]
+PASS seed=37 scenario=strong_campaign nodes=200 edges=321 graph_m3==graph_m4 scaler_before_cosine=1 synthetic=0 notes=['primary_attack fallback→fuzzy (no malfunction in band)']
+SKIP seed=37 scenario=weak_campaign reason=Insufficient weak malicious TEST windows in score band: have 2, need >=25 (weak_thr=0.55, strong_thr=0.8).
+PASS seed=37 scenario=unrelated_incidents nodes=200 edges=289 graph_m3==graph_m4 scaler_before_cosine=1 synthetic=0 notes=[]
+PASS seed=41 scenario=strong_campaign nodes=200 edges=319 graph_m3==graph_m4 scaler_before_cosine=1 synthetic=0 notes=['primary_attack fallback→fuzzy (no malfunction in band)']
+SKIP seed=41 scenario=weak_campaign reason=Insufficient weak malicious TEST windows in score band: have 2, need >=25 (weak_thr=0.55, strong_thr=0.8).
+PASS seed=41 scenario=unrelated_incidents nodes=200 edges=318 graph_m3==graph_m4 scaler_before_cosine=1 synthetic=0 notes=[]
+PASS seed=53 scenario=strong_campaign nodes=200 edges=392 graph_m3==graph_m4 scaler_before_cosine=1 synthetic=0 notes=['primary_attack fallback→fuzzy (no malfunction in band)']
+SKIP seed=53 scenario=weak_campaign reason=Insufficient weak malicious TEST windows in score band: have 2, need >=25 (weak_thr=0.55, strong_thr=0.8).
+PASS seed=53 scenario=unrelated_incidents nodes=200 edges=369 graph_m3==graph_m4 scaler_before_cosine=1 synthetic=0 notes=[]
+PASS seed=67 scenario=strong_campaign nodes=200 edges=367 graph_m3==graph_m4 scaler_before_cosine=1 synthetic=0 notes=['primary_attack fallback→fuzzy (no malfunction in band)']
+SKIP seed=67 scenario=weak_campaign reason=Insufficient weak malicious TEST windows in score band: have 2, need >=25 (weak_thr=0.55, strong_thr=0.8).
+PASS seed=67 scenario=unrelated_incidents nodes=200 edges=340 graph_m3==graph_m4 scaler_before_cosine=1 synthetic=0 notes=[]
+PASS seed=71 scenario=strong_campaign nodes=200 edges=290 graph_m3==graph_m4 scaler_before_cosine=1 synthetic=0 notes=['primary_attack fallback→fuzzy (no malfunction in band)']
+SKIP seed=71 scenario=weak_campaign reason=Insufficient weak malicious TEST windows in score band: have 2, need >=25 (weak_thr=0.55, strong_thr=0.8).
+PASS seed=71 scenario=unrelated_incidents nodes=200 edges=301 graph_m3==graph_m4 scaler_before_cosine=1 synthetic=0 notes=[]
+PASS seed=83 scenario=strong_campaign nodes=200 edges=323 graph_m3==graph_m4 scaler_before_cosine=1 synthetic=0 notes=['primary_attack fallback→fuzzy (no malfunction in band)']
+SKIP seed=83 scenario=weak_campaign reason=Insufficient weak malicious TEST windows in score band: have 2, need >=25 (weak_thr=0.55, strong_thr=0.8).
+PASS seed=83 scenario=unrelated_incidents nodes=200 edges=301 graph_m3==graph_m4 scaler_before_cosine=1 synthetic=0 notes=[]
+PASS seed=97 scenario=strong_campaign nodes=200 edges=341 graph_m3==graph_m4 scaler_before_cosine=1 synthetic=0 notes=['primary_attack fallback→fuzzy (no malfunction in band)']
+SKIP seed=97 scenario=weak_campaign reason=Insufficient weak malicious TEST windows in score band: have 2, need >=25 (weak_thr=0.55, strong_thr=0.8).
+PASS seed=97 scenario=unrelated_incidents nodes=200 edges=309 graph_m3==graph_m4 scaler_before_cosine=1 synthetic=0 notes=[]
+PASS seed=101 scenario=strong_campaign nodes=200 edges=297 graph_m3==graph_m4 scaler_before_cosine=1 synthetic=0 notes=['primary_attack fallback→fuzzy (no malfunction in band)']
+SKIP seed=101 scenario=weak_campaign reason=Insufficient weak malicious TEST windows in score band: have 2, need >=25 (weak_thr=0.55, strong_thr=0.8).
+PASS seed=101 scenario=unrelated_incidents nodes=200 edges=308 graph_m3==graph_m4 scaler_before_cosine=1 synthetic=0 notes=[]

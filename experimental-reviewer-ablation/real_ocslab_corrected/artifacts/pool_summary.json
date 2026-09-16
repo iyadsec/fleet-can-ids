@@ -1,0 +1,59 @@
+{
+  "n_all_windows": 110121,
+  "n_train": 74858,
+  "n_validation": 20669,
+  "n_test": 14594,
+  "n_train_benign_if": 48765,
+  "platforms": [
+    "Chevrolet",
+    "Hyundai",
+    "Kia"
+  ],
+  "test_by_platform": {
+    "Kia": 10615,
+    "Hyundai": 3049,
+    "Chevrolet": 930
+  },
+  "test_strong": 6481,
+  "test_weak": 2,
+  "feature_names_9d": [
+    "anomaly_score",
+    "frame_count",
+    "message_rate",
+    "burstiness",
+    "mean_inter_arrival_time",
+    "std_inter_arrival_time",
+    "can_id_entropy",
+    "most_common_can_id_ratio",
+    "payload_entropy"
+  ],
+  "behavioural_24d": [
+    "frame_count",
+    "unique_can_id_count",
+    "can_id_entropy",
+    "most_common_can_id_ratio",
+    "mean_inter_arrival_time",
+    "std_inter_arrival_time",
+    "mean_dlc",
+    "std_dlc",
+    "byte_mean_0",
+    "byte_mean_1",
+    "byte_mean_2",
+    "byte_mean_3",
+    "byte_mean_4",
+    "byte_mean_5",
+    "byte_mean_6",
+    "byte_mean_7",
+    "byte_std_0",
+    "byte_std_1",
+    "byte_std_2",
+    "byte_std_3",
+    "byte_std_4",
+    "byte_std_5",
+    "byte_std_6",
+    "byte_std_7"
+  ],
+  "split_manifest": "/workspace/experimental-reviewer-ablation/real_ocslab_corrected/split_manifest.csv",
+  "synthetic_descriptors": false,
+  "leakage_errors": 0
+}

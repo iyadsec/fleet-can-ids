@@ -98,3 +98,7 @@ new_experiments/**/logs/
 # Cache
 .cache/
 *.parquet
+experimental-reviewer-ablation/real_ocslab_corrected/artifacts/all_scored_windows.csv
+experimental-reviewer-ablation/real_ocslab_corrected/artifacts/ablation_run.log
+experimental-reviewer-ablation/real_ocslab_corrected/artifacts/pool_build.log
+experimental-reviewer-ablation/real_ocslab_corrected/scenario_cache/

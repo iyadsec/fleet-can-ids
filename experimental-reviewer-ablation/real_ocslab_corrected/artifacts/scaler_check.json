@@ -1,0 +1,20 @@
+{
+  "ok": true,
+  "scaler_id": "fleet_benign_f4569e5242cc",
+  "n_features": 9,
+  "fitted_feature_names": [
+    "anomaly_score",
+    "frame_count",
+    "message_rate",
+    "burstiness",
+    "mean_inter_arrival_time",
+    "std_inter_arrival_time",
+    "can_id_entropy",
+    "most_common_can_id_ratio",
+    "payload_entropy"
+  ],
+  "matches_feature_names": true,
+  "fit_row_count": 11423,
+  "attack_labels_used": false,
+  "training_split": "train"
+}

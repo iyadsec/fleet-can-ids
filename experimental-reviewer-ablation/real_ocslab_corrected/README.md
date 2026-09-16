@@ -1,44 +1,26 @@
 # real_ocslab_corrected — Reviewer ablation (methodology correction)
 
-Answers Reviewer comment on Sec 4.5.2 (component ablation) using recoverable FLEET-GUARD methodology.
+Answers Reviewer Sec 4.5.2 using recoverable FLEET-GUARD methodology on **Sonata / Soul / Spark** car_track traces.
 
-**PR #22 (`real_ocslab/`) is preserved as diagnostic provenance** and must not be used in the paper.
+**PR #22 (`real_ocslab/`) preserved** — do not use its Campaign F1=0 in the paper.
 
-## Current status: STOPPED
+## Results (10 seeds)
 
-| Gate | Result |
-|------|--------|
-| Campaign semantics recoverable? | **YES** — see `CAMPAIGN_SEMANTICS_AUDIT.md` |
-| Manuscript Hyundai/Kia/Chevrolet car_track data present? | **NO** — see `DATASET_PROVENANCE.md` |
-| Fleet scaler matches 9-D `g_i`? | **YES** (exact feature order) |
-| Seed-11 cosine validation | **BLOCKED** (no TEST pool) |
-| M1–M4 ten-seed run | **NOT STARTED** |
+| Method | Strong Campaign F1 | Weak | Strong Membership F1 | Independent Merge Rate |
+|--------|-------------------:|-----:|---------------------:|-----------------------:|
+| M1 local IF | N/A | N/A | N/A | N/A |
+| M2 descriptor clustering | **0.113 ± 0.064** | N/A | 0.267 ± 0.134 | 0.191 ± 0.051 |
+| M3 GCN | 0.000 ± 0.000 | N/A | 0.000 | 0.750 ± 0.250 |
+| M4 GraphSAGE | 0.000 ± 0.000 | N/A | 0.000 | 0.717 ± 0.236 |
 
-## What will run once car_track data is provided
+Weak arm unsupported on TEST under regenerated IF (2 weak-band windows). No parameter retuning.
 
-1. Source-trace-level 70/15/15 split (no overlapping-window leakage)
-2. Window 100 / stride 50 on contiguous blocks only
-3. 24-D behavioural features + IF (benign TRAIN only)
-4. Strong ≥0.80 / weak [0.55, 0.80)
-5. Publication campaign semantics: instance catalog + composition + **prototype blend strength=1.0**
-6. Similarity: raw 9-D `g_i` → `fleet_benign_scaler.json` → cosine → τ=0.95 constrained kNN
-7. Seed-11 cosine gate, then seeds `[11,23,37,41,53,67,71,83,97,101]`
-8. M1–M4 with shared scenarios, β=0.5, fragment merge=0.85, no retuning
+See `FINAL_REPORT.md` for full A–M report and interpretation.
 
-## How to continue
+## Reproduce
 
 ```bash
-# Place Sonata / Soul / Spark car_track CSVs under:
-#   Dataset/ocslab_pipeline/Hyundai/
-#   Dataset/ocslab_pipeline/Kia/
-#   Dataset/ocslab_pipeline/Chevrolet/
-
 python experimental-reviewer-ablation/real_ocslab_corrected/check_dataset_gate.py
+python experimental-reviewer-ablation/real_ocslab_corrected/build_scored_pool_corrected.py  # if pool missing
 python experimental-reviewer-ablation/real_ocslab_corrected/run_corrected_ablation.py
 ```
-
-## Explicit non-goals
-
-- No τ / DBSCAN / gate retuning after seeing results
-- No use of OCSLab_Car / Challenge_D / Challenge_S
-- No optimization for Campaign F1

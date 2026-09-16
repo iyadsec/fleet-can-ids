@@ -1,80 +1,96 @@
-# Final report — corrected reviewer ablation (STOPPED)
+# Final report — corrected reviewer ablation
 
 ## Status
 
-**Experiment not executed.** Manuscript-aligned Sonata/Soul/Spark car_track traces are absent from the workspace. PR #22 results remain diagnostic-only and must not appear in the paper.
+**Executed** on manuscript car_track Sonata / Soul / Spark traces (downloaded from HCRL Challenge 2019 Dropbox).  
+PR #22 `real_ocslab/` remains diagnostic provenance and **must not** be used in the paper.
+
+Weak campaigns: **UNSUPPORTED** on held-out TEST under regenerated IF (only 2 weak-band malicious windows; need ≥25). No τ/DBSCAN/gate retuning performed.
 
 ---
 
 ### A. Dataset provenance
 
-Target: `Dataset/ocslab_pipeline/{Hyundai,Kia,Chevrolet}/`.
+| Platform | Local path | Identity |
+|----------|------------|----------|
+| Hyundai Sonata | `Dataset/ocslab_pipeline/_source_car_track/car_track_*/*Sonata*` | **Confirmed** by filenames |
+| Kia Soul | `.../*KIA_Soul*` | **Confirmed** |
+| Chevrolet Spark | `.../*CHEVROLET_Spark*` | **Confirmed** |
 
-- Hyundai: **empty**
-- Kia: **empty**
-- Chevrolet: 5 classic Car-Hacking files (byte-identical to `normal_run_data` / DoS / Fuzzy / gear / RPM) — **not** Chevrolet Spark car_track
-- Publication manifests require 21 `*_HY_Sonata_*` / `*_KIA_Soul_*` / `*_CHEVROLET_Spark_*` basenames — **0 present locally**
-- Exact Sonata/Soul/Spark identity: **cannot be established from local pipeline files**; confirmed only via recovered OneDrive manifest paths
+Source: HCRL In-Vehicle Network Intrusion Detection Challenge (`car_track_{preliminary,final_1st,final_2nd}_train`).  
+21/21 publication `balanced_split_manifest.csv` basenames present. Classic Car-Hacking placeholders removed from OEM dirs.
 
-### B. Train/validation/test split
+### B. Split / leakage
 
-**Not produced.** Planned: source-trace contiguous 70/15/15 with no overlapping-window leakage; `split_manifest.csv` deferred.
+Publication `balanced_split_manifest.csv` contiguous segments / complete-trace assignments.  
+`split_manifest.csv` written; zero multi-split segment leakage. Overlapping windows never cross partitions.
 
-### C. Exact campaign semantics recovered
+### C. Campaign semantics
 
-**YES (audited).** Score-band + shared attack family + `compute_campaign_prototype` + `apply_coordination_strength(strength=1.0)`. See `CAMPAIGN_SEMANTICS_AUDIT.md`. PR #22 score-only grouping rejected.
+Prototype blend `coordination_strength=1.0` on coordinated rows. Composition strong `{H:2,K:2,C:1}`.  
+Primary family preferred `malfunction`; **fell back to `fuzzy`** (no malfunction in strong TEST band under this split).
 
-### D. 24-D / 9-D feature path (planned)
+### D–E. Feature / scaler path
 
-`extract_window_features` → 24-D `BEHAVIOURAL_FEATURE_COLUMNS` → IF `anomaly_score` → derive 9-D `g_i` (`FEATURE_NAMES`). Not executed.
+24-D → IF (benign TRAIN only) → 9-D `g_i` → **`fleet_benign_scaler.json` (exact feature match) → cosine → constrained kNN**.
 
-### E. Fleet scaler before cosine
+### F. Seed-11 cosine (scaled)
 
-Scaler verified: `fleet_benign_scaler.json` feature names/order **exact match** to 9-D `g_i`. Config requires apply-before-cosine; raw unscaled cosine forbidden. Application deferred pending TEST pool.
+| Bucket | mean | median | % ≥ 0.95 |
+|--------|-----:|-------:|---------:|
+| camp–camp | 0.711 | 0.779 | 28.8 |
+| camp–benign | −0.064 | −0.090 | **0.00** |
 
-### F. Seed-11 cosine validation
+**PASS** — not PR #22 global collapse.
 
-**BLOCKED** — see `COSINE_VALIDATION.md`.
+### G. M1–M4 definitions
 
-### G. M1–M4 definitions (frozen; not run)
+As frozen in `config.yaml` (τ=0.95, k=2/5, β=0.5, fragment=0.85, GraphSAGE 9→64→32, 30 ep).  
+M2 clusters **scaled 9-D `g_i`** (same representation as graph node features).
 
-| Method | Definition |
-|--------|------------|
-| M1 | Local IF only; campaign metrics N/A |
-| M2 | Same nodes; descriptor → StandardScaler → PCA(8) → DBSCAN → gate |
-| M3 | Publication-scaled similarity graph → 2-layer GCN (9→64→32) → StandardScaler → PCA(8) → DBSCAN → gate |
-| M4 | Same graph → GraphSAGE 9→64→32, mean agg, ReLU, 30 ep, Adam 0.01, wd 5e-4, λ=0.25 → same clustering/gate |
+### H. Ten-seed results (mean ± std)
 
-Graph: τ=0.95, same-k=2, cross-k=5. Gate: β=0.5, fragment merge=0.85.
+| Method | Strong Campaign F1 | Weak Campaign F1 | Strong Membership F1 | Weak Membership F1 | Independent Merge Rate |
+|--------|-------------------:|-----------------:|---------------------:|-------------------:|-----------------------:|
+| M1 local IF | N/A | N/A | N/A | N/A | N/A |
+| M2 descriptor clustering | **0.113 ± 0.064** | N/A | **0.267 ± 0.134** | N/A | **0.191 ± 0.051** |
+| M3 GCN | 0.000 ± 0.000 | N/A | 0.000 ± 0.000 | N/A | 0.750 ± 0.250 |
+| M4 GraphSAGE | 0.000 ± 0.000 | N/A | 0.000 ± 0.000 | N/A | 0.717 ± 0.236 |
 
-### H. Ten-seed results
+### I. Unrelated-incident merging
 
-**N/A — not run.**
+Graph methods show high incorrect-merge rates (~0.72–0.75). M2 lower (~0.19).
 
-### I. Independent-incident merge
+### J. Metrics
 
-**N/A — not run.**
+Shared harness: Jaccard ≥ 0.5 greedy matching; Campaign P/R/F1; Membership F1; Fragmentation; merge/false-campaign rates (`metrics.py`).
 
-### J. Metric definitions (unchanged from shared harness)
+### K. Shared scenarios
 
-Matching: greedy one-to-one Jaccard ≥ 0.5.  
-Campaign Precision = matched / #pred; Recall = matched / #GT; F1 = harmonic mean.  
-Membership F1 = micro F1 over matched pair membership (unmatched GT→FN, unmatched pred→FP).  
-Fragmentation = mean over GT of (#pred clusters with overlap).  
-Incorrect merge rate / false campaign rate as in `experimental-reviewer-ablation/metrics.py`.
+Verified per seed: M3 edge signature == M4; shared scaled features; synthetic=0; identical frozen scenario CSVs.
 
-### K. Shared scenarios across variants
+### L. Remaining vs historical publication
 
-**N/A — not run.** Assertions planned: identical descriptor IDs, GT, and M3/M4 edges/features.
+- Regenerated IF scores (not frozen publication descriptors) → TEST weak-band nearly empty; strong TEST dominated by fuzzy.
+- Absolute Section VII numeric identity not claimed.
+- Weak campaigns not evaluated.
 
-### L. Remaining differences vs historical publication
+### M. Paper suitability?
 
-Even after data arrives: absolute Section VII numeric identity is not claimed (missing frozen descriptors/models; regenerated IF/windows). Methodology corrections target recoverable semantics only.
-
-### M. Scientifically suitable for paper inclusion as reviewer ablation?
-
-**NO — not yet.** Campaign semantics and scaler path are ready, but without Sonata/Soul/Spark inputs the corrected experiment cannot run. **PR #22 Campaign F1=0 must not be used in the paper.**
+**Conditionally YES for a corrected strong/unrelated component ablation**, with explicit caveats:
+1. Weak arm unsupported under regenerated IF on this TEST split (do not invent weak windows / retune thresholds).
+2. Under frozen methodology, **M2 > M3/M4** on strong Campaign F1; GraphSAGE does **not** outperform GCN or descriptor clustering here.
+3. PR #22 zero-F1 results remain invalid for the paper.
 
 ---
 
-Required unblock: provide car_track CSVs, then re-run `check_dataset_gate.py` → pool → seed-11 cosine gate → full ten-seed M1–M4.
+## Scientific interpretation (no retuning)
+
+1. **Local IF:** provides anomaly scores / local alerts only; no campaign reconstruction (N/A).
+2. **Descriptor clustering (M2):** only method with non-zero strong Campaign F1 (~0.11); fragments into many clusters (often matches partially).
+3. **Graph representation learning (M3/M4):** after publication scaler, graphs are selective (~300 edges) but GNN+DBSCAN yields typically **one** predicted campaign that fails Jaccard ≥ 0.5 → Campaign F1 = 0.
+4. **GraphSAGE vs GCN:** no benefit — both 0.000 strong Campaign F1; similar high unrelated merge rates.
+5. **Strong vs weak:** weak not measurable on TEST.
+6. **Unrelated merging:** graph methods merge independent incidents more than M2.
+
+**Honest conclusion:** correcting the scaler/data/campaign-semantics pipeline removes the PR #22 cosine-collapse artifact, but under frozen τ/DBSCAN/gate settings this controlled ablation does **not** show GraphSAGE superiority over descriptor clustering.

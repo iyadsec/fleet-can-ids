@@ -1,2 +1,91 @@
-status,note
-BLOCKED,No results: manuscript car_track Sonata/Soul/Spark data missing; experiment STOPPED before M1-M4
+method,scenario,local_precision,local_recall,local_f1,campaign_precision,campaign_recall,campaign_f1,membership_f1,fragmentation,incorrect_merge_rate,false_campaign_rate,n_gt_campaigns,n_pred_campaigns,n_matched_campaigns,campaign_metrics_status,seed,is_unrelated
+M1_local_if,strong_campaign,0.29069767441860467,1.0,0.45045045045045046,,,,,,,,1.0,0.0,0.0,N/A_no_campaign_reconstruction,11,
+M2_descriptor_clustering,strong_campaign,0.29069767441860467,1.0,0.45045045045045046,0.0,0.0,0.0,0.0,3.0,0.0,1.0,1.0,13.0,0.0,computed,11,False
+M3_gcn,strong_campaign,0.29069767441860467,1.0,0.45045045045045046,0.0,0.0,0.0,0.0,1.0,0.0,1.0,1.0,1.0,0.0,computed,11,False
+M4_graphsage,strong_campaign,0.29069767441860467,1.0,0.45045045045045046,0.0,0.0,0.0,0.0,1.0,0.0,1.0,1.0,1.0,0.0,computed,11,False
+ALL,weak_campaign,,,,,,,,,,,,,,"unsupported:Insufficient weak malicious TEST windows in score band: have 2, need >=25 (weak_thr=0.55, strong_thr=0.8).",11,
+M1_local_if,unrelated_incidents,0.3333333333333333,1.0,0.5,,,,,,,,5.0,0.0,0.0,N/A_no_campaign_reconstruction,11,
+M2_descriptor_clustering,unrelated_incidents,0.3333333333333333,1.0,0.5,0.0,0.0,0.0,0.0,1.0,0.16666666666666666,1.0,5.0,12.0,0.0,computed,11,True
+M3_gcn,unrelated_incidents,0.3333333333333333,1.0,0.5,0.0,0.0,0.0,0.0,1.0,0.5,1.0,5.0,2.0,0.0,computed,11,True
+M4_graphsage,unrelated_incidents,0.3333333333333333,1.0,0.5,0.3333333333333333,0.2,0.25,0.04504504504504505,1.0,0.6666666666666666,0.6666666666666666,5.0,3.0,1.0,computed,11,True
+M1_local_if,strong_campaign,0.29069767441860467,1.0,0.45045045045045046,,,,,,,,1.0,0.0,0.0,N/A_no_campaign_reconstruction,23,
+M2_descriptor_clustering,strong_campaign,0.29069767441860467,1.0,0.45045045045045046,0.07692307692307693,1.0,0.14285714285714288,0.3424657534246575,3.0,0.0,0.9230769230769231,1.0,13.0,1.0,computed,23,False
+M3_gcn,strong_campaign,0.29069767441860467,1.0,0.45045045045045046,0.0,0.0,0.0,0.0,1.0,0.0,1.0,1.0,1.0,0.0,computed,23,False
+M4_graphsage,strong_campaign,0.29069767441860467,1.0,0.45045045045045046,0.0,0.0,0.0,0.0,1.0,0.0,1.0,1.0,1.0,0.0,computed,23,False
+ALL,weak_campaign,,,,,,,,,,,,,,"unsupported:Insufficient weak malicious TEST windows in score band: have 2, need >=25 (weak_thr=0.55, strong_thr=0.8).",23,
+M1_local_if,unrelated_incidents,0.27472527472527475,1.0,0.4310344827586208,,,,,,,,5.0,0.0,0.0,N/A_no_campaign_reconstruction,23,
+M2_descriptor_clustering,unrelated_incidents,0.27472527472527475,1.0,0.4310344827586208,0.0,0.0,0.0,0.0,1.0,0.18181818181818182,1.0,5.0,11.0,0.0,computed,23,True
+M3_gcn,unrelated_incidents,0.27472527472527475,1.0,0.4310344827586208,0.0,0.0,0.0,0.0,1.0,0.5,1.0,5.0,2.0,0.0,computed,23,True
+M4_graphsage,unrelated_incidents,0.27472527472527475,1.0,0.4310344827586208,0.0,0.0,0.0,0.0,1.0,1.0,1.0,5.0,1.0,0.0,computed,23,True
+M1_local_if,strong_campaign,0.30120481927710846,1.0,0.462962962962963,,,,,,,,1.0,0.0,0.0,N/A_no_campaign_reconstruction,37,
+M2_descriptor_clustering,strong_campaign,0.30120481927710846,1.0,0.462962962962963,0.0,0.0,0.0,0.0,2.0,0.0,1.0,1.0,14.0,0.0,computed,37,False
+M3_gcn,strong_campaign,0.30120481927710846,1.0,0.462962962962963,0.0,0.0,0.0,0.0,1.0,0.0,1.0,1.0,1.0,0.0,computed,37,False
+M4_graphsage,strong_campaign,0.30120481927710846,1.0,0.462962962962963,0.0,0.0,0.0,0.0,1.0,0.0,1.0,1.0,1.0,0.0,computed,37,False
+ALL,weak_campaign,,,,,,,,,,,,,,"unsupported:Insufficient weak malicious TEST windows in score band: have 2, need >=25 (weak_thr=0.55, strong_thr=0.8).",37,
+M1_local_if,unrelated_incidents,0.2808988764044944,1.0,0.4385964912280702,,,,,,,,5.0,0.0,0.0,N/A_no_campaign_reconstruction,37,
+M2_descriptor_clustering,unrelated_incidents,0.2808988764044944,1.0,0.4385964912280702,0.0,0.0,0.0,0.0,1.0,0.18181818181818182,1.0,5.0,11.0,0.0,computed,37,True
+M3_gcn,unrelated_incidents,0.2808988764044944,1.0,0.4385964912280702,0.5,0.2,0.28571428571428575,0.20833333333333331,1.0,1.0,0.5,5.0,2.0,1.0,computed,37,True
+M4_graphsage,unrelated_incidents,0.2808988764044944,1.0,0.4385964912280702,0.0,0.0,0.0,0.0,1.0,1.0,1.0,5.0,1.0,0.0,computed,37,True
+M1_local_if,strong_campaign,0.2717391304347826,1.0,0.4273504273504273,,,,,,,,1.0,0.0,0.0,N/A_no_campaign_reconstruction,41,
+M2_descriptor_clustering,strong_campaign,0.2717391304347826,1.0,0.4273504273504273,0.07142857142857142,1.0,0.13333333333333333,0.3448275862068966,3.0,0.0,0.9285714285714286,1.0,14.0,1.0,computed,41,False
+M3_gcn,strong_campaign,0.2717391304347826,1.0,0.4273504273504273,0.0,0.0,0.0,0.0,3.0,0.0,1.0,1.0,4.0,0.0,computed,41,False
+M4_graphsage,strong_campaign,0.2717391304347826,1.0,0.4273504273504273,0.0,0.0,0.0,0.0,1.0,0.0,1.0,1.0,1.0,0.0,computed,41,False
+ALL,weak_campaign,,,,,,,,,,,,,,"unsupported:Insufficient weak malicious TEST windows in score band: have 2, need >=25 (weak_thr=0.55, strong_thr=0.8).",41,
+M1_local_if,unrelated_incidents,0.2840909090909091,1.0,0.4424778761061947,,,,,,,,5.0,0.0,0.0,N/A_no_campaign_reconstruction,41,
+M2_descriptor_clustering,unrelated_incidents,0.2840909090909091,1.0,0.4424778761061947,0.1,0.2,0.13333333333333333,0.0784313725490196,1.0,0.2,0.9,5.0,10.0,1.0,computed,41,True
+M3_gcn,unrelated_incidents,0.2840909090909091,1.0,0.4424778761061947,0.0,0.0,0.0,0.0,1.0,1.0,1.0,5.0,1.0,0.0,computed,41,True
+M4_graphsage,unrelated_incidents,0.2840909090909091,1.0,0.4424778761061947,0.0,0.0,0.0,0.0,1.0,0.5,1.0,5.0,2.0,0.0,computed,41,True
+M1_local_if,strong_campaign,0.32894736842105265,1.0,0.4950495049504951,,,,,,,,1.0,0.0,0.0,N/A_no_campaign_reconstruction,53,
+M2_descriptor_clustering,strong_campaign,0.32894736842105265,1.0,0.4950495049504951,0.058823529411764705,1.0,0.1111111111111111,0.3048780487804878,2.0,0.0,0.9411764705882353,1.0,17.0,1.0,computed,53,False
+M3_gcn,strong_campaign,0.32894736842105265,1.0,0.4950495049504951,0.0,0.0,0.0,0.0,1.0,0.0,1.0,1.0,1.0,0.0,computed,53,False
+M4_graphsage,strong_campaign,0.32894736842105265,1.0,0.4950495049504951,0.0,0.0,0.0,0.0,1.0,0.0,1.0,1.0,1.0,0.0,computed,53,False
+ALL,weak_campaign,,,,,,,,,,,,,,"unsupported:Insufficient weak malicious TEST windows in score band: have 2, need >=25 (weak_thr=0.55, strong_thr=0.8).",53,
+M1_local_if,unrelated_incidents,0.32894736842105265,1.0,0.4950495049504951,,,,,,,,5.0,0.0,0.0,N/A_no_campaign_reconstruction,53,
+M2_descriptor_clustering,unrelated_incidents,0.32894736842105265,1.0,0.4950495049504951,0.0,0.0,0.0,0.0,1.4,0.23076923076923078,1.0,5.0,13.0,0.0,computed,53,True
+M3_gcn,unrelated_incidents,0.32894736842105265,1.0,0.4950495049504951,0.0,0.0,0.0,0.0,1.0,1.0,1.0,5.0,1.0,0.0,computed,53,True
+M4_graphsage,unrelated_incidents,0.32894736842105265,1.0,0.4950495049504951,0.0,0.0,0.0,0.0,1.0,0.5,1.0,5.0,2.0,0.0,computed,53,True
+M1_local_if,strong_campaign,0.32051282051282054,1.0,0.48543689320388356,,,,,,,,1.0,0.0,0.0,N/A_no_campaign_reconstruction,67,
+M2_descriptor_clustering,strong_campaign,0.32051282051282054,1.0,0.48543689320388356,0.125,1.0,0.2222222222222222,0.352112676056338,2.0,0.0,0.875,1.0,8.0,1.0,computed,67,False
+M3_gcn,strong_campaign,0.32051282051282054,1.0,0.48543689320388356,0.0,0.0,0.0,0.0,1.0,0.0,1.0,1.0,1.0,0.0,computed,67,False
+M4_graphsage,strong_campaign,0.32051282051282054,1.0,0.48543689320388356,0.0,0.0,0.0,0.0,1.0,0.0,1.0,1.0,1.0,0.0,computed,67,False
+ALL,weak_campaign,,,,,,,,,,,,,,"unsupported:Insufficient weak malicious TEST windows in score band: have 2, need >=25 (weak_thr=0.55, strong_thr=0.8).",67,
+M1_local_if,unrelated_incidents,0.29411764705882354,1.0,0.45454545454545453,,,,,,,,5.0,0.0,0.0,N/A_no_campaign_reconstruction,67,
+M2_descriptor_clustering,unrelated_incidents,0.29411764705882354,1.0,0.45454545454545453,0.0,0.0,0.0,0.0,0.6,0.07692307692307693,1.0,5.0,13.0,0.0,computed,67,True
+M3_gcn,unrelated_incidents,0.29411764705882354,1.0,0.45454545454545453,0.0,0.0,0.0,0.0,1.0,0.5,1.0,5.0,2.0,0.0,computed,67,True
+M4_graphsage,unrelated_incidents,0.29411764705882354,1.0,0.45454545454545453,0.0,0.0,0.0,0.0,1.0,1.0,1.0,5.0,2.0,0.0,computed,67,True
+M1_local_if,strong_campaign,0.26881720430107525,1.0,0.423728813559322,,,,,,,,1.0,0.0,0.0,N/A_no_campaign_reconstruction,71,
+M2_descriptor_clustering,strong_campaign,0.26881720430107525,1.0,0.423728813559322,0.07692307692307693,1.0,0.14285714285714288,0.3225806451612903,3.0,0.0,0.9230769230769231,1.0,13.0,1.0,computed,71,False
+M3_gcn,strong_campaign,0.26881720430107525,1.0,0.423728813559322,0.0,0.0,0.0,0.0,1.0,0.0,1.0,1.0,1.0,0.0,computed,71,False
+M4_graphsage,strong_campaign,0.26881720430107525,1.0,0.423728813559322,0.0,0.0,0.0,0.0,1.0,0.0,1.0,1.0,1.0,0.0,computed,71,False
+ALL,weak_campaign,,,,,,,,,,,,,,"unsupported:Insufficient weak malicious TEST windows in score band: have 2, need >=25 (weak_thr=0.55, strong_thr=0.8).",71,
+M1_local_if,unrelated_incidents,0.29069767441860467,1.0,0.45045045045045046,,,,,,,,5.0,0.0,0.0,N/A_no_campaign_reconstruction,71,
+M2_descriptor_clustering,unrelated_incidents,0.29069767441860467,1.0,0.45045045045045046,0.0,0.0,0.0,0.0,1.4,0.2727272727272727,1.0,5.0,11.0,0.0,computed,71,True
+M3_gcn,unrelated_incidents,0.29069767441860467,1.0,0.45045045045045046,0.0,0.0,0.0,0.0,1.0,1.0,1.0,5.0,1.0,0.0,computed,71,True
+M4_graphsage,unrelated_incidents,0.29069767441860467,1.0,0.45045045045045046,0.0,0.0,0.0,0.0,1.0,0.5,1.0,5.0,2.0,0.0,computed,71,True
+M1_local_if,strong_campaign,0.2976190476190476,1.0,0.4587155963302752,,,,,,,,1.0,0.0,0.0,N/A_no_campaign_reconstruction,83,
+M2_descriptor_clustering,strong_campaign,0.2976190476190476,1.0,0.4587155963302752,0.058823529411764705,1.0,0.1111111111111111,0.3125,3.0,0.0,0.9411764705882353,1.0,17.0,1.0,computed,83,False
+M3_gcn,strong_campaign,0.2976190476190476,1.0,0.4587155963302752,0.0,0.0,0.0,0.0,1.0,0.0,1.0,1.0,1.0,0.0,computed,83,False
+M4_graphsage,strong_campaign,0.2976190476190476,1.0,0.4587155963302752,0.0,0.0,0.0,0.0,1.0,0.0,1.0,1.0,1.0,0.0,computed,83,False
+ALL,weak_campaign,,,,,,,,,,,,,,"unsupported:Insufficient weak malicious TEST windows in score band: have 2, need >=25 (weak_thr=0.55, strong_thr=0.8).",83,
+M1_local_if,unrelated_incidents,0.28735632183908044,1.0,0.4464285714285714,,,,,,,,5.0,0.0,0.0,N/A_no_campaign_reconstruction,83,
+M2_descriptor_clustering,unrelated_incidents,0.28735632183908044,1.0,0.4464285714285714,0.08333333333333333,0.2,0.11764705882352941,0.06666666666666667,1.4,0.25,0.9166666666666666,5.0,12.0,1.0,computed,83,True
+M3_gcn,unrelated_incidents,0.28735632183908044,1.0,0.4464285714285714,0.0,0.0,0.0,0.0,1.0,1.0,1.0,5.0,1.0,0.0,computed,83,True
+M4_graphsage,unrelated_incidents,0.28735632183908044,1.0,0.4464285714285714,0.0,0.0,0.0,0.0,1.0,1.0,1.0,5.0,2.0,0.0,computed,83,True
+M1_local_if,strong_campaign,0.27472527472527475,1.0,0.4310344827586208,,,,,,,,1.0,0.0,0.0,N/A_no_campaign_reconstruction,97,
+M2_descriptor_clustering,strong_campaign,0.27472527472527475,1.0,0.4310344827586208,0.08333333333333333,1.0,0.15384615384615385,0.3289473684210526,2.0,0.0,0.9166666666666666,1.0,12.0,1.0,computed,97,False
+M3_gcn,strong_campaign,0.27472527472527475,1.0,0.4310344827586208,0.0,0.0,0.0,0.0,1.0,0.0,1.0,1.0,1.0,0.0,computed,97,False
+M4_graphsage,strong_campaign,0.27472527472527475,1.0,0.4310344827586208,0.0,0.0,0.0,0.0,1.0,0.0,1.0,1.0,1.0,0.0,computed,97,False
+ALL,weak_campaign,,,,,,,,,,,,,,"unsupported:Insufficient weak malicious TEST windows in score band: have 2, need >=25 (weak_thr=0.55, strong_thr=0.8).",97,
+M1_local_if,unrelated_incidents,0.26595744680851063,1.0,0.42016806722689076,,,,,,,,5.0,0.0,0.0,N/A_no_campaign_reconstruction,97,
+M2_descriptor_clustering,unrelated_incidents,0.26595744680851063,1.0,0.42016806722689076,0.08333333333333333,0.2,0.11764705882352941,0.08928571428571429,1.0,0.16666666666666666,0.9166666666666666,5.0,12.0,1.0,computed,97,True
+M3_gcn,unrelated_incidents,0.26595744680851063,1.0,0.42016806722689076,0.0,0.0,0.0,0.0,1.0,0.5,1.0,5.0,2.0,0.0,computed,97,True
+M4_graphsage,unrelated_incidents,0.26595744680851063,1.0,0.42016806722689076,0.0,0.0,0.0,0.0,1.0,0.5,1.0,5.0,2.0,0.0,computed,97,True
+M1_local_if,strong_campaign,0.2808988764044944,1.0,0.4385964912280702,,,,,,,,1.0,0.0,0.0,N/A_no_campaign_reconstruction,101,
+M2_descriptor_clustering,strong_campaign,0.2808988764044944,1.0,0.4385964912280702,0.058823529411764705,1.0,0.1111111111111111,0.3597122302158274,2.0,0.0,0.9411764705882353,1.0,17.0,1.0,computed,101,False
+M3_gcn,strong_campaign,0.2808988764044944,1.0,0.4385964912280702,0.0,0.0,0.0,0.0,2.0,0.0,1.0,1.0,2.0,0.0,computed,101,False
+M4_graphsage,strong_campaign,0.2808988764044944,1.0,0.4385964912280702,0.0,0.0,0.0,0.0,1.0,0.0,1.0,1.0,1.0,0.0,computed,101,False
+ALL,weak_campaign,,,,,,,,,,,,,,"unsupported:Insufficient weak malicious TEST windows in score band: have 2, need >=25 (weak_thr=0.55, strong_thr=0.8).",101,
+M1_local_if,unrelated_incidents,0.3048780487804878,1.0,0.4672897196261682,,,,,,,,5.0,0.0,0.0,N/A_no_campaign_reconstruction,101,
+M2_descriptor_clustering,unrelated_incidents,0.3048780487804878,1.0,0.4672897196261682,0.0,0.0,0.0,0.0,1.0,0.18181818181818182,1.0,5.0,11.0,0.0,computed,101,True
+M3_gcn,unrelated_incidents,0.3048780487804878,1.0,0.4672897196261682,0.0,0.0,0.0,0.0,1.0,0.5,1.0,5.0,2.0,0.0,computed,101,True
+M4_graphsage,unrelated_incidents,0.3048780487804878,1.0,0.4672897196261682,0.0,0.0,0.0,0.0,1.0,0.5,1.0,5.0,2.0,0.0,computed,101,True

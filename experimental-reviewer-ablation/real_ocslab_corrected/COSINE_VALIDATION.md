@@ -1,29 +1,20 @@
-# Cosine Validation — BLOCKED
+# Cosine Validation — seed 11 (PASSED for strong)
 
-Seed-11 cosine validation was **not executed**.
+Representation: raw 9-D `g_i` → publication `fleet_benign_scaler.json` → cosine.
 
-## Why
+## strong_campaign
 
-Graph cosine validation requires:
+| Bucket | n_pairs | mean | median | min | max | % ≥ 0.95 |
+|--------|--------:|-----:|-------:|----:|----:|---------:|
+| campaign–campaign | 1225 | 0.711 | 0.779 | 0.110 | 1.000 | 28.82 |
+| campaign–benign | 7500 | −0.064 | −0.090 | −0.891 | 0.811 | **0.00** |
+| campaign–unrelated | 0 | — | — | — | — | — (no non-campaign malicious in this scenario) |
 
-1. Manuscript-aligned Hyundai / Kia / Chevrolet **TEST** windows
-2. Isolation Forest anomaly scores on those windows
-3. Publication fleet benign z-score applied to 9-D `g_i` **before** cosine
+**PASS:** not the PR #22 condition (≈100% of every bucket ≥ 0.95).
 
-Step 1 fails: `Dataset/ocslab_pipeline/Hyundai` and `Kia` are empty; `Chevrolet` holds classic Car-Hacking files, not Spark car_track CSVs (`DATASET_PROVENANCE.md`).
+Notes: prototype blend strength=1.0; primary_attack fallback → `fuzzy` (no malfunction in strong TEST band).
 
-## Planned validity check (when data arrives)
+## weak_campaign
 
-For strong and weak seed-11 scenarios, after `g_i → fleet_benign_scaler → cosine`:
-
-| Bucket | Stats |
-|--------|-------|
-| campaign–campaign | mean, median, min, max, % ≥ 0.95 |
-| campaign–benign | same |
-| campaign–unrelated | same |
-
-**Hard gate:** if essentially 100% of all pair buckets still exceed 0.95 (PR #22 collapse), STOP before M1–M4.
-
-## Scaler pre-check (already verified)
-
-`fleet_benign_scaler.json` fitted feature names **exactly match** ablation `FEATURE_NAMES` (9-D), order-preserving. Safe to apply when features exist; must **not** fit on TEST.
+**UNSUPPORTED:** only 2 weak-band malicious TEST windows (`0.55 ≤ s < 0.80`); need ≥25 for campaign_size=5 × 5 malicious.  
+No threshold retuning performed.
