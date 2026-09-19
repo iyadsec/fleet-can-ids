@@ -1,0 +1,11 @@
+{
+  "declared_at_utc": "2026-09-19T20:50:42Z",
+  "declared_before_any_eta_evaluation": true,
+  "candidate_values": [2, 3, 5, 10],
+  "selection_rule_predeclared": {
+    "1": "Exclude eta values that materially worsen non-campaign false detections relative to the recovered primary operating point (validation V0/V1/V2-style conditions when available).",
+    "2": "Among remaining eta values, prefer strongest mean campaign F1 across validation strong and weak campaign conditions (V3/V4-style when available).",
+    "3": "If effectively tied, select the smaller eta to avoid unnecessarily suppressing weak campaign evidence."
+  },
+  "note": "Candidate set frozen before attempting validation. No eta was selected; experiment stopped for missing runnable validation split."
+}

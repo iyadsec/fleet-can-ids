@@ -1,0 +1,42 @@
+{
+  "created_at_utc": "2026-09-19T20:50:42Z",
+  "experiment": "experimental-2026-09-19/eta_revalidation",
+  "verdict": "STOP_NO_VALIDATION_SPLIT",
+  "concurrent_blocker": "STOP_METRIC_IMPLEMENTATION_UNRECOVERED",
+  "ctt_run": false,
+  "historical_ocslab_modified": false,
+  "eta_selected": false,
+  "eta_candidates_predeclared": [2, 3, 5, 10],
+  "code_paths": {
+    "fleet_core": "src/evaluation/publication_fleet_core.py",
+    "eta_parameter": "min_campaign_cluster_size",
+    "tests": "tests/test_ctt_aligned_publication_fleet.py",
+    "historical_gate_audit": "outputs/publication_metric_recovery/ETA_HISTORICAL_GATE_AUDIT.md",
+    "matcher_audit": "outputs/publication_metric_recovery/P7_P8_MATCHER_AUDIT.md"
+  },
+  "missing_for_go": [
+    "Runnable primary OCSLab fleet validation scenarios (descriptors / event payloads for V0–V4); build_mixed_validation_suite never committed",
+    "Balanced publication intermediates: window_features / IF models / scenario descriptors",
+    "OCSLab raw traces in this environment",
+    "extract_run_metrics / predicted↔GT matcher for P7/P8-compatible Campaign F1 and Membership F1"
+  ],
+  "available_but_insufficient": [
+    "validation_manifest.csv metadata (segment IDs, scenario hashes; mostly empty event_ids)",
+    "parameter_search.csv / selection_report.md (historical freeze selection diagnostics)",
+    "fleet_benign_scaler.json",
+    "frozen campaign_metrics aggregates under experimental-2026-06-23/01_primary_ocslab_balanced/ (reference only)"
+  ],
+  "artifacts_written": [
+    "ETA_IMPLEMENTATION_AUDIT.md",
+    "eta_candidate_set_predeclared.json",
+    "frozen_fleet_configuration.json",
+    "eta_selection.json",
+    "ETA_VALIDATION_RESULTS.csv",
+    "ETA_CLUSTER_SIZE_ANALYSIS.csv",
+    "HISTORICAL_VS_ETA_REVALIDATED.md",
+    "ETA_DECISION_IMPACT.md",
+    "REPRODUCIBILITY_MANIFEST.json",
+    "FINAL_VERDICT.md",
+    "final/README.md"
+  ]
+}

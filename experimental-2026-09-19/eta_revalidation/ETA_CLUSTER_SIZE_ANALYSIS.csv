@@ -1,0 +1,5 @@
+eta,status,candidate_cluster_size_min,p25,median,p75,max,pct_candidates_removed_by_eta,note
+2,NOT_RUN,,,,,,,STOP_NO_VALIDATION_SPLIT — cluster-size analysis requires runnable validation scenarios
+3,NOT_RUN,,,,,,,STOP_NO_VALIDATION_SPLIT — cluster-size analysis requires runnable validation scenarios
+5,NOT_RUN,,,,,,,STOP_NO_VALIDATION_SPLIT — cluster-size analysis requires runnable validation scenarios
+10,NOT_RUN,,,,,,,STOP_NO_VALIDATION_SPLIT — cluster-size analysis requires runnable validation scenarios

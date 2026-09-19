@@ -1,0 +1,62 @@
+{
+  "experiment": "experimental-2026-09-19/eta_revalidation",
+  "status": "STOP_NO_VALIDATION_SPLIT",
+  "eta_status": "NOT_SELECTED",
+  "historical_eta_claim": null,
+  "dbscan_min_samples_is_not_eta": true,
+  "graph": {
+    "metric": "cosine",
+    "similarity_threshold": 0.95,
+    "max_same_vehicle_neighbors": 2,
+    "max_cross_vehicle_neighbors": 5,
+    "temporal_edges": false,
+    "edge_attr_passed_to_sageconv": false
+  },
+  "graphsage": {
+    "input_dim": 9,
+    "gnn_feature_columns": [
+      "anomaly_score",
+      "message_rate",
+      "frame_count",
+      "burstiness",
+      "mean_inter_arrival_time",
+      "std_inter_arrival_time",
+      "can_id_entropy",
+      "most_common_can_id_ratio",
+      "payload_entropy"
+    ],
+    "hidden_channels": 64,
+    "embedding_dim": 32,
+    "aggregation": "mean",
+    "activation": "relu_after_first_sageconv",
+    "epochs": 30,
+    "optimizer": "Adam",
+    "learning_rate": 0.01,
+    "weight_decay": 0.0005,
+    "campaign_loss_weight": 0.25,
+    "supervision": "structure"
+  },
+  "clustering": {
+    "preprocessing": ["StandardScaler", "PCA"],
+    "pca_components": 8,
+    "metric": "euclidean",
+    "dbscan_eps": 0.5,
+    "dbscan_min_samples": 2
+  },
+  "campaign_gate": {
+    "gamma_parameter": "minimum_distinct_vehicles",
+    "minimum_distinct_vehicles": 2,
+    "eta_parameter": "min_campaign_cluster_size",
+    "min_campaign_cluster_size": null,
+    "beta_parameter": "minimum_campaign_cohesion",
+    "minimum_campaign_cohesion": 0.5,
+    "minimum_cross_vehicle_support": 1,
+    "cohesion_formula": "centroid_mean_cosine_l2_normalized",
+    "fragment_consolidation_enabled": true,
+    "fragment_centroid_threshold": 0.85
+  },
+  "authoritative_master_config_hash": "72dbfc1760126e799a8a1670f1aa81391bd69a65edeab7beecb61846aa946d9e",
+  "freeze_yaml": "recovered_publication_pipeline/new_experiments/final_end_to_end_publication_run_balanced/configs/final_shared_fleet_configuration.yaml",
+  "historical_results_path": "experimental-2026-06-23/01_primary_ocslab_balanced/",
+  "historical_results_modified": false
+}
