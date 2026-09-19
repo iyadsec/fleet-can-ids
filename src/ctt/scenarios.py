@@ -173,16 +173,30 @@ def run_scenario_evaluation(
     scenarios: list[str] | None = None,
     seeds: list[int] | None = None,
     progress: ProgressLogger | None = None,
+    *,
+    min_campaign_cluster_size: int | None = None,
 ) -> pd.DataFrame:
-    """Run all fleet scenarios across seeds using the shared publication fleet path."""
+    """Run all fleet scenarios across seeds using the shared publication fleet path.
+
+    ``min_campaign_cluster_size`` (η) is required for campaign inference and is
+    independent of DBSCAN ``min_samples``. Historical η is unrecoverable.
+    """
     from src.ctt.fleet_campaign import evaluate_campaign, run_fleet_campaign_inference
-    from src.ctt.fleet_graph import fit_or_load_ctt_scaler
+    from src.ctt.fleet_graph import fit_or_load_ctt_scaler, resolve_ctt_fleet_config
     from src.ctt.progress_logger import ProgressLogger
 
     del desc_df  # global descriptor pool unused; scenarios build descriptors from windows
 
+    if min_campaign_cluster_size is None:
+        raise ValueError(
+            "min_campaign_cluster_size (η) must be supplied explicitly for CTT "
+            "scenario evaluation. It is independent of dbscan_min_samples; "
+            "historical P7/P8 η is UNRECOVERABLE (see ETA_DBSCAN_SEPARATION_AUDIT)."
+        )
+
     scenario_list = scenarios or list(SCENARIO_CONFIGS.keys())
     seed_list = seeds if seeds is not None else SCENARIO_SEEDS
+    base_cfg = resolve_ctt_fleet_config(min_campaign_cluster_size=min_campaign_cluster_size)
 
     results_dir = ensure_dir(output_root / "results" / "scenario_evaluation")
     scaler_cache = output_root / "scalers" / "ctt_fleet_benign_scaler.json"
@@ -251,7 +265,13 @@ def run_scenario_evaluation(
             ]
             model_df = scen_desc[model_cols].copy()
 
-            artifacts = run_fleet_campaign_inference(model_df, scaler=scaler, seed=seed)
+            artifacts = run_fleet_campaign_inference(
+                model_df,
+                scaler=scaler,
+                seed=seed,
+                cfg=base_cfg,
+                min_campaign_cluster_size=min_campaign_cluster_size,
+            )
             # Persist graph stats per run
             pd.DataFrame([artifacts.graph_stats]).to_csv(
                 scenario_dir / f"seed_{seed}_graph_stats.csv", index=False

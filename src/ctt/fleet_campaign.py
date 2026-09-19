@@ -26,16 +26,29 @@ def run_fleet_campaign_inference(
     scaler: FleetScalerProvenance | None = None,
     cfg: PublicationFleetConfig | None = None,
     seed: int = 42,
+    min_campaign_cluster_size: int | None = None,
 ) -> FleetRunArtifacts:
     """
     Model inference only — no GT attack labels/types/campaign membership as inputs.
 
     Attack-type columns may be present on ``desc_df`` for post-hoc evaluation
     fields inside the shared cluster summary, but they are not used by the gate.
+
+    η (``min_campaign_cluster_size``) must be supplied via ``cfg`` or this
+    argument. It is never taken from DBSCAN ``min_samples``.
     """
-    cfg = cfg or resolve_ctt_fleet_config(seed=seed)
+    if cfg is None:
+        cfg = resolve_ctt_fleet_config(
+            seed=seed, min_campaign_cluster_size=min_campaign_cluster_size
+        )
+    elif min_campaign_cluster_size is not None:
+        cfg = PublicationFleetConfig(
+            **{**cfg.to_dict(), "min_campaign_cluster_size": min_campaign_cluster_size}
+        )
     if seed != cfg.seed:
         cfg = PublicationFleetConfig(**{**cfg.to_dict(), "seed": seed})
+    # Explicit require here so callers get a clear error before GraphSAGE.
+    cfg.require_min_campaign_cluster_size()
     scaler = scaler or fit_or_load_ctt_scaler(desc_df)
     return run_publication_fleet_pipeline(
         desc_df, fleet_scaler_provenance=scaler, cfg=cfg

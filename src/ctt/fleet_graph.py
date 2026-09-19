@@ -30,13 +30,21 @@ def resolve_ctt_fleet_config(
     k_same: int = GRAPH_SAME_VEHICLE_CAP,
     k_cross: int = GRAPH_CROSS_VEHICLE_CAP,
     seed: int = 42,
+    min_campaign_cluster_size: int | None = None,
 ) -> PublicationFleetConfig:
-    """Publication freeze defaults (CTT constants mirror the freeze)."""
+    """Publication freeze defaults (CTT constants mirror the freeze).
+
+    ``min_campaign_cluster_size`` (η) is independent of DBSCAN ``min_samples``.
+    Historical P7/P8 η is unrecoverable — callers that run the campaign gate
+    must supply η explicitly; it is never derived from ``dbscan_min_samples``.
+    Graph-only helpers may leave it ``None``.
+    """
     return PublicationFleetConfig(
         similarity_threshold=similarity_threshold,
         max_same_vehicle_neighbors=k_same,
         max_cross_vehicle_neighbors=k_cross,
         seed=seed,
+        min_campaign_cluster_size=min_campaign_cluster_size,
     )
 
 

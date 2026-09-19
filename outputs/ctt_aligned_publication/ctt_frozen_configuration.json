@@ -16,13 +16,16 @@
   "dbscan_pca_components": 8,
   "max_clustering_samples": 20000,
   "minimum_distinct_vehicles": 2,
-  "minimum_cluster_size": 2,
   "minimum_cross_vehicle_support": 1,
   "minimum_campaign_cohesion": 0.5,
+  "min_campaign_cluster_size": null,
   "fragment_consolidation_enabled": true,
   "fragment_centroid_threshold": 0.85,
   "seed": 42,
   "master_config_hash": "72dbfc1760126e799a8a1670f1aa81391bd69a65edeab7beecb61846aa946d9e",
+  "eta_parameter_name": "min_campaign_cluster_size",
+  "eta_status": "UNRECOVERABLE_HISTORICAL_VALUE_REQUIRED_BEFORE_CTT_RUN",
+  "dbscan_min_samples_is_not_eta": true,
   "gnn_feature_columns": [
     "anomaly_score",
     "message_rate",
@@ -43,7 +46,7 @@
   "edge_attr_passed_to_sageconv": false,
   "aggregation": "mean",
   "activation": "relu_after_first_layer",
-  "config_content_hash": "e6e3d8edcd5cd0161afeda20adb68090ee7867df7ecd11a1ce4d1d720f6c2345",
+  "config_content_hash": "3a0235e761a245c144fc5372e7450bfca480d03c7acab88f712db0f03598a822",
   "authoritative_master_config_hash": "72dbfc1760126e799a8a1670f1aa81391bd69a65edeab7beecb61846aa946d9e",
   "freeze_yaml": "recovered_publication_pipeline/new_experiments/final_end_to_end_publication_run_balanced/configs/final_shared_fleet_configuration.yaml"
 }

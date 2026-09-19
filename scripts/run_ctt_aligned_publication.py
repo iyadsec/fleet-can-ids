@@ -151,9 +151,18 @@ def _audit_no_label_leakage(output_dir: Path) -> str:
     return text
 
 
-def _write_frozen_config(output_dir: Path, cfg: PublicationFleetConfig) -> None:
+def _write_frozen_config(
+    output_dir: Path,
+    cfg: PublicationFleetConfig,
+    *,
+    eta_status: str,
+) -> None:
     payload = {
         **cfg.to_dict(),
+        # Explicit aliases so manifests cannot silently treat DBSCAN min_samples as η.
+        "eta_parameter_name": "min_campaign_cluster_size",
+        "eta_status": eta_status,
+        "dbscan_min_samples_is_not_eta": True,
         "gnn_feature_columns": list(GNN_FEATURE_COLUMNS),
         "dbscan_metric": "euclidean",
         "dbscan_preprocessing": ["StandardScaler", "PCA"],
@@ -184,17 +193,78 @@ def main() -> int:
     parser.add_argument("--dataset-root", type=Path, default=None)
     parser.add_argument(
         "--mode",
-        choices=["smoke", "pilot", "full"],
-        default="smoke",
-        help="smoke=synthetic; pilot/full require CTT data or --allow-synthetic",
+        choices=["smoke", "pilot", "full", "write-config-only"],
+        default="write-config-only",
+        help=(
+            "write-config-only=emit frozen config + audits without running CTT "
+            "(default until η is decided); smoke/pilot/full require --eta"
+        ),
     )
     parser.add_argument("--allow-synthetic", action="store_true")
     parser.add_argument("--seeds", type=int, nargs="*", default=None)
+    parser.add_argument(
+        "--eta",
+        "--min-campaign-cluster-size",
+        dest="min_campaign_cluster_size",
+        type=int,
+        default=None,
+        help=(
+            "Required for smoke/pilot/full: post-clustering |C_k| threshold η. "
+            "Independent of DBSCAN min_samples. Historical P7/P8 η is UNRECOVERABLE — "
+            "do not pass a value chosen by inspecting CTT results."
+        ),
+    )
     args = parser.parse_args()
 
     out = ensure_dir(args.output_dir)
-    cfg = PublicationFleetConfig()
-    _write_frozen_config(out, cfg)
+    eta = args.min_campaign_cluster_size
+    if args.mode == "write-config-only":
+        cfg = PublicationFleetConfig(min_campaign_cluster_size=eta)
+        _write_frozen_config(
+            out,
+            cfg,
+            eta_status=(
+                "EXPLICITLY_SUPPLIED"
+                if eta is not None
+                else "UNRECOVERABLE_HISTORICAL_VALUE_REQUIRED_BEFORE_CTT_RUN"
+            ),
+        )
+        _audit_no_label_leakage(out)
+        write_fleet_transfer_policy(out)
+        print(
+            json.dumps(
+                {
+                    "status": "READY_FOR_ETA_DECISION",
+                    "mode": args.mode,
+                    "min_campaign_cluster_size": eta,
+                    "dbscan_min_samples": cfg.dbscan_min_samples,
+                    "out": str(out),
+                    "note": (
+                        "No CTT experiment run. Supply --eta and a non-write-config-only "
+                        "mode after η is frozen independently of CTT results."
+                    ),
+                },
+                indent=2,
+            )
+        )
+        return 0
+
+    if eta is None:
+        print(
+            "STOP: --eta / --min-campaign-cluster-size is required to run CTT. "
+            "Historical P7/P8 η is UNRECOVERABLE and must not be derived from "
+            "dbscan_min_samples. Decide η independently, then re-run with --eta N."
+        )
+        cfg = PublicationFleetConfig(min_campaign_cluster_size=None)
+        _write_frozen_config(
+            out,
+            cfg,
+            eta_status="UNRECOVERABLE_HISTORICAL_VALUE_REQUIRED_BEFORE_CTT_RUN",
+        )
+        return 2
+
+    cfg = PublicationFleetConfig(min_campaign_cluster_size=eta)
+    _write_frozen_config(out, cfg, eta_status="EXPLICITLY_SUPPLIED_PROSPECTIVE")
     _audit_no_label_leakage(out)
     write_fleet_transfer_policy(out)
 
@@ -239,6 +309,7 @@ def main() -> int:
         output_root=run_root,
         scenarios=scenarios,
         seeds=seeds,
+        min_campaign_cluster_size=eta,
     )
 
     # Graph artifact on pooled weak candidates for summary stats
@@ -321,6 +392,9 @@ def main() -> int:
         "config_hash": cfg.config_hash(),
         "authoritative_master_config_hash": cfg.master_config_hash,
         "parameter_values": cfg.to_dict(),
+        "min_campaign_cluster_size": eta,
+        "eta_status": "EXPLICITLY_SUPPLIED_PROSPECTIVE",
+        "dbscan_min_samples_is_not_eta": True,
         "gnn_feature_columns": list(GNN_FEATURE_COLUMNS),
         "matching_rule": "greedy_jaccard_ge_0.5_ablation_peer_P7P8_matcher_unrecovered",
         "n_run_rows": int(len(run_level)),

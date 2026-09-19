@@ -29,7 +29,7 @@ Publication headline numbers (unchanged; not re-run): Strong Campaign F1 `0.533 
 | DBSCAN eps / min_samples | **0.5 / 2** (freeze) | 0.8 / 2 | eps wrong | Freeze |
 | Campaign gate | r_k≥2, \|C_k\|≥η, c_k≥0.5 centroid cohesion | n_vehicles≥2 × attack-family cohesion | Used attack_type | Shared centroid gate; no attack_type |
 | Cohesion formula | Centroid cosine (IEEE peer); pairwise also exists | Attack-family count inverse | Wrong | `compute_cluster_behavioral_cohesion` |
-| γ / η / β | Freeze: min_vehicles=2, cohesion=0.5; η symbol **unmapped** | N/A | Greek mapping unrecovered | γ:=min_vehicles=2; β:=0.5; η:=dbscan_min_samples=2 (documented) |
+| γ / η / β | Freeze: min_vehicles=2, cohesion=0.5; η **UNRECOVERABLE** | N/A | Greek η unmapped; PR #24 wrongly used dbscan_min_samples | Decouple: η=`min_campaign_cluster_size` required explicitly; γ/β candidate freeze keys only |
 | Fragment merge | freeze threshold 0.85 | None | Missing | Embedding-centroid merge ≥0.85 |
 | Matching (P7/P8) | **UNRECOVERED** (`extract_run_metrics` missing) | Best cluster vehicle overlap | Unknown vs publication | Ablation peer Jaccard≥0.5 + STOP note |
 | Seeds | 11,23,37,41,53,67,71,83,97,101 | Same list | None | Preserve |
@@ -63,14 +63,15 @@ Publication headline numbers (unchanged; not re-run): Strong Campaign F1 `0.533 
 | k_same | 2 | FREEZE YAML |
 | k_cross | 5 | FREEZE YAML |
 | DBSCAN eps / min_samples | 0.5 / 2 | FREEZE YAML |
-| min_vehicles (γ) | 2 | FREEZE `minimum_distinct_vehicles` |
-| cohesion β | 0.5 | FREEZE `minimum_campaign_cohesion` |
-| fragment threshold | 0.85 | FREEZE |
+| min_vehicles (γ candidate) | 2 | FREEZE `minimum_distinct_vehicles` (symbol γ UNRECOVERABLE) |
+| cohesion β candidate | 0.5 | FREEZE `minimum_campaign_cohesion` (β labeled in ablation docs) |
+| fragment threshold | 0.85 | FREEZE (NOT η) |
+| cross_vehicle_support | 1 | FREEZE (NOT η; enforcement UNRECOVERABLE) |
 | epochs / lr | 30 / 0.01 | FREEZE `graphsage.*` + CODE |
 | wd / λ | 5e-4 / 0.25 | Peer CODE only (not in freeze YAML) |
 | PCA dims | 8 | Peer CODE only |
 | 9-D feature list | see GNN_FEATURE_COLUMNS | Peer CODE `final_gnn_fleet_decision_experiment` |
-| η (\|C_k\|) | 2 | Documented as freeze `dbscan_min_samples`; peer `FinalGnnFleetConfig.min_cluster_size=10` **rejected** (not in freeze) |
+| η (\|C_k\|) | **UNRECOVERABLE** | Must be supplied as `min_campaign_cluster_size`; never from `dbscan_min_samples` |
 
 ---
 
@@ -79,4 +80,5 @@ Publication headline numbers (unchanged; not re-run): Strong Campaign F1 `0.533 
 1. Exact P7/P8 campaign↔GT matcher (`run_refinement_fcgnn` / `extract_run_metrics` missing).
 2. Whether publication refinement used centroid vs pairwise cohesion (gate here uses **centroid**, matching the user-specified formula and IEEE peer).
 3. How `minimum_cross_vehicle_support=1` was enforced beyond `r_k≥2`.
-4. Real can-train-and-test dataset absent in this environment — numerical outputs below are from a **synthetic fixture** unless re-run on DTU DOI 10.11583/DTU.24805533.
+4. Historical η (`\|C_k\|`) — **UNRECOVERABLE**; see `ETA_DBSCAN_SEPARATION_AUDIT.md`. Prospective CTT requires explicit `--eta`.
+5. Real can-train-and-test dataset absent in this environment — prior numerical outputs may be from a **synthetic fixture** and/or the incorrect η:=2 coupling; do not treat them as historically justified.

@@ -78,21 +78,28 @@ class PublicationFleetConfig:
     gnn_train_ratio: float = 0.7
     gnn_val_ratio: float = 0.15
 
-    # Clustering (FREEZE eps/min_samples; peer CODE for PCA/metric)
+    # Clustering (FREEZE eps/min_samples; peer CODE for PCA/metric).
+    # DBSCAN min_samples controls density/core-point formation ONLY.
+    # It must NEVER be read as the campaign-gate η (|C_k| threshold).
     dbscan_eps: float = 0.5
     dbscan_min_samples: int = 2
     dbscan_pca_components: int = 8  # peer CODE; not in freeze YAML
     max_clustering_samples: int = 20000
 
-    # Campaign gate (FREEZE). η for |C_k|: peer campaign_detection maps
-    # min_cluster_size to dbscan_min_samples when wiring HDBSCAN; freeze has no
-    # separate cluster-size key, so η := dbscan_min_samples (=2).
-    minimum_distinct_vehicles: int = 2  # γ (named freeze key)
-    minimum_cluster_size: int = 2  # η := freeze dbscan_min_samples
-    minimum_cross_vehicle_support: int = 1  # freeze key; enforced as r_k>=2 already covers
-    minimum_campaign_cohesion: float = 0.5  # β
+    # Campaign gate — independent of DBSCAN.
+    # Freeze keys (VERIFIED_FROM_ARTIFACT): minimum_distinct_vehicles,
+    # minimum_cross_vehicle_support, minimum_campaign_cohesion, fragment_*.
+    # Paper symbols γ/η/β are NOT assigned in balanced freeze artifacts
+    # (PR #25); β→cohesion is labeled only in later ablation docs.
+    minimum_distinct_vehicles: int = 2  # freeze key (candidate γ — symbol UNRECOVERABLE)
+    minimum_cross_vehicle_support: int = 1  # freeze key; NOT η
+    minimum_campaign_cohesion: float = 0.5  # freeze key (candidate β — ablation-labeled)
+    # η = post-clustering |C_k| minimum. Historical P7/P8 value UNRECOVERABLE.
+    # Must be supplied explicitly before the campaign gate runs; default None
+    # prevents silent coupling to dbscan_min_samples.
+    min_campaign_cluster_size: int | None = None
     fragment_consolidation_enabled: bool = True
-    fragment_centroid_threshold: float = 0.85
+    fragment_centroid_threshold: float = 0.85  # fragment merge; NOT η
 
     seed: int = 42
     master_config_hash: str = PUBLICATION_MASTER_CONFIG_HASH
@@ -103,6 +110,20 @@ class PublicationFleetConfig:
     def config_hash(self) -> str:
         payload = json.dumps(self.to_dict(), sort_keys=True, default=str)
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+    def require_min_campaign_cluster_size(self) -> int:
+        """Return η. Raises if unset — never falls back to dbscan_min_samples."""
+        if self.min_campaign_cluster_size is None:
+            raise ValueError(
+                "min_campaign_cluster_size (η, post-clustering |C_k| threshold) must be "
+                "supplied explicitly. It is independent of dbscan_min_samples and has no "
+                "recovered historical P7/P8 value (see PR #25 / ETA_DBSCAN_SEPARATION_AUDIT)."
+            )
+        if int(self.min_campaign_cluster_size) < 1:
+            raise ValueError(
+                f"min_campaign_cluster_size must be >= 1, got {self.min_campaign_cluster_size}"
+            )
+        return int(self.min_campaign_cluster_size)
 
 
 @dataclass
@@ -323,6 +344,22 @@ def _merge_fragment_campaigns(
     return out, new_labels
 
 
+def _cluster_qualifies_campaign(
+    *,
+    size: int,
+    n_vehicles: int,
+    cohesion: float,
+    cfg: PublicationFleetConfig,
+    eta: int,
+) -> bool:
+    """Post-clustering campaign gate only (no labels / attack_type / GT membership)."""
+    return bool(
+        size >= eta
+        and n_vehicles >= cfg.minimum_distinct_vehicles
+        and cohesion >= cfg.minimum_campaign_cohesion
+    )
+
+
 def cluster_and_gate_campaigns(
     embeddings: np.ndarray,
     meta: pd.DataFrame,
@@ -330,12 +367,16 @@ def cluster_and_gate_campaigns(
     behavior_features: np.ndarray,
     cfg: PublicationFleetConfig,
 ) -> tuple[np.ndarray, pd.DataFrame]:
-    """DBSCAN (StandardScaler→PCA→euclidean) + centroid cohesion campaign gate."""
+    """DBSCAN first (uses dbscan_*), then campaign gate (uses η / vehicles / cohesion)."""
+    # η resolved here — never derived from cfg.dbscan_min_samples.
+    eta = cfg.require_min_campaign_cluster_size()
+
     meta = meta.reset_index(drop=True)
     if "vehicle_model" not in meta.columns:
         meta = meta.copy()
         meta["vehicle_model"] = meta.get("vehicle_token", meta.get("vehicle_id", "V"))
 
+    # Stage 1: clustering (DBSCAN density parameters only).
     fit_idx = subsample_indices(meta, cfg.max_clustering_samples, seed=cfg.seed)
     fit_labels, projector = run_dbscan(
         embeddings[fit_idx],
@@ -348,6 +389,7 @@ def cluster_and_gate_campaigns(
         embeddings, fit_labels, embeddings[fit_idx], projector, eps=cfg.dbscan_eps
     )
 
+    # Stage 2: post-clustering campaign gate (η / γ-candidate / β-candidate).
     rows: list[dict[str, Any]] = []
     for cid in sorted({int(c) for c in np.unique(labels)}):
         if cid == -1:
@@ -364,10 +406,8 @@ def cluster_and_gate_campaigns(
             dom_ratio = float((meta.loc[mask, "attack_type"] == dom).mean())
         else:
             dom, dom_ratio = "unknown", 0.0
-        qualifies = bool(
-            size >= cfg.minimum_cluster_size
-            and n_veh >= cfg.minimum_distinct_vehicles
-            and cohesion >= cfg.minimum_campaign_cohesion
+        qualifies = _cluster_qualifies_campaign(
+            size=size, n_vehicles=n_veh, cohesion=cohesion, cfg=cfg, eta=eta
         )
         rows.append(
             {
@@ -378,6 +418,8 @@ def cluster_and_gate_campaigns(
                 "mean_campaign_score": round(float(campaign_scores[mask].mean()), 4),
                 "eval_dominant_attack_type": dom,
                 "eval_attack_type_purity": round(dom_ratio, 4),
+                "gate_eta_min_campaign_cluster_size": eta,
+                "gate_dbscan_min_samples": cfg.dbscan_min_samples,
                 "is_qualifying_campaign_cluster": qualifies,
             }
         )
@@ -399,10 +441,8 @@ def cluster_and_gate_campaigns(
                 cohesion = compute_cluster_behavioral_cohesion(
                     behavior_features, mask, seed=cfg.seed + int(cid)
                 )
-                qualifies = bool(
-                    size >= cfg.minimum_cluster_size
-                    and n_veh >= cfg.minimum_distinct_vehicles
-                    and cohesion >= cfg.minimum_campaign_cohesion
+                qualifies = _cluster_qualifies_campaign(
+                    size=size, n_vehicles=n_veh, cohesion=cohesion, cfg=cfg, eta=eta
                 )
                 rebuilt.append(
                     {
@@ -411,6 +451,8 @@ def cluster_and_gate_campaigns(
                         "vehicles_in_cluster": n_veh,
                         "behavioral_cohesion": round(cohesion, 4),
                         "mean_campaign_score": round(float(campaign_scores[mask].mean()), 4),
+                        "gate_eta_min_campaign_cluster_size": eta,
+                        "gate_dbscan_min_samples": cfg.dbscan_min_samples,
                         "is_qualifying_campaign_cluster": qualifies,
                     }
                 )
@@ -446,6 +488,8 @@ def run_publication_fleet_pipeline(
 ) -> FleetRunArtifacts:
     """End-to-end shared fleet path: graph → GraphSAGE structure train → DBSCAN → gate."""
     cfg = cfg or PublicationFleetConfig()
+    # Fail fast before GraphSAGE: η is independent of dbscan_min_samples and must be set.
+    cfg.require_min_campaign_cluster_size()
     data, meta, behavior_X, cols, graph_stats = build_publication_fleet_graph(
         descriptors, cfg, fleet_scaler_provenance=fleet_scaler_provenance
     )
