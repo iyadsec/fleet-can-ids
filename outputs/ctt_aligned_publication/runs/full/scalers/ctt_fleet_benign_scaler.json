@@ -1,0 +1,40 @@
+{
+  "scaler_id": "fleet_benign_9c7b7d74b967",
+  "training_split": "train",
+  "source_vehicle_token": "global",
+  "fitted_feature_names": [
+    "anomaly_score",
+    "frame_count",
+    "message_rate",
+    "burstiness",
+    "mean_inter_arrival_time",
+    "std_inter_arrival_time",
+    "can_id_entropy",
+    "most_common_can_id_ratio",
+    "payload_entropy"
+  ],
+  "fit_row_count": 200,
+  "means": {
+    "anomaly_score": 0.19682926367601805,
+    "frame_count": 100.0,
+    "message_rate": 100.0,
+    "burstiness": 0.499891216102085,
+    "mean_inter_arrival_time": 0.0010002995050040337,
+    "std_inter_arrival_time": 0.0005000000000000001,
+    "can_id_entropy": 2.50075522527876,
+    "most_common_can_id_ratio": 0.4,
+    "payload_entropy": 2.079430827645754
+  },
+  "stds": {
+    "anomaly_score": 0.05251287620462929,
+    "frame_count": 1.0,
+    "message_rate": 1.0,
+    "burstiness": 0.004551541743026375,
+    "mean_inter_arrival_time": 9.104432268666833e-06,
+    "std_inter_arrival_time": 1.0,
+    "can_id_entropy": 0.009789687852384814,
+    "most_common_can_id_ratio": 1.0,
+    "payload_entropy": 5.729439569672825e-06
+  },
+  "attack_labels_used": false
+}

@@ -1,175 +1,178 @@
-"""Fleet campaign decision via GraphSAGE embeddings and DBSCAN."""
+"""Fleet campaign decision via shared publication FLEET-GUARD path."""
 
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from sklearn.cluster import DBSCAN
-from torch_geometric.data import Data
-from torch_geometric.nn import SAGEConv
 
 from src.ctt.constants import OUTPUT_ROOT
-from src.ctt.descriptors import load_descriptor_vectors
+from src.ctt.fleet_graph import fit_or_load_ctt_scaler, resolve_ctt_fleet_config
 from src.ctt.utils import ensure_dir, safe_div, write_markdown
+from src.evaluation.publication_fleet_core import (
+    FleetRunArtifacts,
+    PublicationFleetConfig,
+    match_predicted_to_gt_campaigns_jaccard,
+    run_publication_fleet_pipeline,
+)
+from src.experiments.local_descriptor_normalisation import FleetScalerProvenance
 
 
-class FleetGraphSAGE(nn.Module):
-    def __init__(self, in_dim: int, hidden_dim: int = 64, out_dim: int = 32):
-        super().__init__()
-        self.conv1 = SAGEConv(in_dim, hidden_dim)
-        self.conv2 = SAGEConv(hidden_dim, out_dim)
+def run_fleet_campaign_inference(
+    desc_df: pd.DataFrame,
+    *,
+    scaler: FleetScalerProvenance | None = None,
+    cfg: PublicationFleetConfig | None = None,
+    seed: int = 42,
+) -> FleetRunArtifacts:
+    """
+    Model inference only — no GT attack labels/types/campaign membership as inputs.
 
-    def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
-        x = F.relu(self.conv1(x, edge_index))
-        return self.conv2(x, edge_index)
-
-
-def build_pyg_data(desc_df: pd.DataFrame, edge_df: pd.DataFrame) -> Data:
-    X, event_ids = load_descriptor_vectors(desc_df)
-    X = np.nan_to_num(X, nan=0.0)
-    id_to_idx = {eid: i for i, eid in enumerate(event_ids)}
-
-    src, dst = [], []
-    for _, e in edge_df.iterrows():
-        if e["source"] in id_to_idx and e["target"] in id_to_idx:
-            src.append(id_to_idx[e["source"]])
-            dst.append(id_to_idx[e["target"]])
-            src.append(id_to_idx[e["target"]])
-            dst.append(id_to_idx[e["source"]])
-
-    edge_index = torch.tensor([src, dst], dtype=torch.long) if src else torch.zeros((2, 0), dtype=torch.long)
-    data = Data(x=torch.tensor(X, dtype=torch.float32), edge_index=edge_index)
-    data.event_ids = event_ids
-    data.vehicle_ids = desc_df["vehicle_id"].tolist()
-    data.labels = desc_df["label"].tolist()
-    data.attack_types = desc_df["attack_type"].tolist()
-    return data
-
-
-def train_graphsage(data: Data, epochs: int = 50, lr: float = 1e-3) -> FleetGraphSAGE:
-    """Graph-level node-feature reconstruction (no attack labels; not vehicle-level IF)."""
-    model = FleetGraphSAGE(data.x.size(1))
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-    decoder = nn.Linear(32, data.x.size(1))
-
-    model.train()
-    for _ in range(epochs):
-        optimizer.zero_grad()
-        z = model(data.x, data.edge_index)
-        recon = decoder(z)
-        loss = F.mse_loss(recon, data.x)
-        loss.backward()
-        optimizer.step()
-    return model
-
-
-def get_embeddings(model: FleetGraphSAGE, data: Data) -> np.ndarray:
-    model.eval()
-    with torch.no_grad():
-        z = model(data.x, data.edge_index)
-    return z.numpy()
-
-
-def dbscan_campaign_decision(
-    embeddings: np.ndarray,
-    event_ids: list[str],
-    vehicle_ids: list[str],
-    attack_types: list[str],
-    labels: list[int],
-    eps: float = 0.8,
-    min_samples: int = 2,
-) -> pd.DataFrame:
-    """Cluster embeddings and decide campaigns."""
-    clustering = DBSCAN(eps=eps, min_samples=min_samples, metric="cosine")
-    cluster_labels = clustering.fit_predict(embeddings)
-
-    rows = []
-    for i, eid in enumerate(event_ids):
-        rows.append(
-            {
-                "event_id": eid,
-                "vehicle_id": vehicle_ids[i],
-                "attack_type": attack_types[i],
-                "label": labels[i],
-                "cluster_id": int(cluster_labels[i]),
-                "is_noise": cluster_labels[i] == -1,
-            }
-        )
-    return pd.DataFrame(rows)
+    Attack-type columns may be present on ``desc_df`` for post-hoc evaluation
+    fields inside the shared cluster summary, but they are not used by the gate.
+    """
+    cfg = cfg or resolve_ctt_fleet_config(seed=seed)
+    if seed != cfg.seed:
+        cfg = PublicationFleetConfig(**{**cfg.to_dict(), "seed": seed})
+    scaler = scaler or fit_or_load_ctt_scaler(desc_df)
+    return run_publication_fleet_pipeline(
+        desc_df, fleet_scaler_provenance=scaler, cfg=cfg
+    )
 
 
 def evaluate_campaign(
-    cluster_df: pd.DataFrame,
+    artifacts: FleetRunArtifacts,
     scenario_type: str,
+    *,
     ground_truth_campaign_vehicles: set[str] | None = None,
-    ground_truth_attack_family: str | None = None,
-) -> dict:
-    """Evaluate campaign detection for a scenario."""
-    clusters = cluster_df[cluster_df["cluster_id"] >= 0].groupby("cluster_id")
-    campaign_detected = False
-    best_cluster = -1
-    best_score = 0.0
+    ground_truth_campaigns: list[set[str]] | None = None,
+) -> dict[str, Any]:
+    """
+    Post-hoc evaluation only.
 
-    for cid, group in clusters:
-        vehicles = set(group["vehicle_id"].unique())
-        n_vehicles = len(vehicles)
-        if n_vehicles < 2:
-            continue
-        attack_families = set(group["attack_type"].unique()) - {"benign"}
-        cohesion = 1.0 / len(attack_families) if attack_families else 0.0
-        score = n_vehicles * cohesion
-        if score > best_score:
-            best_score = score
-            best_cluster = cid
-            campaign_detected = True
+    Matching rule (documented; P7/P8 publication matcher unrecovered):
+    greedy Jaccard ≥ 0.5 between predicted qualifying campaign vehicle sets and
+    GT campaign vehicle sets (ablation peer). When a single GT vehicle set is
+    provided, membership metrics use that set against the best-matching cluster.
+    """
+    summary = artifacts.cluster_summary
+    decisions = artifacts.node_decisions
+    qualifying = (
+        summary[summary["is_qualifying_campaign_cluster"]]
+        if not summary.empty
+        else pd.DataFrame()
+    )
+    campaign_detected = not qualifying.empty
+
+    pred_sets: list[set[str]] = []
+    if campaign_detected and not decisions.empty:
+        for cid in qualifying["cluster_id"].astype(int):
+            members = decisions[decisions["cluster_id"] == cid]
+            veh_col = "vehicle_token" if "vehicle_token" in members.columns else "vehicle_id"
+            pred_sets.append(set(members[veh_col].astype(str)))
+
+    gt_sets = list(ground_truth_campaigns or [])
+    if ground_truth_campaign_vehicles and not gt_sets:
+        gt_sets = [set(ground_truth_campaign_vehicles)]
+
+    matches = match_predicted_to_gt_campaigns_jaccard(pred_sets, gt_sets) if gt_sets else []
+
+    # Campaign-level precision/recall over matched campaigns
+    if gt_sets:
+        tp = len(matches)
+        campaign_precision = safe_div(tp, len(pred_sets))
+        campaign_recall = safe_div(tp, len(gt_sets))
+    else:
+        campaign_precision = 0.0
+        campaign_recall = 0.0
+    campaign_f1 = safe_div(
+        2 * campaign_precision * campaign_recall,
+        campaign_precision + campaign_recall,
+    )
+
+    # Membership metrics on best match (or sole GT set)
+    membership_precision = membership_recall = membership_f1 = 0.0
+    if matches and gt_sets:
+        pi, gi, _ = matches[0]
+        detected = pred_sets[pi]
+        gt = gt_sets[gi]
+        tp_m = len(detected & gt)
+        membership_precision = safe_div(tp_m, len(detected))
+        membership_recall = safe_div(tp_m, len(gt))
+        membership_f1 = safe_div(
+            2 * membership_precision * membership_recall,
+            membership_precision + membership_recall,
+        )
+    elif ground_truth_campaign_vehicles and campaign_detected and pred_sets:
+        # Fallback: largest predicted set vs GT vehicles
+        detected = max(pred_sets, key=len)
+        gt = set(ground_truth_campaign_vehicles)
+        tp_m = len(detected & gt)
+        membership_precision = safe_div(tp_m, len(detected))
+        membership_recall = safe_div(tp_m, len(gt))
+        membership_f1 = safe_div(
+            2 * membership_precision * membership_recall,
+            membership_precision + membership_recall,
+        )
 
     false_campaign = False
     if scenario_type == "benign_fleet_control" and campaign_detected:
         false_campaign = True
     if scenario_type == "isolated_attack" and campaign_detected:
-        # Campaign with >1 vehicle is false
-        if best_cluster >= 0:
-            cv = cluster_df[cluster_df["cluster_id"] == best_cluster]["vehicle_id"].nunique()
-            false_campaign = cv > 1
+        false_campaign = any(len(s) > 1 for s in pred_sets)
 
-    precision = recall = f1 = 0.0
-    if ground_truth_campaign_vehicles and campaign_detected and best_cluster >= 0:
-        detected = set(cluster_df[cluster_df["cluster_id"] == best_cluster]["vehicle_id"])
-        tp = len(detected & ground_truth_campaign_vehicles)
-        prec = safe_div(tp, len(detected))
-        rec = safe_div(tp, len(ground_truth_campaign_vehicles))
-        precision, recall = prec, rec
-        f1 = safe_div(2 * prec * rec, prec + rec)
+    incorrect_merging = 0.0
+    if scenario_type == "unrelated_incidents" and campaign_detected:
+        # Incorrect merge if a qualifying cluster spans >1 distinct GT attack groups
+        incorrect_merging = 1.0 if any(len(s) > 1 for s in pred_sets) else 0.0
+
+    n_clusters = int(summary["cluster_id"].nunique()) if not summary.empty else 0
+    n_assigned = int((decisions["cluster_id"] >= 0).sum()) if not decisions.empty else 0
+    fragmentation = max(n_assigned - n_clusters, 0) if n_clusters else 0
 
     return {
         "scenario_type": scenario_type,
         "campaign_detected": int(campaign_detected),
         "false_campaign": int(false_campaign),
-        "campaign_precision": precision,
-        "campaign_recall": recall,
-        "campaign_f1": f1,
-        "best_cluster": best_cluster,
-        "n_clusters": int(cluster_df["cluster_id"].nunique()),
-        "fragmentation": int((cluster_df["cluster_id"] >= 0).sum() - cluster_df["cluster_id"].nunique()),
+        "incorrect_merging": float(incorrect_merging),
+        "false_campaign_rate": float(false_campaign),
+        "campaign_precision": float(campaign_precision),
+        "campaign_recall": float(campaign_recall),
+        "campaign_f1": float(campaign_f1),
+        "membership_precision": float(membership_precision),
+        "membership_recall": float(membership_recall),
+        "membership_f1": float(membership_f1),
+        "fragmentation": int(fragmentation),
+        "n_qualifying_campaigns": int(len(qualifying)),
+        "n_clusters": n_clusters,
+        "matching_rule": "greedy_jaccard_ge_0.5_ablation_peer",
+        **{f"graph_{k}": v for k, v in artifacts.graph_stats.items() if not isinstance(v, list)},
     }
 
 
 def write_fleet_transfer_policy(output_root: Path = OUTPUT_ROOT) -> None:
+    ensure_dir(output_root / "audit")
     write_markdown(
         output_root / "audit" / "fleet_model_transfer_policy.md",
         "Fleet Model Transfer Policy",
         {
-            "Decision": "Option B — Cross-dataset framework validation",
+            "Decision": (
+                "Shared publication FLEET-GUARD fleet path "
+                "(src.evaluation.publication_fleet_core) with frozen OCSLab config"
+            ),
             "Rationale": (
-                "The OCSLab frozen GraphSAGE is not directly transferred. "
-                "A reproducible GraphSAGE is trained on CTT descriptor graphs "
-                "for cross-dataset framework validation."
+                "CTT reuses the same GraphSAGE structure training, constrained-kNN graph, "
+                "StandardScaler→PCA→euclidean DBSCAN, and centroid cohesion campaign gate "
+                "as the authoritative balanced OCSLab publication experiment. "
+                "Only dataset loading and controlled scenario construction remain CTT-specific."
             ),
             "Temporal edges": "None — all edges are behavioural similarity only.",
+            "Label leakage": (
+                "Attack labels/types/campaign membership are evaluation-only; "
+                "not used as GraphSAGE inputs, training targets, clustering inputs, "
+                "or campaign-gate features."
+            ),
         },
     )
