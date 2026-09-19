@@ -1,0 +1,5 @@
+eta,status,campaign_precision,campaign_recall,campaign_f1,membership_precision,membership_recall,membership_f1,false_campaign_rate,incorrect_merging_rate,fragmentation,strong_campaign_f1,weak_campaign_f1,note
+2,NOT_RUN,,,,,,,STOP_NO_VALIDATION_SPLIT,,,,No runnable fleet validation descriptors; validation not executed
+3,NOT_RUN,,,,,,,STOP_NO_VALIDATION_SPLIT,,,,No runnable fleet validation descriptors; validation not executed
+5,NOT_RUN,,,,,,,STOP_NO_VALIDATION_SPLIT,,,,No runnable fleet validation descriptors; validation not executed
+10,NOT_RUN,,,,,,,STOP_NO_VALIDATION_SPLIT,,,,No runnable fleet validation descriptors; validation not executed

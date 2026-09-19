@@ -318,3 +318,105 @@ def test_cluster_and_gate_source_documents_stage_order():
     assert "run_dbscan" in src
     assert src.index("run_dbscan") < src.index("_cluster_qualifies_campaign")
     assert "dbscan_min_samples" not in inspect.getsource(_cluster_qualifies_campaign)
+
+
+def test_ck_counts_nodes_rk_counts_vehicles(monkeypatch):
+    """|C_k| is node/descriptor count; r_k is distinct-vehicle count — independent."""
+    # 10 nodes, only 2 vehicles → size=10, n_vehicles=2
+    embeddings = np.ones((10, 3), dtype=np.float64)
+    behavior = embeddings.copy()
+    meta = pd.DataFrame(
+        {
+            "vehicle_model": ["VA"] * 5 + ["VB"] * 5,
+            "attack_type": ["ignored"] * 10,
+            "label": [1] * 10,
+        }
+    )
+    scores = np.ones(10)
+
+    import src.evaluation.publication_fleet_core as core
+
+    monkeypatch.setattr(
+        core,
+        "run_dbscan",
+        lambda X, **kw: (np.zeros(len(X), dtype=int), None),
+    )
+    monkeypatch.setattr(
+        core,
+        "extend_dbscan_labels",
+        lambda *a, **k: np.zeros(10, dtype=int),
+    )
+
+    # η=8, γ=2, β=0.5 → qualifies on size=10, vehicles=2
+    cfg = PublicationFleetConfig(
+        min_campaign_cluster_size=8,
+        minimum_distinct_vehicles=2,
+        minimum_campaign_cohesion=0.5,
+        fragment_consolidation_enabled=False,
+    )
+    _, summary = cluster_and_gate_campaigns(embeddings, meta, scores, behavior, cfg)
+    assert int(summary.iloc[0]["cluster_size"]) == 10  # |C_k|
+    assert int(summary.iloc[0]["vehicles_in_cluster"]) == 2  # r_k
+    assert bool(summary.iloc[0]["is_qualifying_campaign_cluster"]) is True
+
+    # Same geometry fails η=11 even though r_k still 2
+    cfg_eta = PublicationFleetConfig(
+        min_campaign_cluster_size=11,
+        minimum_distinct_vehicles=2,
+        minimum_campaign_cohesion=0.5,
+        fragment_consolidation_enabled=False,
+    )
+    _, summary_eta = cluster_and_gate_campaigns(embeddings, meta, scores, behavior, cfg_eta)
+    assert int(summary_eta.iloc[0]["cluster_size"]) == 10
+    assert int(summary_eta.iloc[0]["vehicles_in_cluster"]) == 2
+    assert bool(summary_eta.iloc[0]["is_qualifying_campaign_cluster"]) is False
+
+    # Same geometry fails γ=3 even though |C_k|=10 passes η=8
+    cfg_g = PublicationFleetConfig(
+        min_campaign_cluster_size=8,
+        minimum_distinct_vehicles=3,
+        minimum_campaign_cohesion=0.5,
+        fragment_consolidation_enabled=False,
+    )
+    _, summary_g = cluster_and_gate_campaigns(embeddings, meta, scores, behavior, cfg_g)
+    assert int(summary_g.iloc[0]["cluster_size"]) == 10
+    assert int(summary_g.iloc[0]["vehicles_in_cluster"]) == 2
+    assert bool(summary_g.iloc[0]["is_qualifying_campaign_cluster"]) is False
+
+
+def test_changing_eta_does_not_change_dbscan_labels(monkeypatch):
+    """Changing η must not change DBSCAN cluster labels (eta is post-clustering only)."""
+    embeddings = np.vstack([np.zeros((6, 2)), np.ones((6, 2)) * 5.0])
+    behavior = embeddings.copy()
+    meta = pd.DataFrame({"vehicle_model": [f"V{i % 3}" for i in range(12)]})
+    scores = np.ones(12)
+
+    import src.evaluation.publication_fleet_core as core
+
+    fixed_labels = np.array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1], dtype=int)
+
+    def fake_dbscan(X, *, eps, min_samples, pca_components, random_state):
+        return fixed_labels.copy(), None
+
+    def fake_extend(embeddings, fit_labels, fit_emb, projector, *, eps):
+        return fit_labels.copy()
+
+    monkeypatch.setattr(core, "run_dbscan", fake_dbscan)
+    monkeypatch.setattr(core, "extend_dbscan_labels", fake_extend)
+
+    labels_a, _ = cluster_and_gate_campaigns(
+        embeddings,
+        meta,
+        scores,
+        behavior,
+        PublicationFleetConfig(min_campaign_cluster_size=2, fragment_consolidation_enabled=False),
+    )
+    labels_b, _ = cluster_and_gate_campaigns(
+        embeddings,
+        meta,
+        scores,
+        behavior,
+        PublicationFleetConfig(min_campaign_cluster_size=10, fragment_consolidation_enabled=False),
+    )
+    assert np.array_equal(labels_a, labels_b)
+    assert np.array_equal(labels_a, fixed_labels)

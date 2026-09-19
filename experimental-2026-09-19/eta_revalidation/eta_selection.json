@@ -1,0 +1,19 @@
+{
+  "status": "NOT_SELECTED",
+  "verdict": "STOP_NO_VALIDATION_SPLIT",
+  "candidate_values": [2, 3, 5, 10],
+  "candidate_set_declared_before_evaluation": true,
+  "candidate_set_file": "eta_candidate_set_predeclared.json",
+  "validation_runs": [],
+  "selection_rule": {
+    "1_exclude_worsened_non_campaign_false_detections": true,
+    "2_prefer_mean_strong_weak_campaign_f1": true,
+    "3_tie_break_smaller_eta": true,
+    "applied": false
+  },
+  "selected_eta": null,
+  "selection_reason": "No runnable primary OCSLab fleet-level validation split is available in this repository/environment. Historical validation_manifest.csv is metadata-only (missing descriptors/event payloads). build_mixed_validation_suite is never committed. Final test partition was not substituted. CTT was not used.",
+  "seeds": null,
+  "frozen_fleet_parameters_file": "frozen_fleet_configuration.json",
+  "concurrent_blocker": "STOP_METRIC_IMPLEMENTATION_UNRECOVERED — extract_run_metrics / P7-P8 matcher never committed; ablation Jaccard>=0.5 not authorised as publication matcher."
+}
