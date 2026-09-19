@@ -8,9 +8,9 @@ Frozen **configuration values** for DBSCAN (`eps=0.5`, `min_samples=2`) and the 
 
 ## What remains UNRECOVERABLE
 
-1. **`extract_run_metrics` / `safety_row`** (`final_shared_configuration.metrics`) — never committed  
-2. **`run_refinement_fcgnn`** (`coordinated_campaign_refinement.refinement_pipeline`) — never committed  
-3. **`_run_single_test`** and base **`generate_tables`** — never committed  
+1. **`extract_run_metrics` / `safety_row`** (`final_shared_configuration.metrics`) — never committed (`extract_run_metrics` is imported but unused in recovered balanced `runner.py`; only `safety_row` is called there)  
+2. **`run_refinement_fcgnn`** (`coordinated_campaign_refinement.refinement_pipeline`) — never committed (imported unused in balanced runner; likely invoked from missing `_run_single_test`)  
+3. **`_run_single_test`** and base **`generate_tables`** — never committed (this is the live call that returns P7/P8 run rows)  
 4. **Exact predicted↔GT cluster matcher** (Jaccard / IoU / Hungarian / overlap threshold) — not proven; ablation Jaccard≥0.5 **not** linked to P7/P8  
 5. **η = minimum candidate campaign cluster size `|C_k|`** — no freeze key; **must not** use `dbscan_min_samples`  
 6. **Which cohesion formula** (centroid vs pairwise) the missing refinement applied  

@@ -37,6 +37,19 @@ Named missing metric emitter (import site only):
 
 **Grade:** `VERIFIED_FROM_SOURCE` that these are the intended emitters; **`UNRECOVERABLE`** as git blobs (confirmed `MISSING_MODULES.md`, `RECOVERY_REPORT.md`, full-history search).
 
+### Call-site nuance in recovered balanced `runner.py` (`VERIFIED_FROM_SOURCE`)
+
+| Symbol | In balanced `runner.py` |
+|--------|-------------------------|
+| `extract_run_metrics` | **Imported only** — never invoked in this file |
+| `run_refinement_fcgnn` | **Imported only** — never invoked in this file |
+| `safety_row` | **Called** when writing `safety_metrics.csv` |
+| `_run_single_test` | **Called** per run; returns the metric dict rows that become `campaign_metrics.csv` |
+
+Therefore the field-computing logic almost certainly lived inside missing `_run_single_test` (and/or helpers it called such as `extract_run_metrics` / `run_refinement_fcgnn`), not in the recovered balanced runner body. Confirmed independently by [Git history metric recovery](bc-2ec49c99-b4a9-57c1-8535-d83c46bfc54b) and [Artifact metric field trace](bc-2305f730-4cad-5c80-bd40-122fbab3ceb7).
+
+Pickaxe of unique frozen columns (`fragments_per_true_campaign`, `membership_purity`, `attacked_vehicles_correctly_included`, …) finds **no committed `.py` producer** — only CSV artifacts.
+
 ---
 
 ## 2. How P7/P8 relate to `campaign_metrics.csv`
