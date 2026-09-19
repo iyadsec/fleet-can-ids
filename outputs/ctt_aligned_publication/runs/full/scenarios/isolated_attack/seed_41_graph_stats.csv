@@ -1,0 +1,2 @@
+num_nodes,num_edges,same_vehicle_edges,cross_vehicle_edges,similarity_threshold,k_same,k_cross,edge_weights_in_sageconv,gnn_input_dim,gnn_feature_names
+30,48,48,0,0.95,2,5,False,9,"['anomaly_score', 'message_rate', 'frame_count', 'burstiness', 'mean_inter_arrival_time', 'std_inter_arrival_time', 'can_id_entropy', 'most_common_can_id_ratio', 'payload_entropy']"

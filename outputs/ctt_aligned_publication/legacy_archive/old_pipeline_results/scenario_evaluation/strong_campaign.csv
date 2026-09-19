@@ -1,0 +1,2 @@
+scenario_type,campaign_detected,false_campaign,campaign_precision,campaign_recall,campaign_f1,best_cluster,n_clusters,fragmentation,scenario,seed
+strong_campaign,0,0,0.0,0.0,0.0,-1,1,24,strong_campaign,11

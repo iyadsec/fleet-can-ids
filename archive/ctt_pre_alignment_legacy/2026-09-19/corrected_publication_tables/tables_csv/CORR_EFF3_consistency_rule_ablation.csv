@@ -1,0 +1,3 @@
+rule_state,unrelated_incorrect_merge_rate,benign_false_campaign,isolated_false_campaign,strong_campaign_f1,weak_campaign_f1,mean_campaign_f1,interpretation
+CTT without campaign consistency rule,1.0,0.075,1.0,1.0,1.0,1.0,Before rule: unrelated incidents incorrectly merged (rate 1.0); some isolated false campaigns.
+CTT with campaign consistency rule,0.0,0.0,0.0,1.0,1.0,1.0,After rule: unrelated merge 1.0→0.0; strong/weak campaign F1 remain 1.0; benign/isolated false campaigns 0.

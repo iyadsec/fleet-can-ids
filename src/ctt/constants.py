@@ -151,6 +151,10 @@ SCENARIO_SEEDS = [11, 23, 37, 41, 53, 67, 71, 83, 97, 101]
 WEAK_THRESHOLD_PERCENTILE = 90.0
 STRONG_THRESHOLD_PERCENTILE = 97.5
 
-GRAPH_SIMILARITY_THRESHOLD = 0.85
-GRAPH_KNN_CAP = 10
+# Frozen balanced OCSLab publication fleet graph parameters
+# (final_shared_fleet_configuration.yaml / master hash 72dbfc17…)
+GRAPH_SIMILARITY_THRESHOLD = 0.95
+GRAPH_SAME_VEHICLE_CAP = 2
 GRAPH_CROSS_VEHICLE_CAP = 5
+# Legacy alias retained for callers that still pass a single knn cap argument.
+GRAPH_KNN_CAP = GRAPH_SAME_VEHICLE_CAP

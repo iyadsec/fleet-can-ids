@@ -1,0 +1,6 @@
+scenario,n_seeds,campaign_f1_mean,campaign_precision_mean,campaign_recall_mean,membership_f1_mean,false_campaign_rate,incorrect_merging_mean
+benign_fleet_control,10,0.0,0.0,0.0,0.0,0.0,0.0
+isolated_attack,10,0.0,0.0,0.0,0.0,0.0,0.0
+strong_campaign,10,1.0,1.0,1.0,1.0,0.0,0.0
+unrelated_incidents,10,0.0,0.0,0.0,0.0,0.0,1.0
+weak_campaign,10,1.0,1.0,1.0,0.9666666666666666,0.0,0.0

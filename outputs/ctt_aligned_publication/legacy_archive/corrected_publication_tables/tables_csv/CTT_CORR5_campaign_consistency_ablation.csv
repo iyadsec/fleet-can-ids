@@ -1,0 +1,201 @@
+set_id,seed,scenario,before_incorrect_merge,after_incorrect_merge,before_campaign_f1,after_campaign_f1,before_false_campaign,after_false_campaign
+set_01,11,Benign-Fleet Control,0.0,0.0,0.0,0.0,1,0
+set_01,11,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_01,11,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_01,11,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_01,11,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_01,23,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_01,23,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_01,23,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_01,23,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_01,23,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_01,37,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_01,37,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_01,37,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_01,37,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_01,37,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_01,41,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_01,41,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_01,41,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_01,41,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_01,41,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_01,53,Benign-Fleet Control,0.0,0.0,0.0,0.0,1,0
+set_01,53,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_01,53,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_01,53,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_01,53,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_01,67,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_01,67,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_01,67,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_01,67,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_01,67,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_01,71,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_01,71,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_01,71,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_01,71,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_01,71,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_01,83,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_01,83,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_01,83,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_01,83,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_01,83,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_01,97,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_01,97,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_01,97,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_01,97,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_01,97,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_01,101,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_01,101,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_01,101,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_01,101,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_01,101,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_02,11,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_02,11,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_02,11,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_02,11,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_02,11,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_02,23,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_02,23,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_02,23,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_02,23,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_02,23,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_02,37,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_02,37,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_02,37,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_02,37,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_02,37,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_02,41,Benign-Fleet Control,0.0,0.0,0.0,0.0,1,0
+set_02,41,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_02,41,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_02,41,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_02,41,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_02,53,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_02,53,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_02,53,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_02,53,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_02,53,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_02,67,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_02,67,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_02,67,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_02,67,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_02,67,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_02,71,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_02,71,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_02,71,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_02,71,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_02,71,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_02,83,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_02,83,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_02,83,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_02,83,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_02,83,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_02,97,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_02,97,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_02,97,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_02,97,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_02,97,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_02,101,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_02,101,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_02,101,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_02,101,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_02,101,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_03,11,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_03,11,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_03,11,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_03,11,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_03,11,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_03,23,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_03,23,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_03,23,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_03,23,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_03,23,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_03,37,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_03,37,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_03,37,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_03,37,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_03,37,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_03,41,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_03,41,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_03,41,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_03,41,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_03,41,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_03,53,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_03,53,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_03,53,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_03,53,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_03,53,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_03,67,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_03,67,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_03,67,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_03,67,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_03,67,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_03,71,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_03,71,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_03,71,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_03,71,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_03,71,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_03,83,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_03,83,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_03,83,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_03,83,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_03,83,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_03,97,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_03,97,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_03,97,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_03,97,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_03,97,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_03,101,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_03,101,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_03,101,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_03,101,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_03,101,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_04,11,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_04,11,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_04,11,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_04,11,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_04,11,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_04,23,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_04,23,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_04,23,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_04,23,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_04,23,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_04,37,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_04,37,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_04,37,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_04,37,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_04,37,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_04,41,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_04,41,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_04,41,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_04,41,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_04,41,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_04,53,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_04,53,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_04,53,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_04,53,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_04,53,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_04,67,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_04,67,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_04,67,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_04,67,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_04,67,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_04,71,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_04,71,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_04,71,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_04,71,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_04,71,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_04,83,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_04,83,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_04,83,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_04,83,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_04,83,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_04,97,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_04,97,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_04,97,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_04,97,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_04,97,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_04,101,Benign-Fleet Control,0.0,0.0,0.0,0.0,0,0
+set_04,101,Isolated Single-Vehicle Attack,0.0,0.0,0.0,0.0,1,0
+set_04,101,Unrelated Multi-Vehicle Incidents,1.0,0.0,0.0,0.0,0,0
+set_04,101,Strong Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
+set_04,101,Weak Behaviourally Related Campaign,0.0,0.0,1.0,1.0,0,0
