@@ -1,0 +1,118 @@
+{
+  "checks": [
+    {
+      "name": "P7_aggregation_reproduces_table",
+      "pass": true,
+      "f1_table": [
+        0.5333333333333333,
+        0.7333333333333333,
+        1.0
+      ],
+      "f1_from_campaign_metrics_mean": [
+        0.5333333333333333,
+        0.7333333333333333,
+        1.0
+      ]
+    },
+    {
+      "name": "P8_aggregation_reproduces_table",
+      "pass": true,
+      "f1_table": [
+        0.0666666666666666,
+        0.5,
+        0.7166666666666666
+      ],
+      "f1_from_campaign_metrics_mean": [
+        0.06666666666666667,
+        0.5,
+        0.7166666666666666
+      ]
+    },
+    {
+      "name": "artifact_algebraic_identities_all_hold",
+      "pass": true,
+      "n_strong_weak_rows": 60
+    },
+    {
+      "name": "unrelated_incorrect_merging_mean_is_0_4",
+      "pass": true,
+      "mean": 0.4,
+      "per_seed": [
+        {
+          "seed": 11,
+          "incorrect_merging_rate": 0.0,
+          "n_predicted_campaign_clusters": 0
+        },
+        {
+          "seed": 23,
+          "incorrect_merging_rate": 1.0,
+          "n_predicted_campaign_clusters": 1
+        },
+        {
+          "seed": 37,
+          "incorrect_merging_rate": 0.0,
+          "n_predicted_campaign_clusters": 0
+        },
+        {
+          "seed": 41,
+          "incorrect_merging_rate": 1.0,
+          "n_predicted_campaign_clusters": 1
+        },
+        {
+          "seed": 53,
+          "incorrect_merging_rate": 0.0,
+          "n_predicted_campaign_clusters": 0
+        },
+        {
+          "seed": 67,
+          "incorrect_merging_rate": 0.0,
+          "n_predicted_campaign_clusters": 0
+        },
+        {
+          "seed": 71,
+          "incorrect_merging_rate": 1.0,
+          "n_predicted_campaign_clusters": 1
+        },
+        {
+          "seed": 83,
+          "incorrect_merging_rate": 0.0,
+          "n_predicted_campaign_clusters": 0
+        },
+        {
+          "seed": 97,
+          "incorrect_merging_rate": 1.0,
+          "n_predicted_campaign_clusters": 1
+        },
+        {
+          "seed": 101,
+          "incorrect_merging_rate": 0.0,
+          "n_predicted_campaign_clusters": 0
+        }
+      ],
+      "note": "Rate = mean over 10 seeds of binary incorrect_merging; equals P6 0.400"
+    }
+  ],
+  "status": "pass",
+  "artifact_algebraic_identities": {
+    "precision_eq_min_npred_ntrue_over_npred": true,
+    "recall_eq_min_npred_ntrue_over_ntrue": true,
+    "fp_eq_max_npred_minus_ntrue_0": true,
+    "fn_eq_max_ntrue_minus_npred_0": true,
+    "detection_rate_eq_recall": true,
+    "completeness_eq_recall": true,
+    "membership_purity_eq_membership_precision": true,
+    "membership_recall_eq_attacked_ok_over_true_size": true,
+    "membership_precision_eq_attacked_ok_over_pred_size_when_pred_gt0": true,
+    "pred_size_eq_attacked_ok_plus_benign": true,
+    "true_size_eq_attacked_ok_plus_missed": true,
+    "frag_per_eq_n_predicted": true,
+    "frag_rate_eq_npred_gt_ntrue": true,
+    "f1_eq_2pr_over_p_plus_r": true,
+    "matched_implies_attacked_ok_gt0": true
+  },
+  "full_pipeline_reproduction": {
+    "attempted": false,
+    "reason": "extract_run_metrics / run_refinement_fcgnn / SharedFleetConfiguration / _run_single_test never committed; cannot recompute fields from descriptors",
+    "evidence_grade": "UNRECOVERABLE"
+  }
+}
