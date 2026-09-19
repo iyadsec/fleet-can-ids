@@ -2,7 +2,7 @@
 
 ## Status: **NOT GENERATED** — blocked on raw dataset + IF reconstruction
 
-Validation descriptors were **not** regenerated in this checkpoint.
+**2026-09-19 continue:** Still blocked — raw traces unresolved (0 / 34). Validation descriptors were **not** regenerated.
 
 ---
 

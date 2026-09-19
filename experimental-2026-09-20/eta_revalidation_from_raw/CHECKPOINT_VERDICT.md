@@ -2,62 +2,47 @@
 
 # **STOP_OTHER**
 
-## One-line reason
+## Exact blocker
 
-The raw OCSLab challenge dataset path provided is a **local macOS OneDrive path that is not mounted on this Cloud Agent VM**, so vehicle-level reconstruction, validation descriptors, and validation fleet scenarios cannot be generated here — even though the **balanced source-trace/segment split is exactly recovered** from committed manifests and a **revised metric protocol has been proposed (unused)**.
+All **34 / 34** required raw traces from `balanced_split_manifest.csv` are **MISSING** on this Cloud Agent.
 
----
+`OCSLAB_DATASET_DIR` was set to the user-provided macOS OneDrive path, but that path **does not exist on the remote VM**. No workspace copy under `Dataset/` is present either.
 
-## Checklist vs requested READY criteria
+Therefore reconstruction **must stop** before windows / IF / descriptors / scenarios.
 
-| Requirement | Status |
-|-------------|--------|
-| Source-trace split recovered sufficiently | **Yes — EXACT_SPLIT_RECOVERED** from `balanced_split_manifest.csv` |
-| Validation data legitimate & usable | **No** — raw frames/descriptors not on VM |
-| Vehicle-level reconstruction consistent | **Not run** (blocked) |
-| Validation descriptors/scenarios available | **Not generated** (blocked) |
-| Metric protocol proposed, not used | **Yes** — `PROPOSED_REVISED_METRIC_PROTOCOL.md` |
-
-Because READY_FOR_METRIC_PROTOCOL_REVIEW requires reconstruction through validation scenarios, this checkpoint is **not** READY.
+See `RAW_TRACE_RESOLUTION.csv` and updated `RAW_DATASET_AUDIT.md`.
 
 ---
 
-## Why not other STOP codes alone
+## Preserved verified state (unchanged)
 
-| Code | Why not primary |
-|------|-----------------|
-| `STOP_SPLIT_NOT_RECOVERABLE` | Split **is** exactly recovered from artifacts |
-| `STOP_VEHICLE_PIPELINE_MISMATCH` | No reconstruction yet; FPR≤5% code matches paper statement |
-| `STOP_VALIDATION_DATA_INSUFFICIENT` | Would apply if raw data were present but too thin; here data are **absent from the VM** |
-| `READY_FOR_METRIC_PROTOCOL_REVIEW` | Descriptors/scenarios/vehicle reconstruction incomplete |
-
-`STOP_OTHER` captures the environment blocker accurately.
-
----
-
-## What was completed
-
-1. New tree `experimental-2026-09-20/eta_revalidation_from_raw/` (June historical + 2026-09-19 audits preserved).  
-2. Raw-dataset accessibility audit.  
-3. Exact balanced split recovery + `WINDOW_PROVENANCE.csv`.  
-4. Documented IF FPR≤5% selection code consistency (no run).  
-5. Proposed revised metric protocol **without** evaluating η.  
-6. η **not** selected; CTT **not** run; final OCSLab fleet tests **not** run.
+| Item | Status |
+|------|--------|
+| Exact split recovery | **EXACT_SPLIT_RECOVERED** |
+| 34 segments / 110,121 windows (manifest) | Authoritative reference |
+| Window size / stride | 100 / 50 (manifest-verified) |
+| η selected | **No** |
+| η sweep | **Not run** |
+| CTT | **Not run** |
+| June publication artifacts | **Immutable** |
+| `PROPOSED_REVISED_METRIC_PROTOCOL.md` | **Unmodified, unused** |
+| Prior `experimental-2026-09-19/eta_revalidation/` | Preserved |
 
 ---
 
-## Required next action (human / environment)
+## Why not `READY_FOR_METRIC_PROTOCOL_REVIEW`
 
-Mount or sync the challenge dataset into the Cloud Agent at e.g. `Dataset/ocslab/` or set `OCSLAB_DATASET_DIR` to a VM-visible path pointing at:
+That verdict requires resolved raw traces, reproduced windowing, acceptable vehicle-level reconstruction, validation descriptors, and legitimate validation fleet scenarios. **None** of the data-dependent stages can run until the dataset is mounted inside the VM.
 
-`…/In-Vehicle Network Intrusion Detection Challenge`
+---
 
-Then resume:
+## How to unblock
 
-1. Window + IF reconstruction under recovered split (write new models here only).  
-2. Vehicle-level audit vs table_P4.  
-3. Validation descriptors + scenarios.  
-4. Stop again at **READY_FOR_METRIC_PROTOCOL_REVIEW** (or an amended approved protocol) **before** any η sweep.
+1. Copy/sync `In-Vehicle Network Intrusion Detection Challenge` into the Cloud Agent at e.g.  
+   `Dataset/In-Vehicle Network Intrusion Detection Challenge/`  
+   **or** attach via environment snapshot / self-hosted worker with real filesystem access.  
+2. Re-run the continue task with a **VM-visible** `OCSLAB_DATASET_DIR`.  
+3. Then resolve 34/34 traces → reconstruct windows → IF → validation descriptors/scenarios → return `READY_FOR_METRIC_PROTOCOL_REVIEW` **before** any η sweep.
 
 ---
 
@@ -66,3 +51,5 @@ Then resume:
 ```text
 STOP_OTHER
 ```
+
+**Blocker:** `RAW_TRACES_UNRESOLVED_34_OF_34` (local OneDrive path not visible to Cloud Agent)

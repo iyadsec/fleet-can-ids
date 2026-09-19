@@ -2,7 +2,7 @@
 
 ## Status: **NOT CONSTRUCTED** — blocked on validation descriptors
 
-No S0–S4 (V0–V4) validation fleet scenarios were materialised in this checkpoint.
+**2026-09-19 continue:** Still blocked — no validation descriptors (raw traces unresolved). No S0–S4 scenarios materialised.
 
 ---
 

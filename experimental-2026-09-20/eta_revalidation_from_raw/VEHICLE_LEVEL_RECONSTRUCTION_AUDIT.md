@@ -2,6 +2,8 @@
 
 ## Status: **NOT EXECUTED** — blocked on raw dataset mount
 
+**2026-09-19 continue:** Re-checked with `OCSLAB_DATASET_DIR` set to the user OneDrive path. Path still **not visible** on the Cloud Agent VM; **0 / 34** raw traces resolve (`RAW_TRACE_RESOLUTION.csv`). IF reconstruction remains blocked.
+
 No Isolation Forest was re-fit in this checkpoint. Historical models and thresholds were **not** overwritten.
 
 ---

@@ -1,55 +1,36 @@
 {
-  "created_at_utc": "2026-09-20T00:00:00Z",
+  "updated_at_utc": "2026-09-19T21:12:00Z",
   "experiment": "experimental-2026-09-20/eta_revalidation_from_raw",
   "checkpoint_verdict": "STOP_OTHER",
+  "blocker": "RAW_TRACES_UNRESOLVED_34_OF_34",
   "raw_dataset": {
-    "user_provided_path": "/Users/iyadatieh/Library/CloudStorage/OneDrive-Personal/University of Reading/CodeRepo/Dataset/In-Vehicle Network Intrusion Detection Challenge",
+    "OCSLAB_DATASET_DIR_requested": "/Users/iyadatieh/Library/CloudStorage/OneDrive-Personal/University of Reading/CodeRepo/Dataset/In-Vehicle Network Intrusion Detection Challenge",
     "accessible_on_cloud_agent": false,
-    "ocslab_dataset_dir_env": null,
-    "workspace_Dataset_ocslab": false
+    "resolution_table": "RAW_TRACE_RESOLUTION.csv",
+    "segments_required": 34,
+    "segments_resolved": 0,
+    "segments_missing": 34
   },
   "split_recovery": {
     "classification": "EXACT_SPLIT_RECOVERED",
-    "source": "recovered_publication_pipeline/.../manifests/balanced_split_manifest.csv",
-    "segments": 34,
-    "windows": 110121,
-    "copy": "recovered_balanced_split_manifest.csv"
+    "altered": false,
+    "source": "recovered_balanced_split_manifest.csv"
   },
-  "windowing": {
-    "window_size": 100,
-    "stride": 50,
-    "verified_against_window_manifest": true
-  },
-  "vehicle_level_reconstruction": {
-    "executed": false,
-    "fpr_le_5_percent_code_consistent_with_paper": true,
-    "code_path": "src/evaluation/vehicle_level_evaluation.py"
-  },
+  "window_reconstruction": {"executed": false, "reason": "raw traces unresolved"},
+  "vehicle_level_reconstruction": {"executed": false, "reason": "raw traces unresolved"},
   "validation_descriptors": {"generated": false},
   "validation_scenarios": {"constructed": false},
   "eta": {
-    "candidates_predeclared_pr27": [2, 3, 5, 10],
+    "candidates_predeclared": [2, 3, 5, 10],
     "evaluated": false,
     "selected": false
   },
   "metric_protocol": {
-    "proposed_file": "PROPOSED_REVISED_METRIC_PROTOCOL.md",
+    "file": "PROPOSED_REVISED_METRIC_PROTOCOL.md",
+    "modified": false,
     "approved": false,
     "used_for_evaluation": false
   },
   "ctt_run": false,
-  "historical_june_artifacts_modified": false,
-  "prior_eta_revalidation_preserved": "experimental-2026-09-19/eta_revalidation/",
-  "artifacts": [
-    "RAW_DATASET_AUDIT.md",
-    "TRACE_SPLIT_RECOVERY.md",
-    "WINDOW_PROVENANCE.csv",
-    "recovered_balanced_split_manifest.csv",
-    "VEHICLE_LEVEL_RECONSTRUCTION_AUDIT.md",
-    "VALIDATION_DESCRIPTOR_AUDIT.md",
-    "VALIDATION_SCENARIO_AUDIT.md",
-    "PROPOSED_REVISED_METRIC_PROTOCOL.md",
-    "RECONSTRUCTION_MANIFEST.json",
-    "CHECKPOINT_VERDICT.md"
-  ]
+  "historical_june_artifacts_modified": false
 }
