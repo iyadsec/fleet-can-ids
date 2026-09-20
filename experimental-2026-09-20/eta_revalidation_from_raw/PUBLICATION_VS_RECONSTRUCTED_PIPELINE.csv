@@ -1,0 +1,26 @@
+component,historical_recovered_value,current_validation_value,status,evidence_source
+window_size,100,100,MATCH,WINDOW_PROVENANCE / master YAML
+stride,50,50,MATCH,WINDOW_PROVENANCE / master YAML
+IF_feature_set,vehicle-level 24-D peer,reconstructed IF on raw windows,MATCH,VEHICLE_LEVEL_RECONSTRUCTION_AUDIT
+IF_scoring,benign-train IF; val FPR≤5%,benign-train IF; val FPR≤5%,MATCH,VEHICLE_LEVEL_RECONSTRUCTION_AUDIT
+descriptor_construction,9-D GNN cols + 24-D d_i,same column set,MATCH,VALIDATION_DESCRIPTOR_AUDIT
+strong_threshold,0.80,0.80,MATCH,master YAML local_ids
+weak_threshold,0.55,0.55,MATCH,master YAML local_ids
+node_budget,20×10=200,20×10=200,MATCH,master YAML scenario.*
+tau,0.95,0.95,MATCH,final_shared_fleet_configuration.yaml
+k_same,2,2,MATCH,final_shared_fleet_configuration.yaml
+k_cross,5,5,MATCH,final_shared_fleet_configuration.yaml
+GraphSAGE_architecture,9→64→32 mean SAGEConv,9→64→32 mean SAGEConv,MATCH,AUTHORITATIVE_PIPELINE_PARAMETER_AUDIT
+GraphSAGE_training,structure; Adam; lr=0.01; wd=5e-4; λ=0.25; epochs=30,same,MATCH,CODE defaults + freeze epochs/lr
+PCA,8,8,MATCH,FinalGnnFleetConfig / campaign_clustering
+DBSCAN_eps,0.5,0.5,MATCH,final_shared_fleet_configuration.yaml
+DBSCAN_min_samples,2,2,MATCH,final_shared_fleet_configuration.yaml
+DBSCAN_metric,euclidean,euclidean,MATCH,campaign_clustering.run_dbscan
+gamma_minimum_distinct_vehicles,2,2,MATCH,final_shared_fleet_configuration.yaml
+beta_minimum_campaign_cohesion,0.5,0.5,MATCH,final_shared_fleet_configuration.yaml
+eta_min_campaign_cluster_size,UNRECOVERABLE historically (selected on val),2 (validation-selected),KNOWN_PROSPECTIVE_CHANGE,eta_selection.json
+campaign_construction,build_mixed_validation_suite MISSING; sizes 2/5/10; seeds 11..101,stand-in builder; size 5 only; seeds 131..197; prototype blend,MISMATCH,MISSING_MODULES.md; VALIDATION_SCENARIO_AUDIT
+metric_matcher,extract_run_metrics MISSING (P7/P8 unrecovered),revised_jaccard_0.5_v3,KNOWN_PROSPECTIVE_CHANGE,PROPOSED_REVISED_METRIC_PROTOCOL_V3.md
+validation_scenario_module,UNRECOVERABLE,reconstruct_validation_pipeline._one_scenario,UNRECOVERABLE,MISSING_MODULES.md
+historical_V3_campaign_f1_at_selection,~0.649 (selection_report freeze),0.10 (this validation),MISMATCH,final_shared_fleet_configuration.yaml selection.best_diag
+historical_V4_campaign_f1_at_selection,~0.421 (selection_report freeze),0.00 (this validation),MISMATCH,final_shared_fleet_configuration.yaml selection.best_diag

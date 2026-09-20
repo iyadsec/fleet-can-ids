@@ -1,12 +1,13 @@
 # CHECKPOINT_VERDICT.md
 
-# **ETA_VALIDATION_COMPLETE**
+# **VALIDATION_DIAGNOSTIC_COMPLETE**
 
-Selected η = **2** under `revised_jaccard_0.5_v3`.
-Impact: **REDUNDANT_ON_VALIDATION**.
+η=2 remains provisionally frozen under `revised_jaccard_0.5_v3`.
 
-Final OCSLab TEST and CTT were **not** run. η is frozen.
+Diagnostic primary verdict: **MULTIPLE_CAUSES_FOUND**
+
+Final OCSLab TEST and CTT were **not** run. No parameters changed.
 
 ```text
-ETA_VALIDATION_COMPLETE
+MULTIPLE_CAUSES_FOUND
 ```
