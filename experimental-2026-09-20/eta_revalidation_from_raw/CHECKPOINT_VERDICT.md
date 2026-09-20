@@ -1,13 +1,12 @@
 # CHECKPOINT_VERDICT.md
 
-# **VALIDATION_DIAGNOSTIC_COMPLETE**
+# **SCENARIO_SEMANTICS_PARTIALLY_RECOVERED**
 
-η=2 remains provisionally frozen under `revised_jaccard_0.5_v3`.
+η=2 remains **PROVISIONAL** (not publication-validated). See `ETA_SELECTION_VALIDITY.md`.
 
-Diagnostic primary verdict: **MULTIPLE_CAUSES_FOUND**
-
-Final OCSLab TEST and CTT were **not** run. No parameters changed.
+Historical `build_mixed_validation_suite` was never committed. Peers + artifacts
+recover substantial scenario semantics but not a faithful rebuild without invention.
 
 ```text
-MULTIPLE_CAUSES_FOUND
+SCENARIO_SEMANTICS_PARTIALLY_RECOVERED
 ```
