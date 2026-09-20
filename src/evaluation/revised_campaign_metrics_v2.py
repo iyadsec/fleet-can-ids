@@ -18,7 +18,8 @@ VehicleId = Hashable
 CampaignId = Hashable
 
 TAU_J = 0.5
-METRIC_PROTOCOL_ID = "revised_jaccard_0.5_v2"
+METRIC_PROTOCOL_ID = "revised_jaccard_0.5_v3"
+METRIC_PROTOCOL_ID_V2 = "revised_jaccard_0.5_v2"
 
 
 def jaccard(a: Iterable[VehicleId], b: Iterable[VehicleId]) -> float:
@@ -60,7 +61,7 @@ class MatchPair:
 
 @dataclass
 class ProtocolV2Result:
-    metric_protocol: str = METRIC_PROTOCOL_ID
+    metric_protocol: str = METRIC_PROTOCOL_ID_V2
     tau_j: float = TAU_J
     n_predicted: int = 0
     n_gt: int = 0
@@ -75,20 +76,24 @@ class ProtocolV2Result:
     unmatched_predicted_ids: list[CampaignId] = field(default_factory=list)
     unmatched_gt_ids: list[CampaignId] = field(default_factory=list)
     unmatched_predicted_vehicle_count: int = 0
-    # Micro membership (matched pairs + unmatched-GT FN contributions)
+    # Micro membership
     tp_vehicle_sum: int = 0
     fp_vehicle_sum: int = 0
     fn_vehicle_sum: int = 0
     membership_precision_micro: float = 0.0
     membership_recall_micro: float = 0.0
     membership_f1_micro: float = 0.0
-    # Optional audit MemP including unmatched predicted vehicles in denominator
+    # V2-only optional audit MemP (removed as primary in V3)
     membership_precision_including_unmatched_pred: float = 0.0
     incorrect_merge_run: bool = False
     incorrect_merge_predicted_ids: list[CampaignId] = field(default_factory=list)
     fragments_per_gt: dict[CampaignId, int] = field(default_factory=dict)
     fragmentation_per_gt: dict[CampaignId, int] = field(default_factory=dict)
     fragmentation_rate_mean: float = 0.0
+
+
+# Alias for V3 callers
+ProtocolV3Result = ProtocolV2Result
 
 
 def _safe_div(num: float, den: float) -> float:
@@ -180,10 +185,49 @@ def evaluate_protocol_v2(
     incident_of: Mapping[VehicleId, CampaignId] | None = None,
     tau_j: float = TAU_J,
 ) -> ProtocolV2Result:
-    """Evaluate one scenario run under revised_jaccard_0.5_v2."""
+    """Evaluate one scenario run under revised_jaccard_0.5_v2 (archived semantics)."""
+    return _evaluate_protocol(
+        predicted,
+        gt_campaigns,
+        incident_of=incident_of,
+        tau_j=tau_j,
+        protocol_id=METRIC_PROTOCOL_ID_V2,
+        include_unmatched_pred_in_primary_mem_fp=False,
+    )
+
+
+def evaluate_protocol_v3(
+    predicted: Sequence[PredictedCampaign],
+    gt_campaigns: Sequence[GroundTruthCampaign],
+    *,
+    incident_of: Mapping[VehicleId, CampaignId] | None = None,
+    tau_j: float = TAU_J,
+) -> ProtocolV3Result:
+    """Evaluate one scenario run under revised_jaccard_0.5_v3 (current proposal)."""
+    return _evaluate_protocol(
+        predicted,
+        gt_campaigns,
+        incident_of=incident_of,
+        tau_j=tau_j,
+        protocol_id=METRIC_PROTOCOL_ID,
+        include_unmatched_pred_in_primary_mem_fp=True,
+    )
+
+
+def _evaluate_protocol(
+    predicted: Sequence[PredictedCampaign],
+    gt_campaigns: Sequence[GroundTruthCampaign],
+    *,
+    incident_of: Mapping[VehicleId, CampaignId] | None,
+    tau_j: float,
+    protocol_id: str,
+    include_unmatched_pred_in_primary_mem_fp: bool,
+) -> ProtocolV2Result:
     pred = list(predicted)
     gt = list(gt_campaigns)
-    result = ProtocolV2Result(n_predicted=len(pred), n_gt=len(gt), tau_j=tau_j)
+    result = ProtocolV2Result(
+        metric_protocol=protocol_id, n_predicted=len(pred), n_gt=len(gt), tau_j=tau_j
+    )
 
     if len(gt) == 0:
         result.tp_campaign = 0
@@ -195,6 +239,17 @@ def evaluate_protocol_v2(
         result.campaign_precision = 0.0
         result.campaign_recall = 0.0
         result.campaign_f1 = 0.0
+        # Membership: all predictions unmatched → FP_vehicle = sum |V(P)|
+        tp_s, fp_s, fn_s = 0, result.unmatched_predicted_vehicle_count, 0
+        result.tp_vehicle_sum = tp_s
+        result.fp_vehicle_sum = fp_s
+        result.fn_vehicle_sum = fn_s
+        result.membership_precision_micro = _safe_div(tp_s, tp_s + fp_s)
+        result.membership_recall_micro = _safe_div(tp_s, tp_s + fn_s)
+        result.membership_f1_micro = _f1(
+            result.membership_precision_micro, result.membership_recall_micro
+        )
+        result.membership_precision_including_unmatched_pred = result.membership_precision_micro
     else:
         assigned = maximum_weight_jaccard_assignment(pred, gt, tau_j=tau_j)
         matched_p = {i for i, _, _ in assigned}
@@ -238,13 +293,17 @@ def evaluate_protocol_v2(
             len(pred[i].vehicles) for i in range(len(pred)) if i not in matched_p
         )
 
-        # Micro membership: matched pairs + unmatched GT as FN-only
         tp_s = sum(m.tp_vehicle for m in result.matches)
         fp_s = sum(m.fp_vehicle for m in result.matches)
         fn_s = sum(m.fn_vehicle for m in result.matches)
         for j in range(len(gt)):
             if j not in matched_g:
                 fn_s += len(gt[j].vehicles)
+        if include_unmatched_pred_in_primary_mem_fp:
+            for i in range(len(pred)):
+                if i not in matched_p:
+                    fp_s += len(pred[i].vehicles)
+
         result.tp_vehicle_sum = tp_s
         result.fp_vehicle_sum = fp_s
         result.fn_vehicle_sum = fn_s
@@ -253,13 +312,14 @@ def evaluate_protocol_v2(
         result.membership_f1_micro = _f1(
             result.membership_precision_micro, result.membership_recall_micro
         )
+        # V2 audit field: always the "including unmatched pred" MemP
+        fp_with_unmatched = sum(m.fp_vehicle for m in result.matches) + result.unmatched_predicted_vehicle_count
         result.membership_precision_including_unmatched_pred = _safe_div(
-            tp_s, tp_s + fp_s + result.unmatched_predicted_vehicle_count
+            tp_s, tp_s + fp_with_unmatched
         )
 
     # Incorrect merging (independent of matcher)
     if incident_of is None:
-        # Default: each GT campaign id is its own incident for vehicles in that GT set
         incident_of = {}
         for g in gt:
             for v in g.vehicles:
