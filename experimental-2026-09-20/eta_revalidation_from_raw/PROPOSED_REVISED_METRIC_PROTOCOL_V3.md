@@ -1,8 +1,8 @@
 # PROPOSED_REVISED_METRIC_PROTOCOL_V3.md
 
-**Status:** PROPOSAL ONLY — **not approved**, **not used** for any η evaluation.  
+**Status:** **APPROVED/FROZEN** for the prospective η-revalidation experiment. Do not modify.  
 **Protocol id:** `metric_protocol=revised_jaccard_0.5_v3`  
-**Supersedes:** `PROPOSED_REVISED_METRIC_PROTOCOL_V2.md` (v2) for prospective η-revalidation once approved.
+**Supersedes:** `PROPOSED_REVISED_METRIC_PROTOCOL_V2.md` (v2) for prospective η-revalidation.
 
 **Purpose:** Define one explicit, reproducible evaluation protocol for the prospective η-revalidation experiment because the historical P7/P8 matcher/emitter (`extract_run_metrics`) is **UNRECOVERABLE**.
 
@@ -284,3 +284,10 @@ These tests must **not** be used to tune \(\tau_J\).
 **Do not run η candidates until this V3 protocol (or a further amended written protocol) is approved.**
 
 η remains completely unevaluated under this checkpoint.
+
+---
+
+## FREEZE STATUS
+
+**APPROVED/FROZEN** for the prospective η-revalidation experiment (`revised_jaccard_0.5_v3`). Do not modify metric definitions, `tau_J=0.5`, or this document during/after η evaluation.
+

@@ -1,0 +1,74 @@
+{
+  "experiment": "experimental-2026-09-20/eta_revalidation_from_raw",
+  "status": "ETA_FROZEN",
+  "dbscan_min_samples_is_not_eta": true,
+  "graph": {
+    "metric": "cosine",
+    "similarity_threshold": 0.95,
+    "max_same_vehicle_neighbors": 2,
+    "max_cross_vehicle_neighbors": 5,
+    "temporal_edges": false,
+    "edge_attr_passed_to_sageconv": false
+  },
+  "graphsage": {
+    "input_dim": 9,
+    "gnn_feature_columns": [
+      "anomaly_score",
+      "message_rate",
+      "frame_count",
+      "burstiness",
+      "mean_inter_arrival_time",
+      "std_inter_arrival_time",
+      "can_id_entropy",
+      "most_common_can_id_ratio",
+      "payload_entropy"
+    ],
+    "layers": 2,
+    "hidden_channels": 64,
+    "embedding_dim": 32,
+    "aggregation": "mean",
+    "activation": "relu_after_first_sageconv",
+    "epochs": 30,
+    "optimizer": "Adam",
+    "learning_rate": 0.01,
+    "weight_decay": 0.0005,
+    "campaign_loss_weight": 0.25,
+    "supervision": "structure"
+  },
+  "clustering": {
+    "preprocessing": [
+      "StandardScaler",
+      "PCA"
+    ],
+    "pca_components": 8,
+    "metric": "euclidean",
+    "dbscan_eps": 0.5,
+    "dbscan_min_samples": 2
+  },
+  "authoritative_master_config_hash": "72dbfc1760126e799a8a1670f1aa81391bd69a65edeab7beecb61846aa946d9e",
+  "selection_rules_recorded_before_evaluation": {
+    "eligibility_slack_vs_best": 0.05,
+    "eligibility": "Exclude eta if S0_false_campaign_rate > min_S0 + slack OR S1_false_campaign_rate > min_S1 + slack OR S2_incorrect_merge_rate > min_S2 + slack",
+    "selection_score": "mean(CampaignF1_S3, CampaignF1_S4)",
+    "tie_rule": "If |score_a - score_b| <= 0.01, prefer smaller eta"
+  },
+  "validation_only": true,
+  "test_partition_exposed": false,
+  "ctt_used": false,
+  "eta_status": "SELECTED",
+  "selected_eta": 2,
+  "metric_protocol": "revised_jaccard_0.5_v3",
+  "campaign_gate": {
+    "gamma_parameter": "minimum_distinct_vehicles",
+    "minimum_distinct_vehicles": 2,
+    "eta_parameter": "min_campaign_cluster_size",
+    "min_campaign_cluster_size": 2,
+    "beta_parameter": "minimum_campaign_cohesion",
+    "minimum_campaign_cohesion": 0.5,
+    "minimum_cross_vehicle_support": 1,
+    "fragment_consolidation_enabled": true,
+    "fragment_centroid_threshold": 0.85
+  },
+  "historical_results_modified": false,
+  "manuscript_modified": false
+}

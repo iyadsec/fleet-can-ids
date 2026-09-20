@@ -1,0 +1,5 @@
+eta,S0_false_campaign_rate,S1_false_campaign_rate,S2_incorrect_merge_rate,S3_campaign_f1,S3_membership_f1,S4_campaign_f1,S4_membership_f1,selection_score,clusters_rejected_by_eta,pre_gate_clusters_total,pct_clusters_rejected_by_eta,eligible,selection_status
+2,0.3,0.1,0.0,0.1,0.08333333333333333,0.0,0.0,0.05,0.0,159.0,0.0,True,SELECTED
+3,0.3,0.1,0.0,0.1,0.08333333333333333,0.0,0.0,0.05,1.0,159.0,0.006289308176100629,True,ELIGIBLE
+5,0.3,0.1,0.0,0.1,0.08333333333333333,0.0,0.0,0.05,1.0,159.0,0.006289308176100629,True,ELIGIBLE
+10,0.3,0.1,0.0,0.1,0.08333333333333333,0.0,0.0,0.05,1.0,159.0,0.006289308176100629,True,ELIGIBLE
