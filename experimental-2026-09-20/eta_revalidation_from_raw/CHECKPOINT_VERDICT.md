@@ -1,12 +1,12 @@
 # CHECKPOINT_VERDICT.md
 
-# **SCENARIO_SEMANTICS_PARTIALLY_RECOVERED**
+# **SCENARIO_REBUILD_PARTIALLY_JUSTIFIED**
 
-η=2 remains **PROVISIONAL** (not publication-validated). See `ETA_SELECTION_VALIDITY.md`.
+Forensic coordination audit complete. No validation / η / TEST / CTT runs.
+No code or parameter changes.
 
-Historical `build_mixed_validation_suite` was never committed. Peers + artifacts
-recover substantial scenario semantics but not a faithful rebuild without invention.
+See `SCENARIO_REBUILD_DECISION.md`, `COORDINATION_TRANSFORMATION_AUDIT.md`.
 
 ```text
-SCENARIO_SEMANTICS_PARTIALLY_RECOVERED
+SCENARIO_REBUILD_PARTIALLY_JUSTIFIED
 ```

@@ -1,0 +1,23 @@
+component,classification,basis
+apply_coordination_strength_math,RECOVERED,Single recovered exact module @ 61a8203
+compute_campaign_prototype,RECOVERED,Same module
+BEHAVIOURAL_FEATURE_COLUMNS_set,RECOVERED,feature_extractor.py
+anomaly_score_excluded_from_blend,RECOVERED,Not in behavioural columns; provenance read-only
+DescriptorBudget_10x20_5plus5,RECOVERED,campaign_analysis_corrected defaults + master YAML + artifacts
+weak_strong_thresholds_0_55_0_80,RECOVERED,master YAML local_ids + peer masks
+S3_vs_S4_score_band_selection,RECOVERED,_build_attacked_vehicle_chunk strong/weak paths
+shared_campaign_id_for_S3_S4,RECOVERED,peer _coordinated_campaign_scenario
+V0_V1_V2_peer_builders,RECOVERED,model_diversity_final_tuned/validation_scenarios.py
+validation_seed_list_131_197,RECOVERED,VALIDATION_SEEDS + validation_manifest.csv
+TEST_seed_list_11_101,RECOVERED,REQUIRED_SEEDS + campaign_metrics.csv
+TEST_campaign_sizes_2_5_10,RECOVERED,master YAML + campaign_metrics
+peer_validation_coordination_strength_1_0_for_V3_and_V4,RECOVERABLE_BY_COMPOSITION,Hardcoded in peer validation builder AND baseline reconstructor; NOT proven for missing build_mixed_validation_suite; registry allows [0.75,1.0]
+target_mask_scenario_role_coordinated,RECOVERABLE_BY_COMPOSITION,Consistent in peer validation + corrected + generator; stand-in differs
+instance_catalog_segment_backed_sampling,RECOVERABLE_BY_COMPOSITION,Present in peer builders; required for publication-like construction
+behavioural_coordination_only_flag,RECOVERED,master YAML true
+build_mixed_validation_suite_function_body,UNRECOVERABLE,Never committed
+joint_parameter_search,UNRECOVERABLE,Never committed
+PUBLICATION_SCENARIOS_exact_strength_schedule,UNRECOVERABLE,Never committed; no artifact column
+validation_cs_2_5_10_generator_for_mixed_suite,UNRECOVERABLE,Manifest has stub rows with NaN descriptor_count; no code
+extract_run_metrics_cluster_column_semantics,UNRECOVERABLE,Emitter missing; largest_cluster_size meaning inferred only
+stand_in_S4_strength_0_35_as_publication,UNRECOVERABLE_as_publication_fact,Conflicts with peer/baseline; invent if used as publication truth
