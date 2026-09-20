@@ -1,0 +1,9 @@
+artifacts/reconstructed_windows.csv
+artifacts/reconstructed_window_features.csv
+artifacts/scored_windows.csv
+artifacts/train_benign_scored_windows.csv
+artifacts/validation_descriptors.csv
+artifacts/reconstruct_run.log
+models/*.joblib
+validation_scenarios/*_records.csv
+validation_scenarios/*_membership.csv

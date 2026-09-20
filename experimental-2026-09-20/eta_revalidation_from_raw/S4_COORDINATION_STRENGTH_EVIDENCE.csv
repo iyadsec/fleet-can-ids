@@ -1,0 +1,13 @@
+evidence,supports_1.0,supports_below_1.0,ambiguous,confidence
+P8/campaign_metrics lack coordination_strength column,false,false,true,HIGH
+balanced_master behavioural_coordination_only true (value unknown),false,false,true,HIGH
+No post-coordination descriptor vectors for weak campaigns in archive,false,false,true,HIGH
+Cannot test s=1 signature (zero variance / identical vectors on C),false,false,true,HIGH
+largest_cluster_size mean ~11.1 (weak) smaller than strong; does not identify s,false,false,true,HIGH
+cross_vehicle_edges mean ~99 (weak) indirect only; compatible with multiple s in range,false,false,true,MEDIUM
+Peer validation_scenarios uses strength=1.0 for weak V4 (PEER_IMPLEMENTATION),true,false,false,MEDIUM
+ocslab_publication_baseline uses 1.0 for weak_campaign (PEER not P8),true,false,false,MEDIUM
+scenario_registry S4 range (0.75 1.0) ALLOWED_RANGE_ONLY,false,false,true,HIGH
+Stand-in S4 strength 0.35 conflicts with peers; not a publication artifact,false,true,false,LOW
+P8 F1 must not be used to fit s,false,false,true,HIGH
+No artifact distinguishes s=1.0 from s=0.75 for weak campaigns,false,false,true,HIGH

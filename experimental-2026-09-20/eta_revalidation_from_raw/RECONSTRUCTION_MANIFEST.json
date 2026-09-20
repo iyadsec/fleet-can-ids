@@ -1,0 +1,118 @@
+{
+  "updated_at_utc": "2026-09-20T03:45:00Z",
+  "experiment": "experimental-2026-09-20/eta_revalidation_from_raw",
+  "checkpoint_verdict": "METRIC_PROTOCOL_V3_READY",
+  "raw_dataset": {
+    "OCSLAB_DATASET_DIR": "/workspace/Dataset/In-Vehicle Network Intrusion Detection Challenge",
+    "accessible_on_cloud_agent": true,
+    "resolution_table": "RAW_TRACE_RESOLUTION.csv",
+    "segments_required": 34,
+    "segments_resolved": 34,
+    "segments_missing": 0
+  },
+  "split_recovery": {
+    "classification": "EXACT_SPLIT_RECOVERED",
+    "altered": false,
+    "source": "recovered_balanced_split_manifest.csv"
+  },
+  "window_reconstruction": {
+    "executed": true,
+    "window_size": 100,
+    "stride": 50,
+    "reconstructed_total": 110121,
+    "historical_total": 110121,
+    "match": true,
+    "split_counts": {
+      "train": 74858,
+      "validation": 20669,
+      "test": 14594
+    },
+    "provenance": "WINDOW_PROVENANCE.csv"
+  },
+  "vehicle_level_reconstruction": {
+    "executed": true,
+    "method": "benign-train IsolationForest + validation FPR<=5% max-recall",
+    "pr_auc_vs_table_P4": "MATCH/CLOSE",
+    "f1_vs_table_P4_at_FPR5": "MATERIAL_DIFFERENCE_EXPLAINED_BY_OPERATING_POINT",
+    "f1_vs_table_P4_at_matched_hist_FPR": "MATCH/CLOSE",
+    "stop_vehicle_pipeline_mismatch": false,
+    "audit": "VEHICLE_LEVEL_RECONSTRUCTION_AUDIT.md"
+  },
+  "validation_descriptors": {
+    "generated": true,
+    "count": 20669,
+    "test_exposed": false,
+    "d_i_dim": 24,
+    "g_i_dim": 9,
+    "gnn_feature_columns": [
+      "anomaly_score",
+      "message_rate",
+      "frame_count",
+      "burstiness",
+      "mean_inter_arrival_time",
+      "std_inter_arrival_time",
+      "can_id_entropy",
+      "most_common_can_id_ratio",
+      "payload_entropy"
+    ],
+    "audit": "VALIDATION_DESCRIPTOR_AUDIT.md"
+  },
+  "validation_scenarios": {
+    "constructed": true,
+    "scenarios": [
+      "S0",
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "seeds": [
+      131,
+      137,
+      149,
+      157,
+      163,
+      179,
+      181,
+      191,
+      193,
+      197
+    ],
+    "runs_passed": 50,
+    "runs_total": 50,
+    "descriptors_per_vehicle": 10,
+    "fleet_size": 20,
+    "test_overlap": 0,
+    "audit": "VALIDATION_SCENARIO_AUDIT.md"
+  },
+  "eta": {
+    "candidates_predeclared": [
+      2,
+      3,
+      5,
+      10
+    ],
+    "evaluated": false,
+    "selected": false
+  },
+  "metric_protocol": {
+    "file": "PROPOSED_REVISED_METRIC_PROTOCOL_V3.md",
+    "version": "v3",
+    "protocol_id": "revised_jaccard_0.5_v3",
+    "v1_file": "PROPOSED_REVISED_METRIC_PROTOCOL.md",
+    "v2_file": "PROPOSED_REVISED_METRIC_PROTOCOL_V2.md",
+    "v1_approved": false,
+    "v2_approved": false,
+    "v3_created": true,
+    "approved": false,
+    "used_for_evaluation": false,
+    "unit_tests": "tests/test_revised_campaign_metrics_v2.py",
+    "unit_tests_passed": true,
+    "unit_tests_count": "17/17",
+    "implementation": "src/evaluation/revised_campaign_metrics_v2.py",
+    "eta_evaluated": false
+  },
+  "ctt_run": false,
+  "historical_june_artifacts_modified": false,
+  "reconstruction_script": "scripts/reconstruct_validation_pipeline.py"
+}

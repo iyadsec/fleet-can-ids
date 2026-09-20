@@ -1,0 +1,16 @@
+{
+  "protocol_id": "revised_jaccard_0.5_v3",
+  "tau_jaccard": 0.5,
+  "matching": "maximum_weight_one_to_one",
+  "membership": "vehicle_campaign_assignment_micro",
+  "incorrect_merging": "independent_incident_membership",
+  "fragmentation": "gt_overlap_fragment_count",
+  "approval_status": "frozen",
+  "eta_evaluated_at_freeze": false,
+  "protocol_file": "experimental-2026-09-20/eta_revalidation_from_raw/PROPOSED_REVISED_METRIC_PROTOCOL_V3.md",
+  "implementation_file": "src/evaluation/revised_campaign_metrics_v2.py",
+  "protocol_sha256": "b3ab630f5b3c030395a2c56c4020d820bc9844024c7e1892e63a57933d9d4acf",
+  "implementation_sha256": "aaf72ab62e24ffc3541ef42cb32215df0deb4e60f8f3e5cd463da21915304840",
+  "frozen_at_utc": "2026-09-20T04:17:43Z",
+  "notes": "V3 approved for prospective eta-revalidation. Do not alter definitions during/after eta sweep."
+}

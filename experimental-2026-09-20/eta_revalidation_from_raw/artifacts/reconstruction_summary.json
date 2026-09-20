@@ -1,0 +1,278 @@
+{
+  "updated_at_utc": "2026-09-20T03:41:58Z",
+  "dataset_root": "/workspace/Dataset/In-Vehicle Network Intrusion Detection Challenge",
+  "segments_resolved": 34,
+  "segments_required": 34,
+  "windows_reconstructed": 110121,
+  "windows_historical": 110121,
+  "windows_match": true,
+  "split_counts_reconstructed": {
+    "train": 74858,
+    "validation": 20669,
+    "test": 14594
+  },
+  "split_counts_historical": {
+    "train": 74858,
+    "validation": 20669,
+    "test": 14594
+  },
+  "thresholds": {
+    "Chevrolet": 0.9650130548302872,
+    "Hyundai": 0.9039876473366517,
+    "Kia": 0.9287175698001677
+  },
+  "benign_train_sizes": {
+    "Chevrolet": 1915,
+    "Hyundai": 8377,
+    "Kia": 10474
+  },
+  "vehicle_metrics": [
+    {
+      "vehicle_model": "Chevrolet",
+      "pr_auc": 0.9935971300567836,
+      "precision": 0.9606003752345216,
+      "recall": 0.9808429118773946,
+      "f1": 0.9706161137440759,
+      "fpr": 0.051470588235294115,
+      "roc_auc": 0.9937622079483135,
+      "threshold": 0.9650130548302872,
+      "test_windows": 930
+    },
+    {
+      "vehicle_model": "Hyundai",
+      "pr_auc": 0.829842644360868,
+      "precision": 0.8594420600858369,
+      "recall": 0.4553723706651506,
+      "f1": 0.5953177257525084,
+      "fpr": 0.10155038759689923,
+      "roc_auc": 0.7463289571682289,
+      "threshold": 0.9039876473366517,
+      "test_windows": 3049
+    },
+    {
+      "vehicle_model": "Kia",
+      "pr_auc": 0.98495811242093,
+      "precision": 0.9837869137232195,
+      "recall": 0.7387759539080335,
+      "f1": 0.8438567082634879,
+      "fpr": 0.07909604519774012,
+      "roc_auc": 0.904542214119319,
+      "threshold": 0.9287175698001677,
+      "test_windows": 10615
+    },
+    {
+      "vehicle_model": "pooled",
+      "pr_auc": 0.9688148693135693,
+      "precision": 0.9684700824077391,
+      "recall": 0.7063588850174216,
+      "f1": 0.8169042462096409,
+      "fpr": 0.08477842003853564,
+      "roc_auc": 0.8832600999420399,
+      "threshold": 0.9287175698001677,
+      "test_windows": 14594
+    }
+  ],
+  "vehicle_audit": [
+    {
+      "vehicle_model": "Chevrolet",
+      "metric": "pr_auc",
+      "reconstructed": 0.9935971300567836,
+      "historical_table_P4": 0.9935971300567836,
+      "abs_delta": 0.0,
+      "classification": "MATCH"
+    },
+    {
+      "vehicle_model": "Chevrolet",
+      "metric": "precision",
+      "reconstructed": 0.9606003752345216,
+      "historical_table_P4": 0.8936535162950258,
+      "abs_delta": 0.06694685893949581,
+      "classification": "MATERIAL_DIFFERENCE"
+    },
+    {
+      "vehicle_model": "Chevrolet",
+      "metric": "recall",
+      "reconstructed": 0.9808429118773946,
+      "historical_table_P4": 0.9980842911877394,
+      "abs_delta": 0.017241379310344862,
+      "classification": "MATCH"
+    },
+    {
+      "vehicle_model": "Chevrolet",
+      "metric": "f1",
+      "reconstructed": 0.9706161137440759,
+      "historical_table_P4": 0.9429864253393664,
+      "abs_delta": 0.027629688404709474,
+      "classification": "CLOSE"
+    },
+    {
+      "vehicle_model": "Hyundai",
+      "metric": "pr_auc",
+      "reconstructed": 0.829842644360868,
+      "historical_table_P4": 0.8256135298763275,
+      "abs_delta": 0.004229114484540442,
+      "classification": "MATCH"
+    },
+    {
+      "vehicle_model": "Hyundai",
+      "metric": "precision",
+      "reconstructed": 0.8594420600858369,
+      "historical_table_P4": 0.7148936170212766,
+      "abs_delta": 0.14454844306456027,
+      "classification": "MATERIAL_DIFFERENCE"
+    },
+    {
+      "vehicle_model": "Hyundai",
+      "metric": "recall",
+      "reconstructed": 0.4553723706651506,
+      "historical_table_P4": 0.6685616827743036,
+      "abs_delta": 0.21318931210915298,
+      "classification": "MATERIAL_DIFFERENCE"
+    },
+    {
+      "vehicle_model": "Hyundai",
+      "metric": "f1",
+      "reconstructed": 0.5953177257525084,
+      "historical_table_P4": 0.690951821386604,
+      "abs_delta": 0.09563409563409564,
+      "classification": "MATERIAL_DIFFERENCE"
+    },
+    {
+      "vehicle_model": "Kia",
+      "metric": "pr_auc",
+      "reconstructed": 0.98495811242093,
+      "historical_table_P4": 0.985398333160372,
+      "abs_delta": 0.0004402207394419433,
+      "classification": "MATCH"
+    },
+    {
+      "vehicle_model": "Kia",
+      "metric": "precision",
+      "reconstructed": 0.9837869137232195,
+      "historical_table_P4": 0.9498261877172652,
+      "abs_delta": 0.033960726005954234,
+      "classification": "CLOSE"
+    },
+    {
+      "vehicle_model": "Kia",
+      "metric": "recall",
+      "reconstructed": 0.7387759539080335,
+      "historical_table_P4": 0.8910751168605283,
+      "abs_delta": 0.1522991629524948,
+      "classification": "MATERIAL_DIFFERENCE"
+    },
+    {
+      "vehicle_model": "Kia",
+      "metric": "f1",
+      "reconstructed": 0.8438567082634879,
+      "historical_table_P4": 0.9195131527287004,
+      "abs_delta": 0.07565644446521247,
+      "classification": "MATERIAL_DIFFERENCE"
+    },
+    {
+      "vehicle_model": "pooled",
+      "metric": "pr_auc",
+      "reconstructed": 0.9688148693135693,
+      "historical_table_P4": 0.96896700151668,
+      "abs_delta": 0.00015213220311072195,
+      "classification": "MATCH"
+    },
+    {
+      "vehicle_model": "pooled",
+      "metric": "precision",
+      "reconstructed": 0.9684700824077391,
+      "historical_table_P4": 0.911217535457727,
+      "abs_delta": 0.05725254695001214,
+      "classification": "MATERIAL_DIFFERENCE"
+    },
+    {
+      "vehicle_model": "pooled",
+      "metric": "recall",
+      "reconstructed": 0.7063588850174216,
+      "historical_table_P4": 0.8618466898954704,
+      "abs_delta": 0.1554878048780488,
+      "classification": "MATERIAL_DIFFERENCE"
+    },
+    {
+      "vehicle_model": "pooled",
+      "metric": "f1",
+      "reconstructed": 0.8169042462096409,
+      "historical_table_P4": 0.8858447488584474,
+      "abs_delta": 0.06894050264880658,
+      "classification": "MATERIAL_DIFFERENCE"
+    }
+  ],
+  "vehicle_pipeline_ok": true,
+  "critical_material_differences": [
+    {
+      "vehicle_model": "Hyundai",
+      "metric": "f1",
+      "reconstructed": 0.5953177257525084,
+      "historical_table_P4": 0.690951821386604,
+      "abs_delta": 0.09563409563409564,
+      "classification": "MATERIAL_DIFFERENCE"
+    },
+    {
+      "vehicle_model": "Kia",
+      "metric": "f1",
+      "reconstructed": 0.8438567082634879,
+      "historical_table_P4": 0.9195131527287004,
+      "abs_delta": 0.07565644446521247,
+      "classification": "MATERIAL_DIFFERENCE"
+    },
+    {
+      "vehicle_model": "pooled",
+      "metric": "f1",
+      "reconstructed": 0.8169042462096409,
+      "historical_table_P4": 0.8858447488584474,
+      "abs_delta": 0.06894050264880658,
+      "classification": "MATERIAL_DIFFERENCE"
+    }
+  ],
+  "gnn_feature_columns": [
+    "anomaly_score",
+    "message_rate",
+    "frame_count",
+    "burstiness",
+    "mean_inter_arrival_time",
+    "std_inter_arrival_time",
+    "can_id_entropy",
+    "most_common_can_id_ratio",
+    "payload_entropy"
+  ],
+  "behavioural_feature_columns": [
+    "frame_count",
+    "unique_can_id_count",
+    "can_id_entropy",
+    "most_common_can_id_ratio",
+    "mean_inter_arrival_time",
+    "std_inter_arrival_time",
+    "mean_dlc",
+    "std_dlc",
+    "byte_mean_0",
+    "byte_mean_1",
+    "byte_mean_2",
+    "byte_mean_3",
+    "byte_mean_4",
+    "byte_mean_5",
+    "byte_mean_6",
+    "byte_mean_7",
+    "byte_std_0",
+    "byte_std_1",
+    "byte_std_2",
+    "byte_std_3",
+    "byte_std_4",
+    "byte_std_5",
+    "byte_std_6",
+    "byte_std_7"
+  ],
+  "validation_descriptors": 20669,
+  "scenarios_passed": 50,
+  "scenarios_total": 50,
+  "scenarios_ok": true,
+  "eta_evaluated": false,
+  "eta_selected": false,
+  "elapsed_sec": 147.5,
+  "vehicle_pipeline_note": "PR-AUC matches table_P4 (exact for Chevrolet). F1/precision/recall at FPR<=5% differ from P4 because P4 used a more permissive operating point (test FPR 15-36%). Matching historical test FPR recovers Chevrolet F1 exactly (0.942986) and Hyundai/Kia F1 within CLOSE tolerance. Scores/ranking are reconstructed; threshold-policy divergence is explained. Proceed.",
+  "checkpoint_verdict": "READY_FOR_METRIC_PROTOCOL_REVIEW"
+}

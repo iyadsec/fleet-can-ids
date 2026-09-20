@@ -1,0 +1,117 @@
+{
+  "candidate_set": [
+    2,
+    3,
+    5,
+    10
+  ],
+  "metric_protocol": "revised_jaccard_0.5_v3",
+  "validation_dataset": "OCSLab reconstructed validation descriptors/scenarios",
+  "validation_scenarios": [
+    "S0",
+    "S1",
+    "S2",
+    "S3",
+    "S4"
+  ],
+  "validation_seeds": [
+    131,
+    137,
+    149,
+    157,
+    163,
+    179,
+    181,
+    191,
+    193,
+    197
+  ],
+  "campaign_size_strata_available": [
+    0,
+    1,
+    5
+  ],
+  "campaign_size_note": "Reconstructed validation suite uses campaign_size=5 for S2/S3/S4; sizes 2 and 10 are not present in this reconstructed suite.",
+  "selection_rule": {
+    "1_exclude_if_S0_S1_S2_worse_than_best_plus_slack": 0.05,
+    "2_maximize_mean_S3_S4_campaign_f1": true,
+    "3_tie_break_smaller_eta": true
+  },
+  "tie_rule": {
+    "absolute_difference_le": 0.01,
+    "prefer": "smaller_eta",
+    "recorded_before_selection": true
+  },
+  "dbscan_labels_identical_across_eta": true,
+  "all_candidate_results": [
+    {
+      "eta": 2,
+      "S0_false_campaign_rate": 0.3,
+      "S1_false_campaign_rate": 0.1,
+      "S2_incorrect_merge_rate": 0.0,
+      "S3_campaign_f1": 0.1,
+      "S3_membership_f1": 0.08333333333333333,
+      "S4_campaign_f1": 0.0,
+      "S4_membership_f1": 0.0,
+      "selection_score": 0.05,
+      "clusters_rejected_by_eta": 0.0,
+      "pre_gate_clusters_total": 159.0,
+      "pct_clusters_rejected_by_eta": 0.0,
+      "eligible": true,
+      "selection_status": "SELECTED"
+    },
+    {
+      "eta": 3,
+      "S0_false_campaign_rate": 0.3,
+      "S1_false_campaign_rate": 0.1,
+      "S2_incorrect_merge_rate": 0.0,
+      "S3_campaign_f1": 0.1,
+      "S3_membership_f1": 0.08333333333333333,
+      "S4_campaign_f1": 0.0,
+      "S4_membership_f1": 0.0,
+      "selection_score": 0.05,
+      "clusters_rejected_by_eta": 1.0,
+      "pre_gate_clusters_total": 159.0,
+      "pct_clusters_rejected_by_eta": 0.006289308176100629,
+      "eligible": true,
+      "selection_status": "ELIGIBLE"
+    },
+    {
+      "eta": 5,
+      "S0_false_campaign_rate": 0.3,
+      "S1_false_campaign_rate": 0.1,
+      "S2_incorrect_merge_rate": 0.0,
+      "S3_campaign_f1": 0.1,
+      "S3_membership_f1": 0.08333333333333333,
+      "S4_campaign_f1": 0.0,
+      "S4_membership_f1": 0.0,
+      "selection_score": 0.05,
+      "clusters_rejected_by_eta": 1.0,
+      "pre_gate_clusters_total": 159.0,
+      "pct_clusters_rejected_by_eta": 0.006289308176100629,
+      "eligible": true,
+      "selection_status": "ELIGIBLE"
+    },
+    {
+      "eta": 10,
+      "S0_false_campaign_rate": 0.3,
+      "S1_false_campaign_rate": 0.1,
+      "S2_incorrect_merge_rate": 0.0,
+      "S3_campaign_f1": 0.1,
+      "S3_membership_f1": 0.08333333333333333,
+      "S4_campaign_f1": 0.0,
+      "S4_membership_f1": 0.0,
+      "selection_score": 0.05,
+      "clusters_rejected_by_eta": 1.0,
+      "pre_gate_clusters_total": 159.0,
+      "pct_clusters_rejected_by_eta": 0.006289308176100629,
+      "eligible": true,
+      "selection_status": "ELIGIBLE"
+    }
+  ],
+  "selected_eta": 2,
+  "selection_reason": "Eligible under S0/S1/S2 slack=0.05; maximized selection_score=mean(S3,S4) CampaignF1 (0.050000); tie_eps=0.01 \u2192 selected eta=2.",
+  "eta_frozen": true,
+  "final_test_not_run": true,
+  "ctt_not_run": true
+}

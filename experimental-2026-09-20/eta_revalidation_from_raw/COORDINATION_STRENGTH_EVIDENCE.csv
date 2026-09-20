@@ -1,0 +1,15 @@
+property,evidence_source_1,evidence_source_2,artifact_support,confidence
+apply_coordination_strength_equation,coordination_strength.py lines 47-70 (RECOVERED EXACTLY @ 61a8203),docstring strength=0 keeps originals; strength=1 moves fully to prototype,method=prototype_blend_with_bounded_noise in provenance rows,HIGH
+prototype_is_attack_type_mean,compute_campaign_prototype mean over attack_type rows,called by validation_scenarios and campaign_analysis_corrected,no per-run prototype dump in frozen metrics,HIGH
+features_modified_are_behavioural_24D,BEHAVIOURAL_FEATURE_COLUMNS list in feature_extractor.py,apply_coordination_strength writes only cols from that list,n/a,HIGH
+anomaly_score_not_modified,anomaly_score absent from BEHAVIOURAL_FEATURE_COLUMNS,provenance stores original_anomaly_score without write-back,n/a,HIGH
+S3_S4_primary_diff_is_score_band,_strong_band_mask vs _weak_band_mask in campaign_analysis_corrected.py,thresholds 0.55/0.80 in master YAML local_ids,validation_manifest attack_strength strong/weak,HIGH
+peer_validation_V3_strength_1_0,validation_scenarios.py hardcoded strength=1.0 for coordinated scenarios,membership _build_membership(..., 1.0, ...),no strength column in validation_manifest,MEDIUM
+peer_validation_V4_strength_1_0,same hardcoded 1.0 branch for attack_strength==weak,same file single call site,no strength column in validation_manifest,MEDIUM
+baseline_reconstructor_S3_S4_strength_1_0,ocslab_publication_baseline.py coordination_strength=1.0 for strong_campaign and weak_campaign,uses generate_corrected_campaign_scenario,not the missing balanced runner,MEDIUM
+registry_S3_S4_strength_range_0_75_to_1_0,scenario_registry coordination_strength_range=(0.75 1.0) for S3 and S4,enumerate_run_plan can pick values in range,does not prove single value used in balanced run,LOW
+missing_build_mixed_validation_suite_strength,no defining source in git,runner imports missing module only,validation_manifest lacks configured_coordination_strength,UNRECOVERABLE
+missing_PUBLICATION_SCENARIOS_strength,module never committed,campaign_metrics has no coordination_strength column,P7/P8 aggregates lack strength,UNRECOVERABLE
+freeze_yaml_numeric_coordination_strength,final_shared_fleet_configuration.yaml has no coordination_strength key,master YAML has behavioural_coordination_only true only,n/a,UNRECOVERABLE_as_numeric_value
+stand_in_S4_strength_0_35,reconstruct_validation_pipeline.py only,conflicts with peer 1.0 and baseline 1.0,not a publication artifact,LOW_as_publication_evidence__REJECT_for_publication_claim
+S4_publication_strength_exactly_1_0,peer validation + baseline both use 1.0,registry allows [0.75 1.0]; missing modules unrecovered,no frozen artifact records the value,MEDIUM
