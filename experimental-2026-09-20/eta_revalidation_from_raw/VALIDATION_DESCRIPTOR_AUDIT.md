@@ -1,58 +1,59 @@
 # VALIDATION_DESCRIPTOR_AUDIT.md
 
-## Status: **NOT GENERATED** — blocked on raw dataset + IF reconstruction
+## Status: **GENERATED** (validation split only)
 
-**2026-09-19 continue:** Still blocked — raw traces unresolved (0 / 34). Validation descriptors were **not** regenerated.
+Source: reconstructed scored windows with `split == validation` (20,669 windows).  
+Output: `artifacts/validation_descriptors.csv` (local artifact; large file gitignored).
 
 ---
 
-## What is known without regenerating
+## dᵢ vs gᵢ
 
-From recovered `balanced_window_manifest.csv`:
+| Symbol | Meaning | Columns | Verified in |
+|--------|---------|---------|-------------|
+| **dᵢ** | 24-D behavioural window descriptor | `BEHAVIOURAL_FEATURE_COLUMNS` | `src/features/feature_extractor.py` |
+| **gᵢ** | 9-D GraphSAGE **input** representation | `GNN_FEATURE_COLUMNS` | `src/evaluation/publication_fleet_core.py` |
 
-| Split | Windows |
+### dᵢ (24-D) — exact order
+
+`frame_count`, `unique_can_id_count`, `can_id_entropy`, `most_common_can_id_ratio`, `mean_inter_arrival_time`, `std_inter_arrival_time`, `mean_dlc`, `std_dlc`, `byte_mean_0`…`byte_mean_7`, `byte_std_0`…`byte_std_7`
+
+### gᵢ (9-D) — exact order (authoritative)
+
+1. `anomaly_score`
+2. `message_rate` (= `frame_count` in behaviour view)
+3. `frame_count`
+4. `burstiness` (= `std_inter_arrival_time / (|mean_inter_arrival_time| + ε)`)
+5. `mean_inter_arrival_time`
+6. `std_inter_arrival_time`
+7. `can_id_entropy`
+8. `most_common_can_id_ratio`
+9. `payload_entropy` (entropy of abs(`byte_mean_*`) row-normalised)
+
+Derived via `build_behavior_view_descriptors` + `compute_payload_entropy`. **No GraphSAGE training** was run; gᵢ columns are prepared inputs only.
+
+---
+
+## Provenance columns retained
+
+| Field | Present |
 |-------|---------|
-| validation | **20,669** |
-| Chevrolet / Hyundai / Kia (val) | 930 / 6,998 / 12,741 |
-| Val label mix (0 / 1) | 3,114 / 17,555 |
+| descriptor ID | `descriptor_id` |
+| vehicle | `vehicle_model` |
+| source trace | `source_file` / `relative_source` / `segment_id` |
+| window | `window_id`, `start_frame_idx`, `end_frame_idx` |
+| split | `validation` only |
+| label | evaluation-only (`label`, `attack_type`) |
+| anomaly score | `anomaly_score` (+ vehicle FPR≤5% `threshold`, `predicted_label`) |
 
-These are **window provenance counts**, not descriptor feature matrices.
+### Isolation from test
 
----
+- Descriptors exported **only** from validation windows.
+- Test windows were scored for vehicle-level audit but **not** written into the validation descriptor table or scenario builder inputs.
 
-## Required descriptor schemas (to verify on regenerate)
+### Counts
 
-### `d_i` — 24-D behavioural (publication)
-
-Exact order from recovered `feature_extractor.BEHAVIOURAL_FEATURE_COLUMNS` / IF training manifest:
-
-```text
-frame_count, unique_can_id_count, can_id_entropy, most_common_can_id_ratio,
-mean_inter_arrival_time, std_inter_arrival_time, mean_dlc, std_dlc,
-byte_mean_0..7, byte_std_0..7
-```
-
-### `g_i` — 9-D GraphSAGE input (publication)
-
-```text
-1. anomaly_score
-2. message_rate          # derived ← frame_count in behavior view
-3. frame_count
-4. burstiness            # std_IAT / (|mean_IAT|+1e-9)
-5. mean_inter_arrival_time
-6. std_inter_arrival_time
-7. can_id_entropy
-8. most_common_can_id_ratio
-9. payload_entropy       # entropy of abs(byte_mean_*)
-```
-
-Implemented in `src/evaluation/publication_fleet_core.py` / recovered GNN peer. **Identity check against regenerated columns is pending** until descriptors exist.
-
----
-
-## Separation rules (for the future run)
-
-- Fit IF / scaler on **train** only.
-- Score validation windows with frozen train models.
-- Keep validation and test descriptor stores in separate directories under this experiment root.
-- Do not mix CTT.
+| Split | Windows / descriptors |
+|-------|------------------------|
+| validation descriptors | **20,669** |
+| test descriptors exposed to scenario builder | **0** |
