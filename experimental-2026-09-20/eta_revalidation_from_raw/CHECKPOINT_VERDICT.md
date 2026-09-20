@@ -1,12 +1,10 @@
 # CHECKPOINT_VERDICT.md
 
-# **SCENARIO_REBUILD_PARTIALLY_JUSTIFIED**
+# **REBUILD_ONLY_AS_NEW_PROSPECTIVE_PROTOCOL**
 
-Forensic coordination audit complete. No validation / η / TEST / CTT runs.
-No code or parameter changes.
-
-See `SCENARIO_REBUILD_DECISION.md`, `COORDINATION_TRANSFORMATION_AUDIT.md`.
+P7/P8 artifact audit: S3/S4 coordination strength = **INSUFFICIENT_EVIDENCE**
+(no post-blend descriptors; no numeric strength in freeze/metrics).
 
 ```text
-SCENARIO_REBUILD_PARTIALLY_JUSTIFIED
+REBUILD_ONLY_AS_NEW_PROSPECTIVE_PROTOCOL
 ```

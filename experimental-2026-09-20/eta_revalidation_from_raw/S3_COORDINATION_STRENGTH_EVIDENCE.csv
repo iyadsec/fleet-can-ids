@@ -1,0 +1,13 @@
+evidence,supports_1.0,supports_below_1.0,ambiguous,confidence
+P7/campaign_metrics lack coordination_strength column,false,false,true,HIGH
+balanced_master behavioural_coordination_only true (strength used but value unknown),false,false,true,HIGH
+final_shared_fleet_configuration.yaml has no coordination_strength key,false,false,true,HIGH
+No post-coordination descriptor vectors in archive (cannot test s=1 collapse),false,false,true,HIGH
+Cannot compute within-campaign variance on C from saved artifacts,false,false,true,HIGH
+largest_cluster_size mean ~33.6 (strong) does not uniquely imply s=1 vs s=0.75,false,false,true,HIGH
+cross_vehicle_edges mean ~165 (strong) is indirect and non-discriminating for s in [0.75 1.0],false,false,true,MEDIUM
+malicious_cross_vehicle_edge_purity entirely NaN in archived metrics,false,false,true,HIGH
+Peer validation_scenarios hardcoded strength=1.0 (PEER_IMPLEMENTATION not P7 artifact),true,false,false,MEDIUM
+ocslab_publication_baseline coordination_strength=1.0 for strong_campaign (PEER not P7),true,false,false,MEDIUM
+scenario_registry S3 range (0.75 1.0) ALLOWED_RANGE_ONLY,false,false,true,HIGH
+P7 F1 / selection_report V3 F1 must not be used to fit s,false,false,true,HIGH
