@@ -1,5 +1,12 @@
 # FLEET-GUARD — default configuration
 # Fleet-Level Graph-Based Anomaly Reasoning for Coordinated CAN Attack Detection
+#
+# NOTE: This file contains general/current pipeline defaults.
+# Parameters actually used for the primary OCSLab publication experiments are
+# recorded separately in configs/publication_fleet_guard.yaml (see also
+# docs/PUBLICATION_CONFIGURATION_AUDIT.md). In particular, clustering.dbscan_eps
+# / dbscan_min_samples here (1.2 / 10) are NOT the publication freeze values
+# (0.5 / 2). Do not overwrite these defaults merely to match the paper.
 
 project:
   name: fleet-guard
@@ -121,6 +128,9 @@ clustering:
   method: dbscan
   clustering_method: DBSCAN
   kmeans_clusters: 12
+  # General/current defaults (NOT the publication shared-fleet freeze).
+  # Publication experiment: dbscan_eps=0.5, dbscan_min_samples=2
+  # → see configs/publication_fleet_guard.yaml
   dbscan_eps: 1.2
   dbscan_min_samples: 10
   dbscan_pca_components: 8
