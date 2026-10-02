@@ -1,0 +1,126 @@
+# This configuration records the parameters used for the primary FLEET-GUARD
+# publication experiments (OCSLab balanced end-to-end run; Section VII archive).
+# It is distinct from configs/default.yaml, which contains general/current
+# pipeline defaults.
+#
+# Source-of-truth artifacts (do not invent values beyond these):
+# - recovered_publication_pipeline/.../configs/final_shared_fleet_configuration.yaml
+#   (authoritative shared fleet freeze; also mirrored in validation selection_report.md)
+# - recovered_publication_pipeline/.../configs/balanced_master_experiment.yaml
+# - experimental-2026-06-23/01_primary_ocslab_balanced/ (archived paper tables/results)
+# - src/models/gnn_models.py (GraphSAGE architecture / Adam / λ defaults used by training)
+# - recovered .../final_gnn_fleet_decision_experiment.py (9-D GNN feature columns; cohesion)
+#
+# This file is DOCUMENTATION / REPRODUCIBILITY RECORDING. It does not by itself
+# re-wire missing publication runners. Archived experiment outputs are unchanged.
+
+project:
+  name: fleet-guard
+  framework: FLEET-GUARD
+  configuration_role: primary_ocslab_publication_experiment
+  authoritative_for: Section VII (balanced split)
+  master_config_hash: 72dbfc1760126e799a8a1670f1aa81391bd69a65edeab7beecb61846aa946d9e
+
+# ---------------------------------------------------------------------------
+# Graph construction (τ, k_same, k_cross)
+# Evidence: final_shared_fleet_configuration.yaml; scenario_graph defaults;
+#           parameter_search.csv / selection_report.md (validation freeze)
+# ---------------------------------------------------------------------------
+graph:
+  similarity_metric: cosine
+  similarity_threshold: 0.95          # τ
+  max_same_vehicle_neighbors: 2       # k_same
+  max_cross_vehicle_neighbors: 5      # k_cross
+  temporal_edges: false
+  # Similarity uses 24-D behavioural descriptors (d_i), not the 9-D GNN vector.
+  similarity_feature_view: full_descriptor
+
+# ---------------------------------------------------------------------------
+# GraphSAGE
+# Evidence: balanced_master_experiment.yaml (hidden_dim/epochs/lr);
+#           src/models/gnn_models.py GraphSAGEFleetCorrelator + train defaults;
+#           recovered GNN_FEATURE_COLUMNS (9-D input)
+# ---------------------------------------------------------------------------
+graphsage:
+  architecture: GraphSAGE
+  input_dim: 9
+  gnn_feature_columns:
+    - anomaly_score
+    - message_rate
+    - frame_count
+    - burstiness
+    - mean_inter_arrival_time
+    - std_inter_arrival_time
+    - can_id_entropy
+    - most_common_can_id_ratio
+    - payload_entropy
+  layers: 2
+  hidden_channels: 64
+  embedding_dim: 32
+  aggregation: mean                   # torch_geometric SAGEConv default
+  activation: relu_after_first_sageconv
+  epochs: 30
+  optimizer: Adam
+  learning_rate: 0.01
+  weight_decay: 0.0005                # 5e-4
+  campaign_loss_weight: 0.25          # λ in structure-supervision loss
+  supervision: structure
+  # edge_attr may be stored on PyG Data but is not passed into SAGEConv forward
+  edge_attr_passed_to_sageconv: false
+
+# ---------------------------------------------------------------------------
+# Clustering (DBSCAN on GraphSAGE embeddings after StandardScaler + PCA)
+# Evidence: final_shared_fleet_configuration.yaml (eps/min_samples);
+#           campaign_clustering.run_dbscan defaults for PCA=8, metric=euclidean
+# NOTE: configs/default.yaml currently lists eps=1.2 / min_samples=10 as
+# general pipeline defaults — those are NOT the publication freeze values.
+# ---------------------------------------------------------------------------
+clustering:
+  preprocessing:
+    - StandardScaler
+    - PCA
+  pca_components: 8
+  method: DBSCAN
+  metric: euclidean
+  dbscan_eps: 0.5
+  dbscan_min_samples: 2
+
+# ---------------------------------------------------------------------------
+# Campaign gate (non-η / freeze fields)
+# Evidence: final_shared_fleet_configuration.yaml
+# Paper symbols: β = minimum_campaign_cohesion; γ = minimum_distinct_vehicles
+# η = |C_k| >= η is the campaign-size gate; see unresolved note below.
+# ---------------------------------------------------------------------------
+campaign_gate:
+  beta_minimum_campaign_cohesion: 0.5
+  gamma_minimum_distinct_vehicles: 2
+  minimum_cross_vehicle_support: 1
+  fragment_consolidation_enabled: true
+  fragment_centroid_threshold: 0.85
+  cohesion_space: behavioral_descriptors  # not stored edge weights
+  # η (min campaign cluster size): NOT named in final_shared_fleet_configuration.yaml.
+  # Paper definition |C_k| >= η is preserved; numeric freeze field for η is unresolved
+  # in that YAML (DBSCAN min_samples=2 is NOT η).
+  eta_min_campaign_cluster_size: unresolved_in_shared_fleet_freeze_yaml
+
+# ---------------------------------------------------------------------------
+# Local IDS thresholds (paper strong/weak bands; not coordination strength)
+# Evidence: balanced_master_experiment.yaml local_ids.*
+# ---------------------------------------------------------------------------
+local_ids:
+  model: IsolationForest
+  n_estimators: 200
+  weak_threshold: 0.55
+  strong_threshold: 0.80
+
+# ---------------------------------------------------------------------------
+# Experimental scale (publication fleet scenarios)
+# Evidence: balanced_master_experiment.yaml scenario.*
+# ---------------------------------------------------------------------------
+scenario:
+  fleet_size: 20
+  source_windows_per_vehicle: 10
+  total_source_windows: 200
+  campaign_sizes: [2, 5, 10]
+  window_size: 100
+  stride: 50

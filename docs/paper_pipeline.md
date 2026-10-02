@@ -23,6 +23,8 @@ This table maps paper experiments to runnable scripts and canonical output locat
 
 **End-to-end OCSLab runner:** `python experiments/run_full_pipeline.py --config configs/default.yaml`
 
+**Publication vs default configuration:** `configs/default.yaml` is the general pipeline config. Parameters used for the primary paper fleet experiments are recorded in `configs/publication_fleet_guard.yaml` (audit: [PUBLICATION_CONFIGURATION_AUDIT.md](PUBLICATION_CONFIGURATION_AUDIT.md)). Do not assume default DBSCAN `eps`/`min_samples` match the publication freeze.
+
 **Cross-dataset (can-train-and-test):** `python scripts/run_can_train_and_test_cross_dataset.py --stage full`
 
 ## Paper results mapping

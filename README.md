@@ -50,7 +50,7 @@ Sources: `results/vehicle_level_threshold_comparison.csv` (OCSLab FPR≤5% row),
 
 ```
 .
-├── configs/                    # YAML configuration (default.yaml, fleet_ids.yaml)
+├── configs/                    # default.yaml (general), publication_fleet_guard.yaml (paper), fleet_ids.yaml
 ├── data/raw/                   # Optional local raw traces (gitignored)
 ├── data/processed/             # Pipeline outputs (gitignored)
 ├── docs/                       # datasets.md, paper_pipeline.md
@@ -68,6 +68,33 @@ Sources: `results/vehicle_level_threshold_comparison.csv` (OCSLab FPR≤5% row),
 ```
 
 See [docs/paper_pipeline.md](docs/paper_pipeline.md) for paper-to-code mapping.
+
+## Publication Configuration
+
+FLEET-GUARD keeps **general/current pipeline defaults** separate from the **parameters recorded for the primary OCSLab publication experiments**.
+
+1. `configs/default.yaml` contains general/current defaults used by the numbered pipeline scripts.
+2. `configs/publication_fleet_guard.yaml` records the configuration used for the paper’s primary fleet-level experiments (OCSLab balanced archive / shared-fleet freeze).
+3. Paper results should be interpreted using the **publication configuration**, not by automatically assuming every key in `default.yaml` matches the paper.
+4. Archived experiment outputs under `experimental-2026-06-23/` remain unchanged.
+
+Full evidence, selection provenance, and reproducibility limits: [docs/PUBLICATION_CONFIGURATION_AUDIT.md](docs/PUBLICATION_CONFIGURATION_AUDIT.md).
+
+| Parameter | Publication value | General/default value | Evidence/source |
+|-----------|-------------------|-----------------------|-----------------|
+| τ (similarity threshold) | 0.95 | 0.95 | Shared-fleet freeze; `configs/default.yaml` graph block |
+| k_same | 2 | 2 | Shared-fleet freeze; default graph block |
+| k_cross | 5 | 5 | Shared-fleet freeze; default graph block |
+| GraphSAGE hidden / embedding | 64 / 32 | 64 / 32 | Master YAML + `src/models/gnn_models.py` / default `gnn:` |
+| GraphSAGE epochs / lr / weight decay | 30 / 0.01 / 5e-4 | 30 / 0.01 / 5e-4 | Master YAML + code / default `gnn:` |
+| λ (campaign loss weight) | 0.25 | 0.25 (code default) | `train_graphsage_fleet_correlation` in `gnn_models.py` |
+| PCA components | 8 | 8 | Clustering helpers / default `clustering:` |
+| **DBSCAN eps** | **0.5** | **1.2** | Freeze vs `configs/default.yaml` — **different contexts** |
+| **DBSCAN min_samples** | **2** | **10** | Freeze vs `configs/default.yaml` — **different contexts**; not η |
+| β (min campaign cohesion) | 0.5 | (not the same key as default `clustering.similarity_threshold`) | Shared-fleet freeze |
+| γ (min distinct vehicles) | 2 | `clustering.min_vehicles: 2` (related) | Shared-fleet freeze |
+
+These configurations are not ranked as “better” or “worse”; they serve different contexts (publication freeze vs general pipeline defaults).
 
 ## Installation
 
