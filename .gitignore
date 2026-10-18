@@ -78,6 +78,7 @@ Thumbs.db
 
 # External datasets (clone locally)
 Dataset/
+data/external/
 
 # CTT cross-dataset experiment large artifacts
 new_experiments/can_train_and_test_cross_dataset_validation/normalized/

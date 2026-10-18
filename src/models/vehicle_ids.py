@@ -100,12 +100,13 @@ def prepare_vehicle_split(
     X = subset[BEHAVIOURAL_FEATURE_COLUMNS].fillna(0.0).to_numpy(dtype=np.float32)
     y = subset["label"].to_numpy(dtype=np.int64)
 
+    stratify = y if len(np.unique(y)) > 1 else None
     X_train, X_test, y_train, y_test = train_test_split(
         X,
         y,
         test_size=test_size,
         random_state=random_state,
-        stratify=y,
+        stratify=stratify,
     )
     X_train_benign = X_train[y_train == 0]
     if X_train_benign.size == 0:
@@ -156,10 +157,20 @@ def _train_test_indices(
     random_state: int,
 ) -> tuple[np.ndarray, np.ndarray]:
     idx = np.arange(len(y))
+    stratify = y if len(np.unique(y)) > 1 else None
     train_idx, test_idx = train_test_split(
-        idx, test_size=test_size, random_state=random_state, stratify=y
+        idx, test_size=test_size, random_state=random_state, stratify=stratify
     )
     return train_idx, test_idx
+
+
+def _binary_predict_proba(clf: Any, X_all: np.ndarray) -> np.ndarray:
+    """Attack-class probability; all-zeros if the estimator saw only one class."""
+    proba = clf.predict_proba(X_all)
+    classes = list(getattr(clf, "classes_", []))
+    if 1 in classes:
+        return proba[:, classes.index(1)]
+    return np.zeros(len(X_all), dtype=float)
 
 
 def predict_random_forest(
@@ -176,7 +187,7 @@ def predict_random_forest(
         n_jobs=-1,
     )
     clf.fit(X_train, y_train)
-    return clf.predict(X_all), clf.predict_proba(X_all)[:, 1]
+    return clf.predict(X_all), _binary_predict_proba(clf, X_all)
 
 
 def train_random_forest(split: VehicleSplit, *, random_state: int = 42) -> ModelResult:
@@ -210,7 +221,7 @@ def predict_logistic_regression(
         ]
     )
     pipe.fit(X_train, y_train)
-    return pipe.predict(X_all), pipe.predict_proba(X_all)[:, 1]
+    return pipe.predict(X_all), _binary_predict_proba(pipe, X_all)
 
 
 def train_logistic_regression(split: VehicleSplit, *, random_state: int = 42) -> ModelResult:
@@ -393,8 +404,17 @@ def train_all_models_for_vehicle(
 ) -> list[ModelResult]:
     """Train and evaluate all vehicle-level models."""
     results: list[ModelResult] = []
-    for name, (_, trainer) in MODEL_TRAINERS.items():
+    n_train_classes = int(len(np.unique(split.y_train)))
+    for name, (task, trainer) in MODEL_TRAINERS.items():
         if name == "autoencoder" and not include_autoencoder:
+            continue
+        if task == TASK_BINARY and n_train_classes < 2:
+            logger.warning(
+                "Skipping %s for %s: supervised models need both classes in train "
+                "(fleetcan vehicles not targeted by attacks are benign-only).",
+                name,
+                split.vehicle_model,
+            )
             continue
         logger.info("Training %s for %s", name, split.vehicle_model)
         try:
@@ -416,7 +436,7 @@ def train_all_models_for_vehicle(
 def generate_window_predictions(
     df: pd.DataFrame,
     *,
-    vehicles: tuple[str, ...] = VEHICLE_MODELS,
+    vehicles: tuple[str, ...] | None = None,
     test_size: float = 0.2,
     random_state: int = 42,
     include_autoencoder: bool = True,
@@ -427,6 +447,11 @@ def generate_window_predictions(
     Returns long-format predictions: window_id, vehicle_model, model,
     predicted_label, anomaly_score.
     """
+    present = tuple(sorted(str(v) for v in df["vehicle_model"].dropna().unique()))
+    if vehicles is None:
+        oem = tuple(v for v in VEHICLE_MODELS if v in present)
+        vehicles = oem if oem else present
+
     rows: list[pd.DataFrame] = []
     model_fns: list[tuple[str, Callable[..., tuple[np.ndarray, np.ndarray]]]] = [
         ("random_forest", predict_random_forest),
@@ -449,7 +474,15 @@ def generate_window_predictions(
 
         meta = subset[["window_id", "vehicle_model"]].copy()
 
+        n_train_classes = int(len(np.unique(y_train)))
         for model_name, predict_fn in model_fns:
+            if model_name not in ("isolation_forest", "autoencoder") and n_train_classes < 2:
+                logger.warning(
+                    "Skipping %s predictions for %s: need both classes in train",
+                    model_name,
+                    vehicle,
+                )
+                continue
             logger.info("Predicting %s for %s (%d windows)", model_name, vehicle, len(subset))
             if model_name in ("isolation_forest", "autoencoder"):
                 y_pred, y_score = predict_fn(
@@ -488,13 +521,19 @@ def load_window_predictions(path: Path | str) -> pd.DataFrame:
 def run_vehicle_level_training(
     features_path: Path | str,
     *,
-    vehicles: tuple[str, ...] = VEHICLE_MODELS,
+    vehicles: tuple[str, ...] | None = None,
     test_size: float = 0.2,
     random_state: int = 42,
     include_autoencoder: bool = True,
 ) -> pd.DataFrame:
     """Train all models for each vehicle and return results table."""
     df = load_feature_dataset(features_path)
+    present = tuple(sorted(str(v) for v in df["vehicle_model"].dropna().unique()))
+    if vehicles is None:
+        # Prefer legacy OEM order when present; otherwise use whatever is in the data
+        # (e.g. fleetcan vehicle_001…).
+        oem = tuple(v for v in VEHICLE_MODELS if v in present)
+        vehicles = oem if oem else present
     all_results: list[ModelResult] = []
 
     for vehicle in vehicles:
