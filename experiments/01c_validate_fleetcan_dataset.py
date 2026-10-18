@@ -40,7 +40,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--pilot",
         action="store_true",
-        help="Restrict checks to the default N=20 S0–S3 pilot sessions",
+        help="Restrict checks to the default N=100 S0–S3 pilot sessions",
     )
     parser.add_argument(
         "--output",

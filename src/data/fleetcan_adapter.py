@@ -417,12 +417,12 @@ def load_manifest_sessions(
 
 
 def default_pilot_sessions() -> list[str]:
-    """Fixed N=20 R1 pilot covering S0–S3 (flooding where applicable)."""
+    """Fixed N=100 R1 pilot covering S0–S3 (flooding where applicable)."""
     return [
-        "FCS10_N020_S0_none_K000_none_R1",
-        "FCS10_N020_S1_flooding_K000_isolated_R1",
-        "FCS10_N020_S2_flooding_K000_independent_I05near_R1",
-        "FCS10_N020_S3_flooding_K002_simultaneous_R1",
+        "FCS10_N100_S0_none_K000_none_R1",
+        "FCS10_N100_S1_flooding_K000_isolated_R1",
+        "FCS10_N100_S2_flooding_K000_independent_I05near_R1",
+        "FCS10_N100_S3_flooding_K005_medium_R1",
     ]
 
 

@@ -38,12 +38,12 @@ python experiments/01c_validate_fleetcan_dataset.py --pilot \
   --release-root data/external/fleetcan-sim-scale-1.0
 ```
 
-Pilot sessions (N=20, R1):
+Pilot sessions (N=100, R1):
 
-- `FCS10_N020_S0_none_K000_none_R1`
-- `FCS10_N020_S1_flooding_K000_isolated_R1`
-- `FCS10_N020_S2_flooding_K000_independent_I05near_R1`
-- `FCS10_N020_S3_flooding_K002_simultaneous_R1`
+- `FCS10_N100_S0_none_K000_none_R1`
+- `FCS10_N100_S1_flooding_K000_isolated_R1`
+- `FCS10_N100_S2_flooding_K000_independent_I05near_R1`
+- `FCS10_N100_S3_flooding_K005_medium_R1`
 
 ### Step 2 — Load / adapt → `clean_can_data.csv`
 
@@ -66,7 +66,7 @@ python experiments/06_build_graph.py --config configs/fleetcan_sim.yaml
 
 ### Step 4 — Scale out
 
-Re-run Steps 1–3 with more sessions (e.g. all N=20 R1, then N=50/100) via `--sessions` / `--all-sessions`. Full matrix is 835 sessions / 444M frames — keep pilot first.
+Re-run Steps 1–3 with more sessions (e.g. all N=100 R1, or N=50) via `--sessions` / `--all-sessions`. Full matrix is 835 sessions / 444M frames.
 
 ## Evidence labels
 
@@ -75,20 +75,20 @@ Re-run Steps 1–3 with more sessions (e.g. all N=20 R1, then N=50/100) via `--s
 | Schema supports STANDARD_COLUMNS after join | **VERIFIED** (pilot `01c` PASS + synthetic fixture) |
 | S0–S3 + four attack families present in freeze | **VERIFIED** (manifest / FREEZE / validation_summary) |
 | Full 835-session integrity | **VERIFIED** (`download_fleetcan_sim_scale_1_0.sh` SUCCESS; SHA256 `5d5418b1…de70`; 835 sessions) |
-| Pilot pipeline 01→06 on N=20 S0–S3 flooding | **VERIFIED** (see results below) |
+| Pilot pipeline 01→06 on N=100 S0–S3 flooding | **VERIFIED** (see results below) |
 
-## Pilot results (this run)
+## Pilot results (this run — N=100)
 
 | Stage | Result |
 |---|---|
 | Restore | 26,740 files / 835 sessions verified |
-| `01c` schema | PASS (4/4 pilot sessions) |
-| `01_load_fleetcan` | 699,498 frames; 20 vehicles; attack_free + flooding |
-| `01b --schema-only` | PASS (all schema checks) |
-| `02` windows | 13,876 windows across 20 vehicles |
-| `03` features | 13,876 × 24 behavioural features |
-| `04` vehicle IDS | Supervised models on 8 attacked vehicles; IF on all 20 |
-| `05` descriptors | 1,945 anomaly descriptors |
-| `06` fleet graph | 1,945 nodes, 1,244,454 edges (cosine ≥ 0.85) |
+| `01c` schema | PASS (4/4 N=100 S0–S3 sessions) |
+| `01_load_fleetcan` | **3,534,918 frames; 100 vehicles**; attack_free + flooding |
+| `01b --schema-only` | PASS (`n_vehicle_model=100`) |
+| `02` windows | 70,098 windows across **100** vehicles |
+| `03` features | 70,098 × 24 behavioural features |
+| `04` vehicle IDS | IF on all 100; RF/LR on attacked vehicles |
+| `05` descriptors | 5,698 anomaly descriptors (flooding + attack_free) |
+| `06` fleet graph | 5,698 nodes, 4,769,534 edges (cosine ≥ 0.85) |
 
-**Note:** In coordinated/isolated fleetcan sessions only a subset of vehicles are attack targets. Benign-only vehicles skip RF/LR (need both classes) and still run Isolation Forest / autoencoder.
+**Note:** In coordinated/isolated fleetcan sessions only a subset of vehicles are attack targets. Benign-only vehicles skip RF/LR (need both classes) and still run Isolation Forest.

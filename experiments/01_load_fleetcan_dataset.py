@@ -41,7 +41,7 @@ def parse_args() -> argparse.Namespace:
         "--pilot",
         action="store_true",
         default=True,
-        help="Use default N=20 S0–S3 flooding pilot (default: true)",
+        help="Use default N=100 S0–S3 flooding pilot (default: true)",
     )
     parser.add_argument(
         "--all-sessions",

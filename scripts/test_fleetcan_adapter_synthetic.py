@@ -106,7 +106,7 @@ def _write_session(root: Path, sid: str) -> None:
 def main() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
-        sid = "FCS10_N020_S1_flooding_K000_isolated_R1"
+        sid = "FCS10_N100_S1_flooding_K000_isolated_R1"
         _write_session(root, sid)
 
         report = validate_dataset_coverage(root, session_ids=[sid])

@@ -16,12 +16,12 @@ data:
   dataset: fleetcan_sim_scale_1_0
   # Restored by scripts/download_fleetcan_sim_scale_1_0.sh into data/external/
   release_root: data/external/fleetcan-sim-scale-1.0
-  # Pilot: N=20, R1, S0 + S1/S2/S3 flooding (adapter default)
+  # Pilot: N=100, R1, S0 + S1/S2/S3 flooding (adapter default)
   pilot_sessions:
-    - FCS10_N020_S0_none_K000_none_R1
-    - FCS10_N020_S1_flooding_K000_isolated_R1
-    - FCS10_N020_S2_flooding_K000_independent_I05near_R1
-    - FCS10_N020_S3_flooding_K002_simultaneous_R1
+    - FCS10_N100_S0_none_K000_none_R1
+    - FCS10_N100_S1_flooding_K000_isolated_R1
+    - FCS10_N100_S2_flooding_K000_independent_I05near_R1
+    - FCS10_N100_S3_flooding_K005_medium_R1
   train_split: 0.7
   val_split: 0.15
   test_split: 0.15
