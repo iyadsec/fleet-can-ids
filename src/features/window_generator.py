@@ -101,12 +101,23 @@ def generate_windows_for_trace(
         return pd.DataFrame(columns=WINDOW_METADATA_COLUMNS)
 
     vehicle = trace["vehicle_model"].iloc[0]
-    attack = trace["attack_type"].iloc[0]
+    # Prefer majority attack_type inside the window when a trace mixes benign
+    # and attack frames (fleetcan sessions); fall back to first-row value.
+    default_attack = trace["attack_type"].iloc[0]
 
     rows: list[dict[str, Any]] = []
     for start in range(0, n - window_size + 1, stride):
         end = start + window_size
         window = trace.iloc[start:end]
+        attack_counts = window["attack_type"].astype(str).value_counts()
+        # Prefer a real attack family over attack_free when both appear.
+        non_benign = attack_counts.drop(labels=["attack_free", "unknown", "nan"], errors="ignore")
+        if not non_benign.empty:
+            attack = str(non_benign.idxmax())
+        elif not attack_counts.empty:
+            attack = str(attack_counts.idxmax())
+        else:
+            attack = str(default_attack)
         rows.append(
             {
                 "window_id": id_offset + len(rows),
