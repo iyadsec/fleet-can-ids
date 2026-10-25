@@ -67,6 +67,18 @@ python experiments/01_load_dataset.py --config configs/default.yaml
 
 Writes `data/processed/clean_can_data.csv` with standardized columns.
 
+**Fleetcan-sim (synthetic SUMO dataset)** — after restoring
+[`fleetcan-sim-scale-1.0`](https://github.com/iyadsec/fleet-can-dataset) under `data/external/`:
+
+```bash
+python experiments/01c_validate_fleetcan_dataset.py --pilot
+python experiments/01_load_fleetcan_dataset.py --pilot
+python experiments/01b_validate_clean_dataset.py --schema-only --config configs/fleetcan_sim.yaml
+# then the same 02→06 stages as below
+```
+
+See `docs/audits/fleetcan_sim_pipeline_plan.md`.
+
 **Validate clean dataset** (row counts, schema, ranges, duplicates):
 
 ```bash

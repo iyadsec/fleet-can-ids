@@ -41,7 +41,11 @@ PRIMARY_MODEL = "random_forest"
 
 def make_event_id(vehicle_model: str, window_id: int) -> str:
     """Build a compact unique event identifier."""
-    prefix = VEHICLE_PREFIX.get(vehicle_model, "UNK")
+    prefix = VEHICLE_PREFIX.get(vehicle_model)
+    if prefix is None:
+        # fleetcan-style IDs (vehicle_001 → V001) or other non-OEM names
+        digits = "".join(ch for ch in str(vehicle_model) if ch.isdigit())
+        prefix = f"V{digits[-3:].zfill(3)}" if digits else "UNK"
     return f"EVT-{prefix}-{int(window_id):06d}"
 
 

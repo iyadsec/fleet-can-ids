@@ -1,0 +1,67 @@
+# Fleetcan-sim-scale-1.0 → FLEET-GUARD pipeline configuration
+# Uses the same feature/window/graph settings as default.yaml; only data paths change.
+
+project:
+  name: fleet-can-ids
+  seed: 42
+
+paths:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  outputs_dir: outputs
+  metrics_dir: outputs/metrics
+  figures_dir: outputs/figures
+
+data:
+  dataset: fleetcan_sim_scale_1_0
+  # Restored dataset root (folder that contains data/raw, or parent that contains
+  # fleetcan-sim-scale-1.0/). Local PC example:
+  #   /Users/iyadatieh/fleetcan_data/fleetcan-sim-scale-1.0
+  # Or pass --release-root / scripts/run_fleetcan_pipeline.sh <path>
+  release_root: data/external/fleetcan-sim-scale-1.0
+  local_release_root: /Users/iyadatieh/fleetcan_data/fleetcan-sim-scale-1.0
+  # Pilot: N=100, R1, S0 + S1/S2/S3 flooding (adapter default)
+  pilot_sessions:
+    - FCS10_N100_S0_none_K000_none_R1
+    - FCS10_N100_S1_flooding_K000_isolated_R1
+    - FCS10_N100_S2_flooding_K000_independent_I05near_R1
+    - FCS10_N100_S3_flooding_K005_medium_R1
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+  # Detector-safe: do not feed scenario_id / campaign_id / labels into features
+  detector_forbidden_columns:
+    - scenario_id
+    - campaign_id
+    - attack_id
+    - frame_source
+    - frame_label
+    - label
+    - attack_type
+
+features:
+  window_size: 100
+  overlap: 50
+  stride: 50
+  use_id: true
+  use_payload: true
+  use_timestamp: true
+
+graph:
+  similarity_metric: cosine
+  similarity_threshold: 0.85
+  max_nodes: null
+
+evaluation:
+  metrics:
+    - accuracy
+    - precision
+    - recall
+    - f1
+    - auc
+
+experiment:
+  name: fleetcan_sim_pilot
+  tags:
+    - fleetcan-sim-scale-1.0
+    - pilot
