@@ -61,6 +61,35 @@ def segment_trace_windows(
     return segments
 
 
+def _frame_disjoint_chunks(
+    frame_rows: list[tuple[int, int, int]],
+    *,
+    min_windows: int,
+) -> list[list[int]]:
+    """Segment windows so consecutive segments never share CAN frames.
+
+    ``frame_rows`` is a list of ``(window_id, start_frame_idx, end_frame_idx)`` for
+    one ``(vehicle_model, source_file)`` group. Frame intervals are treated as
+    half-open ``[start, end)``. Each emitted segment is ``min_windows`` windows; the
+    next segment begins at the first window whose ``start_frame_idx`` is >= the
+    previous segment's maximum ``end_frame_idx``, dropping only the minimal number
+    of boundary windows. Because every later segment starts at or after the prior
+    segment's end, all emitted segments of the trace are mutually frame-disjoint.
+    """
+    ordered = sorted(frame_rows, key=lambda r: (int(r[1]), int(r[0])))
+    chunks: list[list[int]] = []
+    i, n = 0, len(ordered)
+    while i + min_windows <= n:
+        chunk = ordered[i : i + min_windows]
+        seg_end = max(int(r[2]) for r in chunk)
+        chunks.append([int(r[0]) for r in chunk])
+        j = i + min_windows
+        while j < n and int(ordered[j][1]) < seg_end:
+            j += 1
+        i = j
+    return chunks
+
+
 def _classify_event_strength(row: pd.Series, weak_th: float, strong_th: float) -> str:
     if is_benign_attack_type(row.get("attack_type", "")):
         return "benign"
@@ -83,25 +112,64 @@ def build_instance_catalog(
     min_weak_events: int = 3,
     min_benign_events: int = 5,
     target_split: str = "test",
+    enforce_frame_disjoint: bool = False,
 ) -> pd.DataFrame:
-    """Catalog disjoint trace segments eligible as scenario vehicle instances."""
+    """Catalog disjoint trace segments eligible as scenario vehicle instances.
+
+    Historical behavior is preserved when ``enforce_frame_disjoint`` is False (the
+    default): segments are consecutive, non-overlapping chunks of
+    ``min_windows_per_segment`` window IDs. When ``enforce_frame_disjoint`` is True,
+    consecutive segments of the same source recording are separated so that their
+    half-open ``[start_frame_idx, end_frame_idx)`` frame intervals never intersect
+    (dropping the minimal number of boundary windows), preventing different logical
+    vehicles from sharing original CAN frames. When ``start_frame_idx`` /
+    ``end_frame_idx`` are available, each catalog row additionally carries
+    ``frame_start``, ``frame_end``, and per-window ``window_frames`` for the
+    source-frame overlap validator.
+    """
     join_cols = [c for c in ("window_id", "vehicle_model", "source_file") if c in descriptors.columns]
+    frame_cols = [
+        c
+        for c in ("start_frame_idx", "end_frame_idx")
+        if c in manifest.columns and c not in descriptors.columns
+    ]
     desc = descriptors.drop(columns=["split"], errors="ignore").merge(
-        manifest[join_cols + ["split"]].drop_duplicates(),
+        manifest[join_cols + ["split"] + frame_cols].drop_duplicates(),
         on=join_cols,
         how="left",
     )
     test = desc[desc["split"] == target_split].copy()
+    has_frames = {"start_frame_idx", "end_frame_idx"}.issubset(test.columns)
+    if enforce_frame_disjoint and not has_frames:
+        raise ValueError(
+            "enforce_frame_disjoint=True requires 'start_frame_idx' and 'end_frame_idx' "
+            "columns (provide them in descriptors or the manifest)."
+        )
     rows: list[dict[str, Any]] = []
     instance_counter = 0
 
     for (vehicle_model, source_file), grp in test.groupby(["vehicle_model", "source_file"], sort=True):
         trace = source_trace_name(source_file)
-        wins = sorted(grp["window_id"].astype(int).tolist())
-        for start in range(0, len(wins), min_windows_per_segment):
-            chunk_ids = wins[start : start + min_windows_per_segment]
-            if len(chunk_ids) < min_windows_per_segment:
-                continue
+        grp_sorted = grp.sort_values("window_id")
+        if enforce_frame_disjoint:
+            frame_rows = [
+                (int(wid), int(s), int(e))
+                for wid, s, e in zip(
+                    grp_sorted["window_id"],
+                    grp_sorted["start_frame_idx"],
+                    grp_sorted["end_frame_idx"],
+                )
+            ]
+            chunks = _frame_disjoint_chunks(frame_rows, min_windows=min_windows_per_segment)
+        else:
+            wins = sorted(grp_sorted["window_id"].astype(int).tolist())
+            chunks = [
+                wins[start : start + min_windows_per_segment]
+                for start in range(0, len(wins), min_windows_per_segment)
+                if len(wins[start : start + min_windows_per_segment]) >= min_windows_per_segment
+            ]
+
+        for chunk_ids in chunks:
             seg_start, seg_end = chunk_ids[0], chunk_ids[-1]
             seg = grp[grp["window_id"].isin(chunk_ids)]
             strengths = seg.apply(
@@ -121,24 +189,33 @@ def build_instance_catalog(
             sid = f"V_{instance_counter:04d}"
             eligible_campaign = strong_n >= min_strong_events or weak_n >= min_weak_events
             eligible_diversity = eligible_campaign
-            rows.append(
-                {
-                    "scenario_vehicle_id": sid,
-                    "vehicle_model": vehicle_model,
-                    "source_trace": trace,
-                    "source_file": str(source_file),
-                    "segment_start": seg_start,
-                    "segment_end": seg_end,
-                    "window_ids": chunk_ids,
-                    "split": target_split,
-                    "attack_types_available": "|".join(attack_types) if attack_types else "benign",
-                    "strong_attack_events": strong_n,
-                    "weak_attack_events": weak_n,
-                    "benign_events": benign_n,
-                    "eligible_for_campaign_size": eligible_campaign,
-                    "eligible_for_model_diversity": eligible_diversity,
-                }
-            )
+            row: dict[str, Any] = {
+                "scenario_vehicle_id": sid,
+                "vehicle_model": vehicle_model,
+                "source_trace": trace,
+                "source_file": str(source_file),
+                "segment_start": seg_start,
+                "segment_end": seg_end,
+                "window_ids": chunk_ids,
+                "split": target_split,
+                "attack_types_available": "|".join(attack_types) if attack_types else "benign",
+                "strong_attack_events": strong_n,
+                "weak_attack_events": weak_n,
+                "benign_events": benign_n,
+                "eligible_for_campaign_size": eligible_campaign,
+                "eligible_for_model_diversity": eligible_diversity,
+            }
+            if has_frames:
+                wf = (
+                    seg.sort_values("window_id")[["start_frame_idx", "end_frame_idx"]]
+                    .astype(int)
+                    .to_numpy()
+                    .tolist()
+                )
+                row["frame_start"] = int(min(a for a, _ in wf))
+                row["frame_end"] = int(max(b for _, b in wf))
+                row["window_frames"] = [[int(a), int(b)] for a, b in wf]
+            rows.append(row)
     return pd.DataFrame(rows)
 
 
