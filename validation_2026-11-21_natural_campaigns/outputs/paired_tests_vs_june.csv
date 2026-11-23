@@ -1,0 +1,9 @@
+scenario,condition,metric,june_mean,new_mean,mean_delta,wilcoxon_p,n_pairs
+strong_campaign,B_natural,campaign_f1,0.7556,0.3389,-0.4167,0.0018,30
+strong_campaign,B_natural,membership_f1,0.7144,0.1189,-0.5955,0.0,30
+strong_campaign,C_partial_train,campaign_f1,0.7556,0.3667,-0.3889,0.0006,30
+strong_campaign,C_partial_train,membership_f1,0.7144,0.1682,-0.5462,0.0,30
+weak_campaign,B_natural,campaign_f1,0.4278,0.0333,-0.3944,0.0004,30
+weak_campaign,B_natural,membership_f1,0.4819,0.0,-0.4819,0.0004,30
+weak_campaign,C_partial_train,campaign_f1,0.4278,0.1,-0.3278,0.001,30
+weak_campaign,C_partial_train,membership_f1,0.4819,0.045,-0.4369,0.0004,30

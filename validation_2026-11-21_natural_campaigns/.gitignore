@@ -1,0 +1,3 @@
+# Per-run CSVs (~37 MB, absolute source paths) and console logs stay local
+outputs/runs/
+outputs/*.log

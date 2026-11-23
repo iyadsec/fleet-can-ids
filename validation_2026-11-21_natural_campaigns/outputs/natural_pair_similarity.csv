@@ -1,0 +1,12 @@
+scenario,pair_type,mean_cosine,frac_ge_tau_0_95,runs
+S3,benign-benign diff participant,-0.004,0.01,30
+S3,mal-benign,0.026,0.027,30
+S3,"mal-mal diff participant, same recording",0.332,0.169,20
+S3,mal-mal diff platform,0.144,0.014,30
+S3,"mal-mal diff recording, same platform",0.115,0.034,9
+S3,mal-mal same participant,0.873,0.56,30
+S4,benign-benign diff participant,0.01,0.009,30
+S4,mal-benign,0.009,0.006,30
+S4,"mal-mal diff participant, same recording",0.556,0.045,20
+S4,mal-mal diff platform,0.032,0.0,30
+S4,mal-mal same participant,0.732,0.191,30

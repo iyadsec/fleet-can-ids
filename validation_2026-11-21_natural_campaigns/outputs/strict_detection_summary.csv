@@ -1,0 +1,9 @@
+,,valid_detection,valid_detection,valid_detection,valid_detection,benign_only_alert,benign_only_alert,benign_only_alert,benign_only_alert
+condition,,A_reproduction,B_natural,C_partial_train,June_baseline,A_reproduction,B_natural,C_partial_train,June_baseline
+scenario_key,campaign_size,,,,,,,,
+strong_campaign,2,0.5,0.0,0.0,0.5,0.2,0.3,0.3,0.2
+strong_campaign,5,0.8,0.0,0.0,0.8,0.1,0.1,0.2,0.1
+strong_campaign,10,1.0,0.5,0.4,1.0,0.0,0.0,0.2,0.0
+weak_campaign,2,0.1,0.0,0.0,0.1,0.1,0.1,0.1,0.1
+weak_campaign,5,0.4,0.0,0.1,0.4,0.3,0.0,0.0,0.3
+weak_campaign,10,0.8,0.0,0.1,0.8,0.5,0.0,0.0,0.5
