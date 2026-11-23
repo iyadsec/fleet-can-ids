@@ -34,7 +34,7 @@ The archived P4–P12 tables were produced by `scripts/run_balanced_publication_
 | Vehicle-level anomaly detection (Table P4, balanced fleet run) | `experiments/04_train_vehicle_ids.py` or balanced publication run | `experimental-2026-06-23/01_primary_ocslab_balanced/tables/table_P4_vehicle_level_results.csv` |
 | Vehicle-level anomaly detection (Table I, FPR≤5%) | `scripts/run_vehicle_level_fpr_controlled.py` | `results/vehicle_level_threshold_comparison.csv`, `tables/table_vehicle_level_ids.tex` |
 | Per-vehicle Table I (Chevrolet, Hyundai, Kia, pooled) | `scripts/generate_per_vehicle_fpr_table.py` | `results/per_vehicle_validation_report.md` |
-| Descriptor compactness (Table P5; 53.69% superseded) | Per-window serialization measurement | `validation_2026-11-21_natural_campaigns/outputs/descriptor_serialization_summary.csv` (archived: `.../table_P5_descriptor_compactness_and_privacy.csv`) |
+| Descriptor compactness (Table P5; 53.69% superseded, see provenance document) | `experiments/05_generate_descriptors.py` + privacy evidence | `.../table_P5_descriptor_compactness_and_privacy.csv` |
 | Non-campaign scenarios (Table P6) | Fleet scenario evaluation | `.../table_P6_benign_isolated_unrelated_results.csv` |
 | Strong campaign detection (Table P7) | Campaign scenarios + DBSCAN | `.../table_P7_strong_campaign_results.csv` |
 | Weak campaign detection (Table P8) | Campaign scenarios + DBSCAN | `.../table_P8_weak_campaign_results.csv` |
@@ -46,7 +46,7 @@ The archived P4–P12 tables were produced by `scripts/run_balanced_publication_
 | Cross-dataset local IDS comparison | `scripts/run_can_train_and_test_cross_dataset.py` | `OVERLEAF_CROSS_DATASET_ARTIFACTS/tables_csv/LOCAL_COMP*.csv` |
 | Cross-dataset fleet correlation (ground-truth-assisted scoring) | CTT full stage + artifact builder | `OVERLEAF_CROSS_DATASET_ARTIFACTS/` |
 | Fleet correlation outcomes figure (consistency rule is an oracle) | `scripts/build_figure_CORR_EFF3_consistency_rule_ablation.py` | `OVERLEAF_CROSS_DATASET_ARTIFACTS/figures_pdf/figure_CORR_EFF3_*.pdf` |
-| S3/S4 descriptor-construction sensitivity (separate, Nov 2026) | `validation_2026-11-21_natural_campaigns/run_campaign_validation.py` | `validation_2026-11-21_natural_campaigns/outputs/` |
+| June 2026 run reproduction (P4–P12) | `reproducibility/june_2026/reproduce.py`, `compare_with_june.py` | `reproducibility/june_2026/reproduction_check/` |
 
 ## Regenerate publication bundles
 

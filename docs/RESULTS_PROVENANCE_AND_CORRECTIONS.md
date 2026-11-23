@@ -95,21 +95,12 @@ the same stages. It is **not** the code that produced Tables P4–P12.
   descriptor-coordinated campaigns, not naturally recorded ones.
 * **Replay** has no windows in the test split and was **not** evaluated in any fleet scenario.
 
-## 4. Separate sensitivity analysis (2026-11-21)
-
-`validation_2026-11-21_natural_campaigns/` re-runs S3/S4 with the June artefacts, thresholds and shared
-configuration, changing only campaign construction. It does not replace any June number. Condition A
-reproduces June exactly. Condition B uses unmodified OCSLab observations (no prototype, benign windows
-untouched); these are real attack windows assembled into a scenario, **not** naturally recorded coordinated
-campaigns. Removing the controlled descriptor similarity significantly reduced detection (Wilcoxon
-p ≤ 0.002 for all comparisons). Details: [`validation_2026-11-21_natural_campaigns/README.md`](../validation_2026-11-21_natural_campaigns/README.md).
-
-## 5. Corrected claims
+## 4. Corrected claims
 
 | Earlier claim (where) | Correction |
 |-----------------------|------------|
 | 24-D descriptors feed the graph (README, reports) | Graph and GraphSAGE use the 9-D scaled view; cohesion uses a 6–8-feature behaviour view (§2); 24-D is the local descriptor table |
-| Descriptor bandwidth reduction 53.69% (`table_P5`) / 92.05% (`table_CUR_COMP2`) / "425 MB vs 7.6 GB" (`CUR_COMP5`) | Superseded. P5 compares a nominal 1,600 B window with the 741 B in-memory size of a descriptor row. Measured per window on 322 test windows from 8 recordings: packed binary 44 B vs 2,035 B raw (97.84% smaller); CSV text 79 B vs 4,679 B (98.32%). This is per-window payload size; because 100% of windows were forwarded and windows overlap (stride 50), it is not a fleet bandwidth figure |
+| Descriptor bandwidth reduction 53.69% (`table_P5`) / 92.05% (`table_CUR_COMP2`) / "425 MB vs 7.6 GB" (`CUR_COMP5`) | Superseded. P5 compares a nominal 1,600 B window with the 741 B in-memory size of a descriptor row, which includes the absolute path of the source recording and therefore depends on the machine's directory layout (678 B in the 2026-11-23 reproduction from a shorter path). It is not a transmitted-size measurement, and because 100% of windows were forwarded and windows overlap (stride 50), it is not a fleet bandwidth figure |
 | Local filtering reduces uplink | 100% of windows were forwarded in all fleet scenarios |
 | Replay evaluated in fleet scenarios | Not evaluated (no replay test windows) |
 | S2 false-campaign rate 0.000 | 0.400 under a consistent definition (see §3) |
@@ -118,7 +109,7 @@ p ≤ 0.002 for all comparisons). Details: [`validation_2026-11-21_natural_campa
 | Edge-connectivity table in the manuscript (380/969/1,810 edges) | From the earlier pre-balanced run (`final_end_to_end_publication_run/tables/table_P10`); its "Best" row mixes τ 0.95/k 20 (strong) with τ 0.85/k 20 (weak). The balanced run's P10 (341–1,886 edges) is in this bundle |
 | Method ablation table (M1/M2/M3) | From an earlier configuration (`62bf982`); see `experimental-2026-06-23/02_baseline_ablation/RESULT_PROVENANCE.md` |
 
-## 6. Verification performed for this release
+## 5. Verification performed for this release
 
 * `git hash-object` of every tracked file under `experimental-2026-06-23/` equals its committed blob.
 * Bundle P5/P7/P8/P9/P10 tables are byte-identical to the June run directory tables.

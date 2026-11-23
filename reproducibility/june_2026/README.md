@@ -167,5 +167,5 @@ whose SHA-256 equal `june_local_artifact_hashes.csv`.
 
 ## Excluded
 
-No credentials, private data, logs, caches, bytecode or November code. Raw OCSLab data and large intermediates (features, descriptors, models) are identified by hash
+No credentials, private data, logs, caches, bytecode or code written after the June run. Raw OCSLab data and large intermediates (features, descriptors, models) are identified by hash
 in `june_local_artifact_hashes.csv` and are not redistributed.

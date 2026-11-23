@@ -92,36 +92,20 @@ implements the same stages but did not produce Tables P4–P12.
 
 Paper-to-file mapping: [docs/paper_pipeline.md](docs/paper_pipeline.md).
 
-## 6. Descriptor serialization
+## 6. Descriptor size (Table P5)
 
-Measured per window on 322 test windows from 8 recordings: a packed binary descriptor is 44 B versus
-2,035 B of raw frames (97.84% smaller). As CSV text it is 79 B versus 4,679 B (98.32%). These figures are
-payload size per window. They are not a fleet bandwidth figure, because all windows were forwarded and
-consecutive windows overlap by 50 frames. The archived 53.69% value (`table_P5`) compares a nominal raw
-window with an in-memory descriptor size and is superseded. Descriptors reduce raw CAN exposure but give
-no formal privacy guarantee.
+The archived 53.69% bandwidth reduction (`table_P5`) compares a nominal 1,600 B raw window with the
+in-memory size of a descriptor row (741 B). That size includes the absolute path of the source recording,
+so it depends on the directory layout of the machine that ran the experiment. The figure is not a
+measurement of transmitted descriptor size and is superseded. It is not a fleet bandwidth figure either,
+because all windows were forwarded and consecutive windows overlap by 50 frames. Descriptors reduce raw CAN
+exposure but give no formal privacy guarantee.
 
-## 7. Separate sensitivity analysis (November 2026)
-
-[`validation_2026-11-21_natural_campaigns/`](validation_2026-11-21_natural_campaigns/) re-runs S3/S4 with
-the June artefacts and configuration but without the controlled prototype. It uses unmodified OCSLab
-observations, which are not naturally recorded coordinated attacks. Reproduction of June was exact.
-Removing the controlled descriptor similarity significantly reduced detection (Wilcoxon p ≤ 0.002):
-
-| Strict detection rate | 2 | 5 | 10 |
-|-----------------------|---|---|----|
-| Strong, June (controlled) | 0.5 | 0.8 | 1.0 |
-| Strong, unmodified descriptors | 0.0 | 0.0 | 0.5 |
-| Weak, June (controlled) | 0.1 | 0.4 | 0.8 |
-| Weak, unmodified descriptors | 0.0 | 0.0 | 0.0 |
-
-These results are reported alongside the June baseline and do not replace it.
-
-## 8. Limitations
+## 7. Limitations
 
 - S3/S4 similarity is controlled: the prototype is computed across all splits and is also applied to the
-  attacked participants' benign windows. June campaign results measure detection under this construction
-  (see §7).
+  attacked participants' benign windows. June campaign results measure detection of descriptor-coordinated
+  campaigns under this construction, not of naturally recorded coordinated attacks.
 - Fleets are logical vehicles assembled from three OCSLab platforms, not concurrently recorded vehicles.
 - Windows overlap (stride 50). The vehicle-level pooled table in `results/` (PR-AUC 0.9273) used a random
   stratified 70/15/15 split of overlapping windows, so adjacent train/test windows share frames. Treat it
@@ -138,7 +122,7 @@ These results are reported alongside the June baseline and do not replace it.
 | Path | Contents |
 |------|----------|
 | `experimental-2026-06-23/` | Archived June results (unchanged) |
-| `validation_2026-11-21_natural_campaigns/` | November sensitivity analysis (separate) |
+| `reproducibility/june_2026/` | Verified June 2026 modules, manifest and reproduction scripts |
 | `OVERLEAF_CROSS_DATASET_ARTIFACTS/` | Archived cross-dataset tables and figures (historical; see corrections) |
 | `docs/` | Datasets, paper mapping, provenance and corrections |
 | `src/`, `experiments/`, `scripts/`, `configs/`, `tests/` | Reference implementation, utilities and smoke tests |
