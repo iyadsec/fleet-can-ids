@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-11-23 (VehicleSec 2027: June 2026 provenance and reproducibility snapshot)
+
+### Added
+- `docs/RESULTS_PROVENANCE_AND_CORRECTIONS.md`: generating commit, unpublished June modules (SHA-256), executed parameters, scenario construction, corrected claims
+- `reproducibility/june_2026/`: the 42 June modules missing from `61a8203` (38 verified against June bytecode, 4 marked unverified), manifest with SHA-256, path-free bytecode verification record (the original `.pyc` files embed local paths and are kept privately), June environment, hashes of uncommitted June intermediates, reproduction and comparison scripts, and the reproduction check (detection results equal June)
+
+### Changed
+- README rewritten: executed parameters (9-D graph view, 6–8-feature cohesion, actual thresholds), S0–S4 interpretation, controlled S3/S4 prototype, P5 descriptor-size caveat, reproduction from the snapshot, limitations
+- `docs/paper_pipeline.md`: provenance note; P5 53.69% marked superseded; CTT fleet results marked ground-truth-assisted
+
+### Unchanged
+- All historical outputs, configurations and result values, including every file under `experimental-2026-06-23/` and `OVERLEAF_CROSS_DATASET_ARTIFACTS/` (corrections are documented separately)
+
 ## Unreleased (publication readiness audit)
 
 ### Added
